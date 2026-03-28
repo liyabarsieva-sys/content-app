@@ -16,8 +16,8 @@ const TONES = [
 ];
 
 const S = {
-  bg: "#0f0e0c", bg2: "#181613", border: "#2a2520",
-  text: "#e8e2d8", muted: "#7a7268", accent: "#c4954a",
+  bg: "#0f0e0c", bg2: "#181613", border: "#3a3028",
+  text: "#e8e2d8", muted: "#9a8f82", accent: "#c4954a",
   surface: "#0f0e0c",
 };
 
@@ -31,8 +31,8 @@ function Field({ label, children }) {
 }
 
 const inputStyle = {
-  width: "100%", background: S.bg2, border: `1px solid ${S.border}`,
-  borderRadius: 9, padding: "10px 12px", color: S.text,
+  width: "100%", background: "#2a2218", border: `1px solid #4a3f30`,
+  borderRadius: 9, padding: "10px 12px", color: "#f5f0e8",
   fontSize: 14, outline: "none", resize: "none", fontFamily: "sans-serif",
 };
 
@@ -77,13 +77,23 @@ export default function App() {
     setLoading(true); setError(""); setPosts(null);
 
     const names = PLATFORMS.filter(p => platforms.includes(p.id)).map(p => p.label).join(", ");
-    const prompt = `Напиши посты для соцсетей на русском.
-Эксперт: ${expert || "-"}. Ниша: ${niche || "-"}. Аудитория: ${audience || "-"}. Тон: ${tone}.
-Тема: ${topic}. Что отразить: ${details || "нет"}.
+    const prompt = `Напиши посты для соцсетей на русском языке.
+Эксперт: ${expert || "-"}. Ниша: ${niche || "-"}. Аудитория: ${audience || "-"}. Тональность: ${tone}.
+Тема: ${topic}. Что обязательно отразить: ${details || "нет"}.
 Платформы: ${names}.
-Telegram: 120-150 слов, без хэштегов. ВКонтакте: 100-130 слов, 3 хэштега. Facebook: 100-130 слов. Threads: 50-70 слов. Instagram: 80-100 слов, 5 хэштегов.
-ТОЛЬКО JSON без markdown: {"telegram":"...","vk":"...","facebook":"...","threads":"...","instagram":"..."}
-Включи только: ${platforms.join(",")}`;
+
+Требования по объёму и стилю (строго соблюдай):
+- Telegram: 150-200 слов. Структурированный текст с абзацами. Первые 2 строки — самые важные (это превью). Без хэштегов. Вопрос или призыв в конце.
+- ВКонтакте: 120-180 слов. Первый абзац решает всё — он виден до кнопки "читать далее". В конце 3-4 хэштега по теме.
+- Facebook: 120-160 слов. Начни с личной истории или провокационного вопроса. Без хэштегов. Заканчивай вопросом для дискуссии.
+- Threads: 60-80 слов. Цепляющий хук в первых 2 строках. Без хэштегов.
+- Instagram: 90-120 слов. Ключевое слово темы в первом предложении (SEO). В конце 5 хэштегов.
+
+SEO: ключевое слово из темы — в первом предложении каждого поста.
+
+ТОЛЬКО валидный JSON без markdown:
+{"telegram":"текст","vk":"текст","facebook":"текст","threads":"текст","instagram":"текст"}
+Включи только платформы: ${platforms.join(",")}`;
 
     try {
       const resp = await fetch("https://api.anthropic.com/v1/messages", {
@@ -169,7 +179,7 @@ Telegram: 120-150 слов, без хэштегов. ВКонтакте: 100-130
         {/* Step 1 — Context */}
         {step === 1 && (
           <div>
-            <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 14, padding: 22, marginBottom: 16 }}>
+            <div style={{ background: "#1e1810", border: "1px solid #3a3028", borderRadius: 14, padding: 22, marginBottom: 16 }}>
               <div style={{ fontFamily: "Georgia,serif", fontSize: 17, color: "#f0ebe0", marginBottom: 18, display: "flex", alignItems: "center", gap: 9 }}>
                 <span style={{ width: 26, height: 26, background: S.accent, color: "#0f0e0c", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, flexShrink: 0 }}>1</span>
                 Контекст
@@ -188,7 +198,7 @@ Telegram: 120-150 слов, без хэштегов. ВКонтакте: 100-130
               <Field label="Тональность">
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                   {TONES.map(t => (
-                    <button key={t} onClick={() => setTone(t)} style={{ padding: "6px 12px", borderRadius: 20, border: `1px solid ${tone === t ? S.accent : S.border}`, background: tone === t ? "rgba(196,149,74,.1)" : "transparent", color: tone === t ? S.accent : S.muted, fontSize: 12, cursor: "pointer", fontFamily: "sans-serif" }}>
+                    <button key={t} onClick={() => setTone(t)} style={{ padding: "6px 12px", borderRadius: 20, border: `1px solid ${tone === t ? S.accent : "#4a3f30"}`, background: tone === t ? "rgba(196,149,74,.15)" : "#2a2218", color: tone === t ? S.accent : "#c4b49a", fontSize: 12, cursor: "pointer", fontFamily: "sans-serif" }}>
                       {t}
                     </button>
                   ))}
@@ -197,7 +207,7 @@ Telegram: 120-150 слов, без хэштегов. ВКонтакте: 100-130
               <Field label="Платформы">
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                   {PLATFORMS.map(p => (
-                    <button key={p.id} onClick={() => toggle(p.id)} style={{ padding: "8px 14px", borderRadius: 9, border: `1px solid ${platforms.includes(p.id) ? S.accent : S.border}`, background: platforms.includes(p.id) ? "rgba(196,149,74,.08)" : "transparent", color: platforms.includes(p.id) ? S.text : S.muted, fontSize: 13, cursor: "pointer", fontFamily: "sans-serif", display: "flex", alignItems: "center", gap: 5 }}>
+                    <button key={p.id} onClick={() => toggle(p.id)} style={{ padding: "8px 14px", borderRadius: 9, border: `1px solid ${platforms.includes(p.id) ? S.accent : "#4a3f30"}`, background: platforms.includes(p.id) ? "rgba(196,149,74,.15)" : "#2a2218", color: platforms.includes(p.id) ? "#f5f0e8" : "#c4b49a", fontSize: 13, cursor: "pointer", fontFamily: "sans-serif", display: "flex", alignItems: "center", gap: 5 }}>
                       {p.icon} {p.label}
                     </button>
                   ))}
@@ -213,7 +223,7 @@ Telegram: 120-150 слов, без хэштегов. ВКонтакте: 100-130
         {/* Step 2 — Topic */}
         {step === 2 && (
           <div>
-            <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 14, padding: 22, marginBottom: 16 }}>
+            <div style={{ background: "#1e1810", border: "1px solid #3a3028", borderRadius: 14, padding: 22, marginBottom: 16 }}>
               <div style={{ fontFamily: "Georgia,serif", fontSize: 17, color: "#f0ebe0", marginBottom: 18, display: "flex", alignItems: "center", gap: 9 }}>
                 <span style={{ width: 26, height: 26, background: S.accent, color: "#0f0e0c", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, flexShrink: 0 }}>2</span>
                 Тема и содержание
@@ -251,20 +261,20 @@ Telegram: 120-150 слов, без хэштегов. ВКонтакте: 100-130
           <div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
               {PLATFORMS.filter(p => platforms.includes(p.id)).map(p => (
-                <button key={p.id} onClick={() => { setTab(p.id); setCopied(false); }} style={{ padding: "8px 14px", borderRadius: 9, border: `1px solid ${tab === p.id ? S.accent : S.border}`, background: tab === p.id ? "rgba(196,149,74,.1)" : "transparent", color: tab === p.id ? S.accent : S.muted, fontSize: 13, cursor: "pointer", fontFamily: "sans-serif" }}>
+                <button key={p.id} onClick={() => { setTab(p.id); setCopied(false); }} style={{ padding: "8px 14px", borderRadius: 9, border: `1px solid ${tab === p.id ? S.accent : "#4a3e32"}`, background: tab === p.id ? "rgba(196,149,74,.15)" : "#221c15", color: tab === p.id ? S.accent : "#c4b49a", fontSize: 13, cursor: "pointer", fontFamily: "sans-serif" }}>
                   {p.icon} {p.label}
                 </button>
               ))}
             </div>
 
-            <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 12, overflow: "hidden", marginBottom: 12 }}>
-              <div style={{ padding: "12px 18px", borderBottom: `1px solid ${S.border}`, fontSize: 14, fontWeight: 600, color: S.accent }}>
+            <div style={{ background: "#1e1810", border: "1px solid #3a3028", borderRadius: 12, overflow: "hidden", marginBottom: 12 }}>
+              <div style={{ padding: "12px 18px", borderBottom: "1px solid #3a3028", fontSize: 14, fontWeight: 600, color: S.accent }}>
                 {activePlatform?.icon} {activePlatform?.label}
               </div>
               <div style={{ padding: 18, fontSize: 14, lineHeight: 1.85, color: "#c8c0b4", whiteSpace: "pre-wrap" }}>
                 {posts[tab] || "—"}
               </div>
-              <div style={{ padding: "10px 18px", borderTop: `1px solid ${S.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ padding: "10px 18px", borderTop: "1px solid #3a3028", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span style={{ fontSize: 11, color: "#5a5248" }}>
                   {(posts[tab] || "").split(/\s+/).filter(Boolean).length} слов
                 </span>
@@ -289,3 +299,4 @@ Telegram: 120-150 слов, без хэштегов. ВКонтакте: 100-130
     </div>
   );
 }
+
