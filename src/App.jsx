@@ -104,30 +104,24 @@ export default function App() {
     const platformInstructions = selectedPlatforms.map(p => `\n[${p.label}]\n${p.algo}`).join("\n");
     const tone = TONES.find(t => t.id === form.tone)?.label || "Экспертный";
 
-    const prompt = `Ты опытный SMM-специалист и SEO-эксперт под Яндекс. Создай адаптированные посты для разных соцсетей.
+    const platformRules = selectedPlatforms.map(p => {
+      const rules = {
+        telegram: "Telegram: 100-130 слов, абзацы, без хэштегов, вопрос в конце",
+        vk: "VK: 90-110 слов, 3 хэштега в конце",
+        facebook: "Facebook: 90-110 слов, личная история или вопрос в начале",
+        threads: "Threads: 50-70 слов, цепляющий хук в первых 2 строках",
+        instagram: "Instagram: 70-90 слов, 5 хэштегов в конце",
+      };
+      return rules[p.id] || p.label;
+    }).join(". ");
 
-ДАННЫЕ:
-- Эксперт/компания: ${form.expert || "Эксперт"}
-- Сфера: ${form.niche || "не указана"}
-- Аудитория: ${form.audience || "широкая аудитория"}
-- Тональность: ${tone}
-- Тема поста: ${form.topic}
-- Обязательно отразить в постах: ${form.mustInclude || "не указано"}
-
-ТРЕБОВАНИЯ ПО ПЛАТФОРМАМ:
-${platformInstructions}
-
-SEO под Яндекс (применить во всех постах):
-- Подбери 3-4 ключевых запроса Яндекса по теме (разговорные, вопросы "как", "сколько", "где")
-- Главный ключ — в первом предложении каждого поста
-- Используй синонимы и вариации, не спами одним словом
-
-ВАЖНО: Каждая адаптация должна быть уникальной по структуре и подаче — не просто сокращённая версия одного текста, а разный заход под разный алгоритм.
-
-Ответь ТОЛЬКО валидным JSON без markdown:
-{"topic_title":"красивое название темы","main_query":"главный SEO-запрос","keywords":["к1","к2","к3","к4"],"posts":{"telegram":"текст","vk":"текст","facebook":"текст","threads":"текст","instagram":"текст"}}
-
-Генерируй только те платформы, которые есть в списке: ${selectedPlatforms.map(p => p.id).join(", ")}`;
+    const prompt = `SMM + SEO Яндекс. Создай посты.
+Эксперт: ${form.expert||"-"}. Сфера: ${form.niche||"-"}. Тональность: ${tone}.
+Тема: ${form.topic}. Отразить: ${form.mustInclude||"-"}.
+Платформы: ${platformRules}.
+SEO: ключевой запрос по теме — в первом предложении каждого поста.
+ТОЛЬКО JSON: {"topic_title":"название","main_query":"запрос","keywords":["к1","к2","к3"],"posts":{"telegram":"текст","vk":"текст","facebook":"текст","threads":"текст","instagram":"текст"}}
+Генерируй только: ${selectedPlatforms.map(p => p.id).join(", ")}`;
 
     try {
       const resp = await fetch("https://api.anthropic.com/v1/messages", {
@@ -138,7 +132,7 @@ SEO под Яндекс (применить во всех постах):
         },
         body: JSON.stringify({
           model: "claude-haiku-4-5-20251001",
-          max_tokens: 3000,
+          max_tokens: 4000,
           messages: [{ role: "user", content: prompt }],
         }),
       });
