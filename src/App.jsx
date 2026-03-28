@@ -15,6 +15,53 @@ const TONES = [
   "Простой и понятный",
 ];
 
+const LENGTH_OPTIONS = [
+  {
+    id:"short", label:"Короткий", icon:"▪", desc:"Анонс, тезис, быстрая мысль",
+    note:"Лучший органический охват на FB и Instagram по данным BuzzSumo",
+    limits:{
+      telegram:"50-80 слов. Одна мысль, без воды.",
+      vk:"50-80 слов + 2-3 хэштега.",
+      facebook:"20-40 слов. Краткость даёт +66% вовлечённости.",
+      threads:"30-50 слов. Хук в первой строке.",
+      instagram:"20-40 слов. Акцент на визуал, текст — дополнение."
+    }
+  },
+  {
+    id:"standard", label:"Стандартный", icon:"▪▪", desc:"Сбалансированный формат",
+    note:"Хорошо работает для экспертного и образовательного контента",
+    limits:{
+      telegram:"150-200 слов. Абзацы, умеренно эмодзи.",
+      vk:"120-160 слов + 3-4 хэштега.",
+      facebook:"60-100 слов. Личный тон, вопрос в конце.",
+      threads:"60-80 слов. Хук в первых 2 строках.",
+      instagram:"80-120 слов + 5 хэштегов."
+    }
+  },
+  {
+    id:"long", label:"Длинный", icon:"▪▪▪", desc:"Экспертный лонгрид",
+    note:"Оправдан в Telegram и ВКонтакте. На FB/Instagram снижает охват.",
+    limits:{
+      telegram:"350-500 слов. Структура: хук → тезисы → вывод → CTA.",
+      vk:"300-450 слов + 4-5 хэштегов. Первый абзац решает всё.",
+      facebook:"150-200 слов. Личная история с деталями.",
+      threads:"150-200 слов. Развёрнутый экспертный пост.",
+      instagram:"150-220 слов + 5 хэштегов. Образовательный формат."
+    }
+  },
+  {
+    id:"thread", label:"Тред", icon:"↓↓", desc:"Хук + серия продолжений",
+    note:"Алгоритм продвигает треды — больше времени на контенте",
+    limits:{
+      telegram:"Серия 4-5 постов по 80-100 слов. Нумеруй [1/5] [2/5] и т.д.",
+      vk:"Основной пост 120 слов + 3 продолжения по 70-80 слов в комментариях.",
+      facebook:"Основной пост 60-80 слов + 3 комментария-продолжения.",
+      threads:"Хук 40-60 слов + 4-5 ответов по 60-80 слов. Каждый ответ — отдельная мысль.",
+      instagram:"Пост 80-100 слов + тезисы для карусели (6-8 слайдов) + 5 хэштегов."
+    }
+  },
+];
+
 const PILLAR_ANGLES = [
   { id: "reasons",   label: "Причины",   desc: "Почему это происходит" },
   { id: "mistakes",  label: "Ошибки",    desc: "Что делают не так" },
@@ -136,6 +183,7 @@ export default function App() {
   const [caseAfter, setCaseAfter] = useState("");
   const [caseResult, setCaseResult] = useState("");
   const [caseClient, setCaseClient] = useState("");
+  const [length, setLength] = useState("standard");
   const [caseNiche, setCaseNiche] = useState("");
 
   // Result
@@ -230,12 +278,13 @@ ${strategySection}
 2. ХУК: 1-2 предложения которые останавливают скролл. Должен точно бить в боль: "${pain || topic}".
 3. ПОСТЫ для платформ: ${names}
 
-ЖЁСТКИЕ лимиты слов:
-- Telegram: 170-200 слов. Абзацы, умеренно эмодзи. Первые 2 строки = превью. Без хэштегов. CTA в конце. SEO Яндекс: ключевое слово в первом предложении.
-- ВКонтакте: 140-180 слов. Первый абзац до "читать далее". В конце 3-4 хэштега. CTA. SEO Яндекс: ключевое слово в первом предложении.
-- Facebook: 140-165 слов. Личный тон. Вопрос для дискуссии в конце. Без хэштегов.
-- Threads: 60-80 слов. Хук в первых 2 строках. Без хэштегов.
-- Instagram: 100-120 слов. Ключевое слово в первом предложении. В конце 5 хэштегов.
+Формат поста: ${LENGTH_OPTIONS.find(l=>l.id===length)?.label} — ${LENGTH_OPTIONS.find(l=>l.id===length)?.desc}
+ЖЁСТКИЕ требования к объёму для каждой платформы (ОБЯЗАТЕЛЬНО СОБЛЮДАЙ):
+${platforms.map(pid=>{const lim=LENGTH_OPTIONS.find(l=>l.id===length)?.limits;return `- ${PLATFORMS.find(p=>p.id===pid)?.label}: ${lim?.[pid]||""}`}).join("\n")}
+Для формата "Тред": пронумеруй каждую часть [1], [2], [3] и т.д. — это отдельные сообщения/ответы.
+
+CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный призыв "${selectedCta?.label || "по контексту"}" последним абзацем каждого поста. Например "Написать в директ" → "Напишите мне в директ — разберём вашу ситуацию". Прямо и конкретно, не намекай.\n\
+Последнее предложение каждого поста должно содержать именно этот призыв к действию. Не перефразируй — CTA должен быть конкретным и явным.
 
 Включи только: ${platforms.join(",")}
 
@@ -396,13 +445,13 @@ ${strategySection}
               </div>
             </Card>
             <button onClick={()=>setStep(isCase ? 3 : 2)} disabled={platforms.length===0} style={{width:"100%",padding:15,borderRadius:12,border:"none",background:`linear-gradient(135deg,${S.accent},#e8a85a)`,color:"#0f0e0c",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"sans-serif"}}>
-              {isCase ? "Далее → Данные кейса" : "Далее → Стратегия поста"}
+              {isCase ? "Далее → Данные кейса" : "Далее → Тема поста"}
             </button>
           </div>
         )}
 
-        {/* STEP 2 — Strategy */}
-        {step===2&&(
+        {/* STEP 3 — Strategy */}
+        {step===3&&(
           <div>
             <Card>
               <div style={{fontFamily:"Georgia,serif",fontSize:17,color:S.text,marginBottom:18,display:"flex",alignItems:"center",gap:9}}>
@@ -467,6 +516,22 @@ ${strategySection}
                 </div>
               </div>
 
+              {/* Length */}
+              <div style={{marginBottom:18}}>
+                <Label text="Длина поста" />
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                  {LENGTH_OPTIONS.map(l=>(
+                    <button key={l.id} onClick={()=>setLength(l.id)} style={{padding:"10px 14px",borderRadius:9,border:`1px solid ${length===l.id?S.accent:S.borderL}`,background:length===l.id?S.accentBg:"#221c15",color:length===l.id?S.text:S.muted,fontSize:13,cursor:"pointer",fontFamily:"sans-serif",textAlign:"left"}}>
+                      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
+                        <span style={{color:S.accent,fontWeight:700,fontSize:11}}>{l.icon}</span>
+                        <span style={{fontWeight:600}}>{l.label}</span>
+                      </div>
+                      <div style={{fontSize:11,color:S.dim,marginBottom:2}}>{l.desc}</div>
+                      {length===l.id && <div style={{fontSize:10,color:"#7a9a6a",marginTop:3,fontStyle:"italic"}}>{l.note}</div>}
+                    </button>
+                  ))}
+                </div>
+              </div>
               {/* CTA */}
               <div style={{marginBottom:0}}>
                 <Label text="CTA — призыв к действию" />
@@ -481,7 +546,7 @@ ${strategySection}
             </Card>
 
             <div style={{display:"flex",gap:8}}>
-              <button onClick={()=>setStep(1)} style={{flex:1,padding:12,borderRadius:10,border:`1px solid ${S.border}`,background:"transparent",color:S.dim,fontSize:13,cursor:"pointer",fontFamily:"sans-serif"}}>← Назад</button>
+              <button onClick={()=>setStep(2)} style={{flex:1,padding:12,borderRadius:10,border:`1px solid ${S.border}`,background:"transparent",color:S.dim,fontSize:13,cursor:"pointer",fontFamily:"sans-serif"}}>← Назад</button>
               <button onClick={()=>setStep(3)} style={{flex:3,padding:15,borderRadius:12,border:"none",background:`linear-gradient(135deg,${S.accent},#e8a85a)`,color:"#0f0e0c",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"sans-serif"}}>
                 Далее → Тема и содержание
               </button>
@@ -489,12 +554,12 @@ ${strategySection}
           </div>
         )}
 
-        {/* STEP 3 — Content */}
-        {step===3&&(
+        {/* STEP 2 — Topic */}
+        {step===2&&(
           <div>
             <Card>
               <div style={{fontFamily:"Georgia,serif",fontSize:17,color:S.text,marginBottom:18,display:"flex",alignItems:"center",gap:9}}>
-                <StepNum n={isCase?"2":"3"} /> {isCase ? "Данные кейса" : "Тема и содержание"}
+                <StepNum n={isCase?"2":"3"} /> {isCase ? "Данные кейса" : "Тема поста"}
               </div>
 
               {isCase ? (
@@ -569,11 +634,17 @@ ${strategySection}
               </Card>
             ) : (
               <>
-                <button onClick={generate} disabled={isCase ? !caseBefore.trim() : !topic.trim()} style={{width:"100%",padding:15,borderRadius:12,border:"none",background:(isCase?!caseBefore.trim():!topic.trim())?S.border:`linear-gradient(135deg,${S.accent},#e8a85a)`,color:(isCase?!caseBefore.trim():!topic.trim())?S.dim:"#0f0e0c",fontSize:15,fontWeight:700,cursor:(isCase?caseBefore.trim():topic.trim())?"pointer":"not-allowed",fontFamily:"sans-serif",marginBottom:10}}>
-                  {isCase ? "⭐ Создать кейс-посты" : "✦ Создать посты"}
-                </button>
+                {isCase ? (
+                  <button onClick={generate} disabled={!caseBefore.trim()} style={{width:"100%",padding:15,borderRadius:12,border:"none",background:!caseBefore.trim()?S.border:`linear-gradient(135deg,${S.accent},#e8a85a)`,color:!caseBefore.trim()?S.dim:"#0f0e0c",fontSize:15,fontWeight:700,cursor:caseBefore.trim()?"pointer":"not-allowed",fontFamily:"sans-serif",marginBottom:10}}>
+                    ⭐ Создать кейс-посты
+                  </button>
+                ) : (
+                  <button onClick={()=>setStep(3)} disabled={!topic.trim()} style={{width:"100%",padding:15,borderRadius:12,border:"none",background:!topic.trim()?S.border:`linear-gradient(135deg,${S.accent},#e8a85a)`,color:!topic.trim()?S.dim:"#0f0e0c",fontSize:15,fontWeight:700,cursor:topic.trim()?"pointer":"not-allowed",fontFamily:"sans-serif",marginBottom:10}}>
+                    Далее → Стратегия поста
+                  </button>
+                )}
                 {error&&<p style={{color:"#e05c5c",fontSize:13,textAlign:"center",marginBottom:10}}>{error}</p>}
-                <button onClick={()=>setStep(isCase ? 1 : 2)} style={{width:"100%",padding:10,borderRadius:10,border:`1px solid ${S.border}`,background:"transparent",color:S.dim,fontSize:13,cursor:"pointer",fontFamily:"sans-serif"}}>← Назад</button>
+                <button onClick={()=>setStep(1)} style={{width:"100%",padding:10,borderRadius:10,border:`1px solid ${S.border}`,background:"transparent",color:S.dim,fontSize:13,cursor:"pointer",fontFamily:"sans-serif"}}>← Назад</button>
               </>
             )}
           </div>
