@@ -257,7 +257,7 @@ export default function App() {
     const strategySection = `
 СТРАТЕГИЯ ПОСТА (строго соблюдай):
 - Пиллар контента: ${pillar || "не выбран"}
-- Угол пиллара: ${PILLAR_ANGLES.find(a=>a.id===pillarAngle)?.label || "не выбран"} — ${PILLAR_ANGLES.find(a=>a.id===pillarAngle)?.desc || ""}
+- Угол пиллара: ${PILLAR_ANGLES.find(a=>a.id===pillarAngle)?.label || "выбери сам наиболее подходящий из: Причины, Ошибки, Примеры, Решения — исходя из рубрики и стадии аудитории"}
 - Стадия аудитории: ${selectedStage?.label || "не выбрана"} → цель поста: ${selectedStage?.goal || ""}
 - Рубрика: ${selectedRubric?.label || "не выбрана"}
 - Боль аудитории: ${pain || "не указана"}
