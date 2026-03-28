@@ -101,46 +101,33 @@ export default function App() {
     setLoading(true); setError(""); setResult(null);
 
     const selectedPlatforms = PLATFORMS.filter(p => form.platforms.includes(p.id));
-    const platformInstructions = selectedPlatforms.map(p => `\n[${p.label}]\n${p.algo}`).join("\n");
     const tone = TONES.find(t => t.id === form.tone)?.label || "Экспертный";
 
-    const platformRules = selectedPlatforms.map(p => {
-      const rules = {
-        telegram: "Telegram: 100-130 слов, абзацы, без хэштегов, вопрос в конце",
-        vk: "VK: 90-110 слов, 3 хэштега в конце",
-        facebook: "Facebook: 90-110 слов, личная история или вопрос в начале",
-        threads: "Threads: 50-70 слов, цепляющий хук в первых 2 строках",
-        instagram: "Instagram: 70-90 слов, 5 хэштегов в конце",
-      };
-      return rules[p.id] || p.label;
-    }).join(". ");
+    const rules = {
+      telegram: "100-120 слов, абзацы, без хэштегов",
+      vk: "100-120 слов, 3 хэштега в конце",
+      facebook: "100-120 слов, вопрос в начале",
+      threads: "50-60 слов, яркий хук",
+      instagram: "70-80 слов, 5 хэштегов",
+    };
 
-    const prompt = `SMM + SEO Яндекс. Создай посты.
-Эксперт: ${form.expert||"-"}. Сфера: ${form.niche||"-"}. Тональность: ${tone}.
-Тема: ${form.topic}. Отразить: ${form.mustInclude||"-"}.
-Платформы: ${platformRules}.
-SEO: ключевой запрос по теме — в первом предложении каждого поста.
-ТОЛЬКО JSON: {"topic_title":"название","main_query":"запрос","keywords":["к1","к2","к3"],"posts":{"telegram":"текст","vk":"текст","facebook":"текст","threads":"текст","instagram":"текст"}}
-Генерируй только: ${selectedPlatforms.map(p => p.id).join(", ")}`;
-
+    const posts = {};
     try {
-      const resp = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "anthropic-dangerous-direct-browser-access": "true",
-        },
-        body: JSON.stringify({
-          model: "claude-haiku-4-5-20251001",
-          max_tokens: 4000,
-          messages: [{ role: "user", content: prompt }],
-        }),
-      });
-      const data = await resp.json();
-      const text = data.content?.map(b => b.text || "").join("") || "";
-      const clean = text.replace(/```json|```/g, "").trim();
-      const parsed = JSON.parse(clean);
-      setResult(parsed);
+      for (const p of selectedPlatforms) {
+        const prompt = `Напиши пост для ${p.label}. Тема: ${form.topic}. Отразить: ${form.mustInclude||"-"}. Тональность: ${tone}. Требования: ${rules[p.id]}. SEO: тема в первом предложении. Только текст поста, без пояснений.`;
+        const resp = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "anthropic-dangerous-direct-browser-access": "true" },
+          body: JSON.stringify({
+            model: "claude-haiku-4-5-20251001",
+            max_tokens: 600,
+            messages: [{ role: "user", content: prompt }],
+          }),
+        });
+        const data = await resp.json();
+        posts[p.id] = data.content?.map(b => b.text || "").join("") || "";
+      }
+      setResult({ topic_title: form.topic, main_query: form.topic, keywords: [], posts });
       setActiveTab(form.platforms[0]);
       setStep(3);
     } catch (e) {
