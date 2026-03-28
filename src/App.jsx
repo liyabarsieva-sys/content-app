@@ -161,9 +161,9 @@ export default function App() {
   const [expert, setExpert] = useState(() => localStorage.getItem("lia_expert") || "");
   const [niche, setNiche] = useState(() => localStorage.getItem("lia_niche") || "");
   const [audience, setAudience] = useState(() => localStorage.getItem("lia_audience") || "");
-  const [tone, setTone] = useState(TONES[1]);
-  const [toneOfVoice, setToneOfVoice] = useState("");
-  const [platforms, setPlatforms] = useState(["telegram", "vk"]);
+  const [tone, setTone] = useState(() => localStorage.getItem("lia_tone") || TONES[1]);
+  const [toneOfVoice, setToneOfVoice] = useState(() => localStorage.getItem("lia_tov") || "");
+  const [platforms, setPlatforms] = useState(() => { try { return JSON.parse(localStorage.getItem("lia_platforms") || "null") || ["telegram","vk"]; } catch { return ["telegram","vk"]; } });
 
   // Step 2 — strategy
   const [pillar, setPillar] = useState("");
@@ -195,6 +195,9 @@ export default function App() {
 
   // Save context
   useEffect(() => { localStorage.setItem("lia_expert", expert); }, [expert]);
+  useEffect(() => { localStorage.setItem("lia_tone", tone); }, [tone]);
+  useEffect(() => { localStorage.setItem("lia_tov", toneOfVoice); }, [toneOfVoice]);
+  useEffect(() => { localStorage.setItem("lia_platforms", JSON.stringify(platforms)); }, [platforms]);
   useEffect(() => { localStorage.setItem("lia_niche", niche); }, [niche]);
   useEffect(() => { localStorage.setItem("lia_audience", audience); }, [audience]);
 
@@ -654,14 +657,19 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
         {step===4&&result&&(
           <div>
             {/* Strategy badge */}
-            <div style={{padding:"10px 16px",background:S.card,border:`1px solid ${S.border}`,borderRadius:10,marginBottom:14,fontSize:11,color:S.dim,lineHeight:1.7}}>
+            <div style={{padding:"10px 16px",background:S.card,border:`1px solid ${S.border}`,borderRadius:10,marginBottom:14,fontSize:11,color:S.dim,lineHeight:1.9,display:"flex",flexWrap:"wrap",gap:2,alignItems:"center"}}>
               {[
-                pillar&&`📌 ${pillar}`,
-                pillarAngle&&`${PILLAR_ANGLES.find(a=>a.id===pillarAngle)?.label}`,
-                stage&&`👥 ${selectedStage?.label}`,
-                rubric&&`${selectedRubric?.icon} ${selectedRubric?.label}`,
-                cta&&`🎯 ${selectedCta?.label}`,
-              ].filter(Boolean).join("  ·  ")}
+                length && {label:"📏 Формат:", value:LENGTH_OPTIONS.find(l=>l.id===length)?.label},
+                pillar && {label:"📌 Пиллар:", value:pillar},
+                pillarAngle && {label:"📐 Угол:", value:PILLAR_ANGLES.find(a=>a.id===pillarAngle)?.label},
+                stage && {label:"👥 Стадия:", value:selectedStage?.label},
+                rubric && {label:`${selectedRubric?.icon} Рубрика:`, value:selectedRubric?.label},
+                cta && {label:"🎯 CTA:", value:selectedCta?.label},
+              ].filter(Boolean).map((item,i)=>(
+                <span key={i} style={{marginRight:14,whiteSpace:"nowrap"}}>
+                  {item.label} <em style={{color:S.muted,fontStyle:"italic",fontWeight:600}}>{item.value}</em>
+                </span>
+              ))}
             </div>
 
             {/* Headline + Hook */}
@@ -697,6 +705,11 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
               </div>
             </div>
 
+            <div style={{display:"flex",gap:8,marginBottom:8}}>
+              <button onClick={()=>{setResult(null);generate();}} style={{flex:1,padding:12,borderRadius:10,border:`1px solid ${S.accent}`,background:S.accentBg,color:S.accent,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"sans-serif",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                ↻ Сгенерировать заново
+              </button>
+            </div>
             <div style={{display:"flex",gap:8}}>
               <button onClick={()=>{setResult(null);setStep(3);}} style={{flex:1,padding:12,borderRadius:10,border:"none",background:`linear-gradient(135deg,${S.accent},#e8a85a)`,color:"#0f0e0c",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"sans-serif"}}>
                 Изменить тему
