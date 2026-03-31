@@ -1,4 +1,14 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+
+const useIsMobile = () => {
+  const [mobile, setMobile] = React.useState(window.innerWidth < 600);
+  React.useEffect(() => {
+    const h = () => setMobile(window.innerWidth < 600);
+    window.addEventListener('resize', h);
+    return () => window.removeEventListener('resize', h);
+  }, []);
+  return mobile;
+};
 
 const PLATFORMS = [
   { id: "telegram",  label: "Telegram",   icon: "✈️" },
@@ -308,6 +318,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
     setLoading(false);
   }
 
+  const isMobile = useIsMobile();
   const activePlatform = PLATFORMS.find(p=>p.id===activeTab);
 
   // — API SETUP —
@@ -315,16 +326,16 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
   // — MAIN —
   return (
     <div style={{minHeight:"100vh",background:S.bg,color:S.text,fontFamily:"sans-serif",padding:"20px 20px 80px"}}>
-      <div style={{maxWidth:660,margin:"0 auto"}}>
+      <div style={{maxWidth:660,margin:"0 auto",padding:isMobile?"0 2px":"0 8px"}}>
 
         {/* Header */}
-        <div style={{textAlign:"center",padding:"32px 0 22px",borderBottom:`1px solid ${S.border}`,marginBottom:26}}>
+        <div style={{textAlign:"center",padding:"24px 0 18px",borderBottom:`1px solid ${S.border}`,marginBottom:20}}>
           <div style={{fontSize:10,letterSpacing:".2em",textTransform:"uppercase",color:S.accent,fontWeight:600,marginBottom:8}}>Content Intelligence</div>
-          <h1 style={{fontFamily:"Georgia,serif",fontSize:"clamp(20px,5vw,34px)",color:S.text,lineHeight:1.2,marginBottom:6}}>
+          <h1 style={{fontFamily:"Georgia,serif",fontSize:isMobile?"22px":"clamp(20px,5vw,34px)",color:S.text,lineHeight:1.2,marginBottom:6}}>
             Тема → <span style={{color:S.accent,fontStyle:"italic"}}>стратегия</span> → посты
           </h1>
           <p style={{fontSize:11,color:S.dim}}>Пиллары · Стадия аудитории · Рубрика · CTA · Адаптация под платформы</p>
-          <div style={{display:"flex",justifyContent:"center",gap:10,marginTop:16,flexWrap:"wrap"}}>
+          <div style={{display:"flex",justifyContent:"center",gap:8,marginTop:14,flexWrap:"wrap",flexDirection:isMobile?"column":"row",alignItems:"center"}}>
             <button onClick={startPost} style={{padding:"10px 22px",borderRadius:10,border:`2px solid ${mode==="post"?S.accent:S.borderL}`,background:mode==="post"?S.accentBg:"#221c15",color:mode==="post"?S.accent:S.muted,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"sans-serif"}}>
               ✦ Создать пост
             </button>
@@ -374,7 +385,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
               <div style={{fontFamily:"Georgia,serif",fontSize:17,color:S.text,marginBottom:18,display:"flex",alignItems:"center",gap:9}}>
                 <StepNum n="1" /> Контекст эксперта
               </div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+              <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:12}}>
                 <div style={{marginBottom:14}}>
                   <Label text="Бренд / имя эксперта" />
                   <input style={inp} placeholder="Сервис ФиксПК / Анна Иванова" value={expert} onChange={e=>setExpert(e.target.value)} />
@@ -440,7 +451,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
               {/* Angle */}
               <div style={{marginBottom:18}}>
                 <Label text="Угол пиллара" />
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:8}}>
                   {PILLAR_ANGLES.map(a=>(
                     <button key={a.id} onClick={()=>setPillarAngle(a.id)} style={{padding:"10px 14px",borderRadius:9,border:`1px solid ${pillarAngle===a.id?S.accent:S.borderL}`,background:pillarAngle===a.id?S.accentBg:"#221c15",color:pillarAngle===a.id?S.text:S.muted,fontSize:13,cursor:"pointer",fontFamily:"sans-serif",textAlign:"left"}}>
                       <div style={{fontWeight:600,marginBottom:2}}>{a.label}</div>
@@ -469,7 +480,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
               {/* Rubric */}
               <div style={{marginBottom:18}}>
                 <Label text="Рубрика" />
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:8}}>
                   {RUBRICS.map(r=>(
                     <button key={r.id} onClick={()=>setRubric(r.id)} style={{padding:"10px 14px",borderRadius:9,border:`1px solid ${rubric===r.id?S.accent:S.borderL}`,background:rubric===r.id?S.accentBg:"#221c15",color:rubric===r.id?S.text:S.muted,fontSize:13,cursor:"pointer",fontFamily:"sans-serif",textAlign:"left"}}>
                       <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
@@ -486,7 +497,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
               {/* Length */}
               <div style={{marginBottom:18}}>
                 <Label text="Длина поста" />
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:8}}>
                   {LENGTH_OPTIONS.map(l=>(
                     <button key={l.id} onClick={()=>setLength(l.id)} style={{padding:"10px 14px",borderRadius:9,border:`1px solid ${length===l.id?S.accent:S.borderL}`,background:length===l.id?S.accentBg:"#221c15",color:length===l.id?S.text:S.muted,fontSize:13,cursor:"pointer",fontFamily:"sans-serif",textAlign:"left"}}>
                       <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
@@ -649,7 +660,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
             </Card>
 
             {/* Tabs */}
-            <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:12}}>
+            <div style={{display:"flex",flexWrap:"wrap",gap:isMobile?5:6,marginBottom:12}}>
               {PLATFORMS.filter(p=>platforms.includes(p.id)).map(p=>(
                 <button key={p.id} onClick={()=>setActiveTab(p.id)} style={{padding:"8px 14px",borderRadius:9,border:`1px solid ${activeTab===p.id?S.accent:S.borderL}`,background:activeTab===p.id?S.accentBg:"#221c15",color:activeTab===p.id?S.accent:S.muted,fontSize:13,cursor:"pointer",fontFamily:"sans-serif"}}>
                   {p.icon} {p.label}
@@ -669,12 +680,12 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
               </div>
             </div>
 
-            <div style={{display:"flex",gap:8,marginBottom:8}}>
+            <div style={{display:"flex",gap:8,marginBottom:8,flexDirection:isMobile?"column":"row"}}>
               <button onClick={()=>{setResult(null);generate();}} style={{flex:1,padding:12,borderRadius:10,border:`1px solid ${S.accent}`,background:S.accentBg,color:S.accent,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"sans-serif",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
                 ↻ Сгенерировать заново
               </button>
             </div>
-            <div style={{display:"flex",gap:8}}>
+            <div style={{display:"flex",gap:8,flexDirection:isMobile?"column":"row"}}>
               <button onClick={()=>{setResult(null);setStep(3);}} style={{flex:1,padding:12,borderRadius:10,border:"none",background:`linear-gradient(135deg,${S.accent},#e8a85a)`,color:"#0f0e0c",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"sans-serif"}}>
                 Изменить тему
               </button>
