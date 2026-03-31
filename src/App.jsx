@@ -227,8 +227,6 @@ export default function App() {
   const isCase = mode === "case";
 
   async function generate() {
-    const key = localStorage.getItem("lia_api_key");
-    if (!key) { setError("Нет API-ключа"); return; }
     if (!topic.trim()) { setError("Укажи тему поста"); return; }
     setLoading(true); setError(""); setResult(null);
 
@@ -313,27 +311,6 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
   const activePlatform = PLATFORMS.find(p=>p.id===activeTab);
 
   // — API SETUP —
-  if (showApiSetup) {
-    return (
-      <div style={{minHeight:"100vh",background:S.bg,display:"flex",alignItems:"center",justifyContent:"center",padding:20,fontFamily:"sans-serif"}}>
-        <div style={{maxWidth:460,width:"100%"}}>
-          <h1 style={{fontFamily:"Georgia,serif",fontSize:28,color:S.text,marginBottom:8}}>Content <span style={{color:S.accent,fontStyle:"italic"}}>Intelligence</span></h1>
-          <p style={{fontSize:13,color:S.muted,marginBottom:24,lineHeight:1.6}}>Для работы нужен API-ключ Anthropic. Хранится только в вашем браузере.</p>
-          <Card>
-            <Label text="API-ключ Anthropic" />
-            <input type="password" placeholder="sk-ant-api03-..." value={apiKeyInput} onChange={e=>setApiKeyInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&saveKey()} style={{...inp,marginBottom:10}} />
-            <div style={{fontSize:12,color:S.dim,marginBottom:14,lineHeight:1.6}}>
-              Получи на <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noreferrer" style={{color:S.accent}}>console.anthropic.com</a> → API Keys → Create Key
-            </div>
-            {apiError&&<p style={{color:"#e05c5c",fontSize:12,marginBottom:10}}>{apiError}</p>}
-            <button onClick={saveKey} style={{width:"100%",padding:13,borderRadius:10,border:"none",background:`linear-gradient(135deg,${S.accent},#e8a85a)`,color:"#0f0e0c",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"sans-serif"}}>
-              Сохранить и начать →
-            </button>
-          </Card>
-        </div>
-      </div>
-    );
-  }
 
   // — MAIN —
   return (
