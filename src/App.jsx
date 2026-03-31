@@ -146,9 +146,6 @@ function StepNum({ n }) {
 
 export default function App() {
   // API
-  const [apiKeyInput, setApiKeyInput] = useState("");
-  const [showApiSetup, setShowApiSetup] = useState(!localStorage.getItem("lia_api_key"));
-  const [apiError, setApiError] = useState("");
 
   // Pillars (saved)
   const [pillars, setPillars] = useState(() => {
@@ -200,13 +197,6 @@ export default function App() {
   useEffect(() => { localStorage.setItem("lia_platforms", JSON.stringify(platforms)); }, [platforms]);
   useEffect(() => { localStorage.setItem("lia_niche", niche); }, [niche]);
   useEffect(() => { localStorage.setItem("lia_audience", audience); }, [audience]);
-
-  function saveKey() {
-    const k = apiKeyInput.trim();
-    if (!k.startsWith("sk-ant-")) { setApiError("Ключ должен начинаться с sk-ant-"); return; }
-    localStorage.setItem("lia_api_key", k);
-    window.location.reload();
-  }
 
   function savePillar() {
     const p = pillarInput.trim();
@@ -296,13 +286,10 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
 {"headline":"заголовок","hook":"хук","telegram":"текст","vk":"текст","facebook":"текст","threads":"текст","instagram":"текст"}`;
 
     try {
-      const resp = await fetch("https://api.anthropic.com/v1/messages", {
+      const resp = await fetch("/api/claude", {
         method:"POST",
         headers:{
           "Content-Type":"application/json",
-          "x-api-key":key,
-          "anthropic-version":"2023-06-01",
-          "anthropic-dangerous-direct-browser-access":"true",
         },
         body:JSON.stringify({
           model:"claude-haiku-4-5-20251001",
@@ -369,7 +356,6 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
             </button>
           </div>
           <div style={{display:"flex",justifyContent:"center",gap:16,marginTop:10}}>
-            <button onClick={()=>setShowApiSetup(true)} style={{fontSize:11,color:S.dim,background:"transparent",border:"none",cursor:"pointer",textDecoration:"underline"}}>Сменить ключ</button>
             <button onClick={()=>setShowPillarSetup(!showPillarSetup)} style={{fontSize:11,color:S.accent,background:"transparent",border:"none",cursor:"pointer",textDecoration:"underline"}}>
               {pillars.length ? `Пиллары (${pillars.length})` : "Настроить пиллары"}
             </button>
