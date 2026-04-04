@@ -264,8 +264,8 @@ export default function App() {
 
     const strategySection = `
 СТРАТЕГИЯ ПОСТА (строго соблюдай):
-- Пиллар контента: ${pillar || "не выбран"}
-- Угол пиллара: ${PILLAR_ANGLES.find(a=>a.id===pillarAngle)?.label || "выбери сам наиболее подходящий из: Причины, Ошибки, Примеры, Решения — исходя из рубрики и стадии аудитории"}
+- Смысловой блок контента: ${pillar || "не выбран"}
+- Угол блока: ${PILLAR_ANGLES.find(a=>a.id===pillarAngle)?.label || "выбери сам наиболее подходящий из: Причины, Ошибки, Примеры, Решения — исходя из рубрики и стадии аудитории"}
 - Стадия аудитории: ${selectedStage?.label || "не выбрана"} → цель поста: ${selectedStage?.goal || ""}
 - Рубрика: ${selectedRubric?.label || "не выбрана"}
 - Боль аудитории: ${pain || "не указана"}
@@ -364,20 +364,20 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
         <div style={{textAlign:"center",padding:"18px 20px 16px",background:"#362d52",marginBottom:0}}>
           <div style={{fontSize:10,letterSpacing:".2em",textTransform:"uppercase",color:"rgba(225,223,44,.8)",fontWeight:600,marginBottom:8}}>Content Intelligence</div>
           <h1 style={{fontFamily:"Georgia,serif",fontSize:isMobile?"22px":"clamp(20px,5vw,34px)",color:S.text,lineHeight:1.2,marginBottom:6}}>
-            Тема → <span style={{color:S.accent,fontStyle:"italic"}}>стратегия</span> → посты
+            Тема → <em>стратегия</em> → посты
           </h1>
-          <p style={{fontSize:11,color:"rgba(244,241,236,.6)"}}>Пиллары · Стадия аудитории · Рубрика · CTA · Адаптация под платформы</p>
+          <p style={{fontSize:12,color:"#9a88b8",marginTop:6}}>Смысловые блоки · Стадия · Рубрика · CTA · Платформы</p>
           <div style={{display:"flex",justifyContent:"center",gap:8,marginTop:14,flexWrap:"wrap",flexDirection:isMobile?"column":"row",alignItems:"center"}}>
-            <button onClick={startPost} style={{padding:"10px 22px",borderRadius:10,border:`2px solid ${mode==="post"?"#362d52":"#d8d0e0"}`,background:mode==="post"?"#362d52":"#fff",color:mode==="post"?"#f4f1ec":"#9a88b8",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"sans-serif"}}>
+            <button onClick={startPost} style={{padding:"10px 22px",borderRadius:10,border:`2px solid ${mode==="post"?"#362d52":"#9a88b8"}`,background:mode==="post"?"#f4f1ec":"#9a88b8",color:mode==="post"?"#362d52":"#f4f1ec",fontWeight:mode==="post"?700:600,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"sans-serif"}}>
               ✦ Создать пост
             </button>
-            <button onClick={startCase} style={{padding:"10px 22px",borderRadius:10,border:`2px solid ${mode==="case"?"#362d52":"#d8d0e0"}`,background:mode==="case"?"#362d52":"#fff",color:mode==="case"?"#f4f1ec":"#9a88b8",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"sans-serif"}}>
+            <button onClick={startCase} style={{padding:"10px 22px",borderRadius:10,border:`2px solid ${mode==="case"?"#362d52":"#9a88b8"}`,background:mode==="case"?"#f4f1ec":"#9a88b8",color:mode==="case"?"#362d52":"#f4f1ec",fontWeight:mode==="case"?700:600,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"sans-serif"}}>
               ⭐ Создать кейс
             </button>
           </div>
           <div style={{display:"flex",justifyContent:"center",gap:16,marginTop:10}}>
-            <button onClick={()=>setShowPillarSetup(!showPillarSetup)} style={{fontSize:11,color:"#5c4e7a",background:"transparent",border:"none",cursor:"pointer",textDecoration:"underline"}}>
-              {pillars.length ? `Пиллары (${pillars.length})` : "Настроить пиллары"}
+            <button onClick={()=>setShowPillarSetup(!showPillarSetup)} style={{fontSize:11,color:"#f4f1ec",background:"transparent",border:"none",cursor:"pointer",textDecoration:"underline",opacity:.85}}>
+              {pillars.length ? `Блоки (${pillars.length})` : "Настроить блоки"}
             </button>
           </div>
         </div>
@@ -385,12 +385,12 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
         {/* Pillar setup panel */}
         {showPillarSetup && (
           <Card>
-            <div style={{fontFamily:"Georgia,serif",fontSize:16,color:S.text,marginBottom:4}}>Пиллары контента</div>
+            <div style={{fontFamily:"Georgia,serif",fontSize:16,color:S.text,marginBottom:4}}>Смысловые блоки</div>
             <div style={{fontSize:12,color:"#5c4e7a",marginBottom:10,lineHeight:1.6}}>
-              <strong style={{color:S.muted}}>Пиллар</strong> — это ключевая тема, вокруг которой строится весь ваш контент. Например, у психолога пиллары могут быть: «Отношения», «Самооценка», «Тревога», «Обо мне».
+              <strong style={{color:"#f4f1ec"}}>Смысловой блок</strong> — это ключевая тема, вокруг которой строится весь ваш контент. Например, у психолога блоки могут быть: «Отношения», «Самооценка», «Тревога», «Обо мне».
             </div>
             <div style={{padding:"10px 13px",background:"#0f0e0c",borderRadius:8,border:`1px solid ${S.border}`,marginBottom:14,fontSize:11,color:"#5c4e7a",lineHeight:1.7}}>
-              💡 По методу Ryan Brock (Pillar-Based Marketing): 3-4 пиллара × 4 угла (причины, ошибки, примеры, решения) = бесконечный поток идей без повторений. Пиллары сохраняются и доступны в каждом посте.
+              💡 По методу Ryan Brock (Pillar-Based Marketing): 3-4 блока × 4 угла (причины, ошибки, примеры, решения) = бесконечный поток идей без повторений. Блоки сохраняются и доступны в каждом посте.
             </div>
             <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:12}}>
               {pillars.map((p,i)=>(
@@ -399,7 +399,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                   <button onClick={()=>removePillar(i)} style={{background:"transparent",border:"none",color:"#5c4e7a",cursor:"pointer",fontSize:16,lineHeight:1,padding:0}}>×</button>
                 </div>
               ))}
-              {pillars.length===0&&<span style={{fontSize:12,color:"#5c4e7a",fontStyle:"italic"}}>Пиллары не добавлены</span>}
+              {pillars.length===0&&<span style={{fontSize:12,color:"#5c4e7a",fontStyle:"italic"}}>Смысловые блоки не добавлены</span>}
             </div>
             {pillars.length<4&&(
               <div style={{display:"flex",gap:8}}>
@@ -435,7 +435,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                 <Label text="Тональность" />
                 <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
                   {TONES.map(t=>(
-                    <button key={t} onClick={()=>setTone(t)} style={{padding:"6px 12px",borderRadius:20,border:`1px solid ${tone===t?"#362d52":"#d8d0e0"}`,background:tone===t?"#362d52":"#fff",color:tone===t?"#f4f1ec":"#9a88b8",fontSize:12,cursor:"pointer",fontFamily:"sans-serif"}}>{t}</button>
+                    <button key={t} onClick={()=>setTone(t)} style={{padding:"6px 12px",borderRadius:20,border:`1px solid ${tone===t?"#362d52":"#d8d0e0"}`,background:tone===t?"#362d52":"#fff",color:tone===t?"#f4f1ec":"#362d52",fontSize:12,cursor:"pointer",fontFamily:"sans-serif"}}>{t}</button>
                   ))}
                 </div>
               </div>
@@ -447,7 +447,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                 <Label text="Платформы" />
                 <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
                   {PLATFORMS.map(p=>(
-                    <button key={p.id} onClick={()=>toggle(p.id)} style={{padding:"8px 14px",borderRadius:9,border:`1px solid ${platforms.includes(p.id)?"#362d52":"#d8d0e0"}`,background:platforms.includes(p.id)?"#362d52":"#fff",color:platforms.includes(p.id)?"#f4f1ec":"#9a88b8",fontSize:13,cursor:"pointer",fontFamily:"sans-serif",display:"flex",alignItems:"center",gap:5}}>
+                    <button key={p.id} onClick={()=>toggle(p.id)} style={{padding:"8px 14px",borderRadius:9,border:`1px solid ${platforms.includes(p.id)?"#362d52":"#d8d0e0"}`,background:platforms.includes(p.id)?"#362d52":"#fff",color:platforms.includes(p.id)?"#f4f1ec":"#362d52",fontSize:13,cursor:"pointer",fontFamily:"sans-serif",display:"flex",alignItems:"center",gap:5}}>
                       {p.icon} {p.label}
                     </button>
                   ))}
@@ -470,7 +470,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
 
               {/* Pillar */}
               <div style={{marginBottom:18}}>
-                <Label text="Пиллар контента" hint={pillars.length ? "Выбери основную тему" : "Добавь пиллары через кнопку «Настроить пиллары» вверху"} />
+                <Label text="Смысловой блок" hint={pillars.length ? "Выбери смысловой блок" : "Добавь блоки через кнопку «Настроить блоки» вверху"} />
                 <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
                   {pillars.length>0 ? pillars.map((p,i)=>(
                     <button key={i} onClick={()=>setPillar(p)} style={{padding:"8px 14px",borderRadius:9,border:`1px solid ${pillar===p?S.accent:S.borderL}`,background:pillar===p?S.accentBg:"#221c15",color:pillar===p?S.text:S.muted,fontSize:13,cursor:"pointer",fontFamily:"sans-serif"}}>{p}</button>
@@ -482,12 +482,12 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
 
               {/* Angle */}
               <div style={{marginBottom:18}}>
-                <Label text="Угол пиллара" />
+                <Label text="Угол смыслового блока" />
                 <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:8}}>
                   {PILLAR_ANGLES.map(a=>(
-                    <button key={a.id} onClick={()=>setPillarAngle(a.id)} style={{padding:"10px 14px",borderRadius:9,border:`1px solid ${pillarAngle===a.id?"#362d52":"#d8d0e0"}`,background:pillarAngle===a.id?"#362d52":"#fff",color:pillarAngle===a.id?"#f4f1ec":"#9a88b8",fontSize:13,cursor:"pointer",fontFamily:"sans-serif",textAlign:"left"}}>
+                    <button key={a.id} onClick={()=>setPillarAngle(a.id)} style={{padding:"10px 14px",borderRadius:9,border:`1px solid ${pillarAngle===a.id?"#362d52":"#d8d0e0"}`,background:pillarAngle===a.id?"#362d52":"#fff",color:pillarAngle===a.id?"#f4f1ec":"#362d52",fontSize:13,cursor:"pointer",fontFamily:"sans-serif",textAlign:"left"}}>
                       <div style={{fontWeight:600,marginBottom:2}}>{a.label}</div>
-                      <div style={{fontSize:11,opacity:.7}}>{a.desc}</div>
+                      <div style={{fontSize:11,color:"#5c4e7a"}}>{a.desc}</div>
                     </button>
                   ))}
                 </div>
@@ -498,12 +498,12 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                 <Label text="Стадия аудитории" hint="На каком уровне осознания находится читатель?" />
                 <div style={{display:"flex",flexDirection:"column",gap:7}}>
                   {AWARENESS_STAGES.map(s=>(
-                    <button key={s.id} onClick={()=>setStage(s.id)} style={{padding:"10px 14px",borderRadius:9,border:`1px solid ${stage===s.id?s.color:S.borderL}`,background:stage===s.id?"#362d52":"#fff",color:stage===s.id?"#f4f1ec":"#9a88b8",fontSize:13,cursor:"pointer",fontFamily:"sans-serif",textAlign:"left",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                    <button key={s.id} onClick={()=>setStage(s.id)} style={{padding:"10px 14px",borderRadius:9,border:`1px solid ${stage===s.id?s.color:S.borderL}`,background:stage===s.id?"#362d52":"#fff",color:stage===s.id?"#f4f1ec":"#362d52",fontSize:13,cursor:"pointer",fontFamily:"sans-serif",textAlign:"left",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                       <div>
                         <span style={{fontWeight:600}}>{s.label}</span>
                         <span style={{fontSize:11,color:"#5c4e7a",marginLeft:8}}>→ {s.goal}</span>
                       </div>
-                      <span style={{fontSize:10,color:s.color,background:"rgba(0,0,0,.2)",padding:"2px 8px",borderRadius:10,flexShrink:0}}>{s.share}</span>
+                      <span style={{fontSize:10,color:"#fff",background:"#362d52",padding:"2px 8px",borderRadius:10,flexShrink:0,fontWeight:600}}>{s.share}</span>
                     </button>
                   ))}
                 </div>
@@ -514,13 +514,13 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                 <Label text="Рубрика" />
                 <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:8}}>
                   {RUBRICS.map(r=>(
-                    <button key={r.id} onClick={()=>setRubric(r.id)} style={{padding:"10px 14px",borderRadius:9,border:`1px solid ${rubric===r.id?"#362d52":"#d8d0e0"}`,background:rubric===r.id?"#362d52":"#fff",color:rubric===r.id?"#f4f1ec":"#9a88b8",fontSize:13,cursor:"pointer",fontFamily:"sans-serif",textAlign:"left"}}>
+                    <button key={r.id} onClick={()=>setRubric(r.id)} style={{padding:"10px 14px",borderRadius:9,border:`1px solid ${rubric===r.id?"#362d52":"#d8d0e0"}`,background:rubric===r.id?"#362d52":"#fff",color:rubric===r.id?"#f4f1ec":"#362d52",fontSize:13,cursor:"pointer",fontFamily:"sans-serif",textAlign:"left"}}>
                       <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
                         <span>{r.icon}</span>
                         <span style={{fontWeight:600}}>{r.label}</span>
                         <span style={{fontSize:10,color:"#5c4e7a",marginLeft:"auto"}}>{r.share}</span>
                       </div>
-                      <div style={{fontSize:11,opacity:.7}}>{r.desc}</div>
+                      <div style={{fontSize:11,color:"#5c4e7a"}}>{r.desc}</div>
                     </button>
                   ))}
                 </div>
@@ -531,7 +531,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                 <Label text="Длина поста" />
                 <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:8}}>
                   {LENGTH_OPTIONS.map(l=>(
-                    <button key={l.id} onClick={()=>setLength(l.id)} style={{padding:"10px 14px",borderRadius:9,border:`1px solid ${length===l.id?"#362d52":"#d8d0e0"}`,background:length===l.id?"#362d52":"#fff",color:length===l.id?"#f4f1ec":"#9a88b8",fontSize:13,cursor:"pointer",fontFamily:"sans-serif",textAlign:"left"}}>
+                    <button key={l.id} onClick={()=>setLength(l.id)} style={{padding:"10px 14px",borderRadius:9,border:`1px solid ${length===l.id?"#362d52":"#d8d0e0"}`,background:length===l.id?"#362d52":"#fff",color:length===l.id?"#f4f1ec":"#362d52",fontSize:13,cursor:"pointer",fontFamily:"sans-serif",textAlign:"left"}}>
                       <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
                         <span style={{color:S.accent,fontWeight:700,fontSize:11}}>{l.icon}</span>
                         <span style={{fontWeight:600}}>{l.label}</span>
@@ -547,7 +547,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                 <Label text="CTA — призыв к действию" />
                 <div style={{display:"flex",flexWrap:"wrap",gap:7}}>
                   {CTA_OPTIONS.map(c=>(
-                    <button key={c.id} onClick={()=>setCta(c.id)} style={{padding:"7px 13px",borderRadius:9,border:`1px solid ${cta===c.id?"#362d52":"#d8d0e0"}`,background:cta===c.id?"#362d52":"#fff",color:cta===c.id?"#f4f1ec":"#9a88b8",fontSize:12,cursor:"pointer",fontFamily:"sans-serif",display:"flex",alignItems:"center",gap:5}}>
+                    <button key={c.id} onClick={()=>setCta(c.id)} style={{padding:"7px 13px",borderRadius:9,border:`1px solid ${cta===c.id?"#362d52":"#d8d0e0"}`,background:cta===c.id?"#362d52":"#fff",color:cta===c.id?"#f4f1ec":"#362d52",fontSize:12,cursor:"pointer",fontFamily:"sans-serif",display:"flex",alignItems:"center",gap:5}}>
                       {c.icon} {c.label}
                     </button>
                   ))}
@@ -623,9 +623,9 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
               )}
 
               {/* Strategy summary */}
-              <div style={{padding:"10px 14px",background:"#0f0e0c",borderRadius:9,border:`1px solid ${S.border}`,fontSize:11,color:"#5c4e7a",lineHeight:1.7}}>
+              <div style={{padding:"10px 14px",background:"#362d52",borderRadius:9,border:"none",fontSize:11,color:"#f4f1ec",lineHeight:1.7,textAlign:"center"}}>
                 {[
-                  pillar && `📌 Пиллар: ${pillar}`,
+                  pillar && `📌 Блок: ${pillar}`,
                   pillarAngle && `📐 Угол: ${PILLAR_ANGLES.find(a=>a.id===pillarAngle)?.label}`,
                   stage && `👥 Стадия: ${selectedStage?.label}`,
                   rubric && `📂 Рубрика: ${selectedRubric?.icon} ${selectedRubric?.label}`,
@@ -645,11 +645,11 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
             ) : (
               <>
                 {isCase ? (
-                  <button onClick={generate} disabled={!caseBefore.trim()} style={{width:"100%",padding:15,borderRadius:12,border:"none",background:!caseBefore.trim()?S.border:`linear-gradient(135deg,${S.accent},#e8a85a)`,color:!caseBefore.trim()?S.dim:"#0f0e0c",fontSize:15,fontWeight:700,cursor:caseBefore.trim()?"pointer":"not-allowed",fontFamily:"sans-serif",marginBottom:10}}>
+                  <button onClick={generate} disabled={!caseBefore.trim()} style={{width:"100%",padding:15,borderRadius:12,border:"none",background:!caseBefore.trim()?"#d8d0e0":"#362d52",color:!caseBefore.trim()?"#9a88b8":"#f4f1ec",fontSize:15,fontWeight:700,cursor:caseBefore.trim()?"pointer":"not-allowed",fontFamily:"sans-serif",marginBottom:10}}>
                     ⭐ Создать кейс-посты
                   </button>
                 ) : (
-                  <button onClick={()=>setStep(3)} disabled={!topic.trim()} style={{width:"100%",padding:15,borderRadius:12,border:"none",background:!topic.trim()?S.border:`linear-gradient(135deg,${S.accent},#e8a85a)`,color:!topic.trim()?S.dim:"#0f0e0c",fontSize:15,fontWeight:700,cursor:topic.trim()?"pointer":"not-allowed",fontFamily:"sans-serif",marginBottom:10}}>
+                  <button onClick={()=>setStep(3)} disabled={!topic.trim()} style={{width:"100%",padding:15,borderRadius:12,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:15,fontWeight:700,cursor:topic.trim()?"pointer":"not-allowed",fontFamily:"sans-serif",marginBottom:10}}>
                     Далее → Стратегия поста
                   </button>
                 )}
@@ -667,7 +667,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
             <div style={{padding:"10px 16px",background:"#f4f1ec",border:"1px solid #e8e0f0",borderRadius:10,marginBottom:14,fontSize:11,color:"#5c4e7a",lineHeight:1.9,display:"flex",flexWrap:"wrap",gap:2,alignItems:"center"}}>
               {[
                 length && {label:"📏 Формат:", value:LENGTH_OPTIONS.find(l=>l.id===length)?.label},
-                pillar && {label:"📌 Пиллар:", value:pillar},
+                pillar && {label:"📌 Блок:", value:pillar},
                 pillarAngle && {label:"📐 Угол:", value:PILLAR_ANGLES.find(a=>a.id===pillarAngle)?.label},
                 stage && {label:"👥 Стадия:", value:selectedStage?.label},
                 rubric && {label:`${selectedRubric?.icon} Рубрика:`, value:selectedRubric?.label},
@@ -694,7 +694,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
             {/* Tabs */}
             <div style={{display:"flex",flexWrap:"wrap",gap:isMobile?5:6,marginBottom:12}}>
               {PLATFORMS.filter(p=>platforms.includes(p.id)).map(p=>(
-                <button key={p.id} onClick={()=>setActiveTab(p.id)} style={{padding:"8px 14px",borderRadius:9,border:`1px solid ${activeTab===p.id?"#362d52":"#d8d0e0"}`,background:activeTab===p.id?"#362d52":"#fff",color:activeTab===p.id?"#f4f1ec":"#9a88b8",fontSize:13,cursor:"pointer",fontFamily:"sans-serif"}}>
+                <button key={p.id} onClick={()=>setActiveTab(p.id)} style={{padding:"8px 14px",borderRadius:9,border:`1px solid ${activeTab===p.id?"#362d52":"#d8d0e0"}`,background:activeTab===p.id?"#362d52":"#fff",color:activeTab===p.id?"#f4f1ec":"#362d52",fontSize:13,cursor:"pointer",fontFamily:"sans-serif"}}>
                   {p.icon} {p.label}
                 </button>
               ))}
