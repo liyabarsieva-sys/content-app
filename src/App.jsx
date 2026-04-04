@@ -135,7 +135,7 @@ function Label({ text, hint, share }) {
     <div style={{ marginBottom: hint ? 3 : 7 }}>
       <div style={{ fontSize:11, color:"#5c4e7a", textTransform:"uppercase", letterSpacing:".08em", fontWeight:600, display:"flex", alignItems:"center", gap:8 }}>
         {text}
-        {share && <span style={{ fontSize:10, color:S.accent, background:S.accentBg, padding:"1px 7px", borderRadius:10 }}>{share} контент-плана</span>}
+        {share && <span style={{ fontSize:10, color:"#362d52", background:"#e1df2c", padding:"1px 7px", borderRadius:10, fontWeight:700 }}>{share} контент-плана</span>}
       </div>
       {hint && <div style={{ fontSize:11, color:"#5c4e7a", marginTop:2, fontStyle:"italic" }}>{hint}</div>}
     </div>
@@ -473,7 +473,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                 <Label text="Смысловой блок" hint={pillars.length ? "Выбери смысловой блок" : "Добавь блоки через кнопку «Настроить блоки» вверху"} />
                 <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
                   {pillars.length>0 ? pillars.map((p,i)=>(
-                    <button key={i} onClick={()=>setPillar(p)} style={{padding:"8px 14px",borderRadius:9,border:`1px solid ${pillar===p?S.accent:S.borderL}`,background:pillar===p?S.accentBg:"#221c15",color:pillar===p?S.text:S.muted,fontSize:13,cursor:"pointer",fontFamily:"sans-serif"}}>{p}</button>
+                    <button key={i} onClick={()=>setPillar(p)} style={{padding:"8px 14px",borderRadius:9,border:`1px solid ${pillar===p?"#362d52":"rgba(244,241,236,.3)"}`,background:pillar===p?"#f4f1ec":"#362d52",color:pillar===p?"#362d52":"#f4f1ec",fontSize:13,cursor:"pointer",fontFamily:"sans-serif"}}>{p}</button>
                   )) : (
                     <button onClick={()=>setShowPillarSetup(true)} style={{padding:"8px 14px",borderRadius:9,border:"1px dashed #d8d0e0",background:"transparent",color:"#5c4e7a",fontSize:13,cursor:"pointer",fontFamily:"sans-serif"}}>+ Добавить пиллары</button>
                   )}
@@ -503,7 +503,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                         <span style={{fontWeight:600}}>{s.label}</span>
                         <span style={{fontSize:11,color:"#5c4e7a",marginLeft:8}}>→ {s.goal}</span>
                       </div>
-                      <span style={{fontSize:10,color:"#fff",background:"#362d52",padding:"2px 8px",borderRadius:10,flexShrink:0,fontWeight:600}}>{s.share}</span>
+                      <span style={{fontSize:10,color:"#362d52",background:"#e1df2c",padding:"2px 8px",borderRadius:10,flexShrink:0,fontWeight:700}}>{s.share}</span>
                     </button>
                   ))}
                 </div>
@@ -518,7 +518,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                       <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
                         <span>{r.icon}</span>
                         <span style={{fontWeight:600}}>{r.label}</span>
-                        <span style={{fontSize:10,color:"#5c4e7a",marginLeft:"auto"}}>{r.share}</span>
+                        <span style={{fontSize:10,color:"#362d52",background:"#e1df2c",padding:"1px 7px",borderRadius:8,marginLeft:"auto",fontWeight:700}}>{r.share}</span>
                       </div>
                       <div style={{fontSize:11,color:"#5c4e7a"}}>{r.desc}</div>
                     </button>
@@ -536,8 +536,8 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                         <span style={{color:S.accent,fontWeight:700,fontSize:11}}>{l.icon}</span>
                         <span style={{fontWeight:600}}>{l.label}</span>
                       </div>
-                      <div style={{fontSize:11,color:"#5c4e7a",marginBottom:2}}>{l.desc}</div>
-                      {length===l.id && <div style={{fontSize:10,color:"#7a9a6a",marginTop:3,fontStyle:"italic"}}>{l.note}</div>}
+                      <div style={{fontSize:11,color:length===l.id?"#f4f1ec":"#5c4e7a",marginBottom:2}}>{l.desc}</div>
+                      {length===l.id && <div style={{fontSize:10,color:"#f4f1ec",marginTop:3,fontStyle:"italic",opacity:.9}}>{l.note}</div>}
                     </button>
                   ))}
                 </div>
@@ -557,7 +557,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
 
             <div style={{display:"flex",gap:8}}>
               <button onClick={()=>setStep(2)} style={{flex:1,padding:12,borderRadius:10,border:`1px solid ${S.border}`,background:"transparent",color:"#5c4e7a",fontSize:13,cursor:"pointer",fontFamily:"sans-serif"}}>← Назад</button>
-              <button onClick={()=>generate()} style={{flex:3,padding:15,borderRadius:12,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"sans-serif"}}>
+              <button onClick={generate} style={{flex:3,padding:15,borderRadius:12,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"sans-serif"}}>
                 ✦ Создать посты
               </button>
             </div>
