@@ -104,6 +104,45 @@ const RUBRICS = [
 
 ];
 
+const SORDELL_MATRIX = [
+  {
+    id: "personal_unexpected",
+    label: "Личное + Неожиданное",
+    icon: "⚡",
+    share: "40%",
+    desc: "Личная история которая нарушает ожидание",
+    hint: "Самый мощный квадрат. Личный опыт + неожиданный угол. Например: «12 лет практики — и вот что противоречит тому чему меня учили»",
+    prompt: "Пиши от первого лица, делись личным опытом автора. Нарушай ожидание читателя — скажи то что эксперты обычно не говорят. Уязвимость + неожиданный поворот."
+  },
+  {
+    id: "professional_unexpected",
+    label: "Профессиональное + Неожиданное",
+    icon: "🔥",
+    share: "30%",
+    desc: "Экспертная тема с провокационным углом",
+    hint: "Строит авторитет. Возьми профессиональную тему — но скажи о ней так как никто другой. Например: «Самый вредный совет который все дают»",
+    prompt: "Экспертный контент с неожиданным углом. Нарушай общепринятое мнение, опровергай популярные советы, показывай то что противоречит ожиданиям. Строй репутацию мыслителя."
+  },
+  {
+    id: "personal_known",
+    label: "Личное + Известное",
+    icon: "💬",
+    share: "20%",
+    desc: "Личная история на привычную для аудитории тему",
+    hint: "Поддерживает тепло и связь с аудиторией. Высокое доверие, умеренный охват.",
+    prompt: "Пиши от первого лица, делись личным опытом на тему которую аудитория ожидает. Тепло, уязвимо, человечно."
+  },
+  {
+    id: "professional_known",
+    label: "Профессиональное + Известное",
+    icon: "📚",
+    share: "10%",
+    desc: "Экспертный контент на стандартные темы ниши",
+    hint: "База и онбординг новых подписчиков. Не больше 10% от всего контента.",
+    prompt: "Экспертный контент на стандартную тему ниши. Чёткое объяснение, факты, структура."
+  },
+];
+
 const CTA_OPTIONS = [
   { id: "dm",       label: "Написать в директ",     icon: "✉️" },
   { id: "site",     label: "Перейти на сайт",        icon: "🌐" },
@@ -188,6 +227,7 @@ export default function App() {
   const [stage, setStage] = useState("");
   const [rubric, setRubric] = useState("");
   const [cta, setCta] = useState("");
+  const [sordellQuad, setSordellQuad] = useState("");
 
   // Mode
   const [mode, setMode] = useState("post"); // "post" | "case"
@@ -242,6 +282,7 @@ export default function App() {
   }
 
   const selectedStage = AWARENESS_STAGES.find(s => s.id === stage);
+  const selectedSordell = SORDELL_MATRIX.find(q => q.id === sordellQuad);
   const selectedRubric = RUBRICS.find(r => r.id === rubric);
   const selectedCta = CTA_OPTIONS.find(c => c.id === cta);
   const isCase = mode === "case";
@@ -343,7 +384,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
       const parsed = JSON.parse(text.replace(/```json|```/g,"").trim());
       setResult(parsed);
       setActiveTab(platforms[0]);
-      setStep(4);
+      setStep(5);
     } catch(e) {
       setError("Ошибка: " + e.message);
     }
@@ -460,12 +501,12 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
           </div>
         )}
 
-        {/* STEP 3 — Strategy */}
+        {/* STEP 3 — О чём писать */}
         {step===3&&(
           <div>
             <Card>
               <div style={{fontFamily:"'Cormorant Garamond', serif",fontSize:19,color:"#362d52",fontWeight:600,marginBottom:18,display:"flex",alignItems:"center",gap:9}}>
-                <StepNum n="2" /> Стратегия поста
+                <StepNum n="3" /> О чём писать
               </div>
 
               {/* Pillar */}
@@ -475,7 +516,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                   {pillars.length>0 ? pillars.map((p,i)=>(
                     <button key={i} onClick={()=>setPillar(p)} style={{padding:"8px 14px",borderRadius:9,border:`1px solid ${pillar===p?"#362d52":"#d8d0e0"}`,background:pillar===p?"#362d52":"#f0eef8",color:pillar===p?"#f4f1ec":"#362d52",fontSize:13,cursor:"pointer",fontFamily:"sans-serif"}}>{p}</button>
                   )) : (
-                    <button onClick={()=>setShowPillarSetup(true)} style={{padding:"8px 14px",borderRadius:9,border:"1px dashed #d8d0e0",background:"transparent",color:"#5c4e7a",fontSize:13,cursor:"pointer",fontFamily:"sans-serif"}}>+ Добавить пиллары</button>
+                    <button onClick={()=>setShowPillarSetup(true)} style={{padding:"8px 14px",borderRadius:9,border:"1px dashed #d8d0e0",background:"transparent",color:"#5c4e7a",fontSize:13,cursor:"pointer",fontFamily:"sans-serif"}}>+ Добавить блоки</button>
                   )}
                 </div>
               </div>
@@ -501,7 +542,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                     <button key={s.id} onClick={()=>setStage(s.id)} style={{padding:"10px 14px",borderRadius:9,border:`1px solid ${stage===s.id?s.color:S.borderL}`,background:stage===s.id?"#362d52":"#fff",color:stage===s.id?"#f4f1ec":"#362d52",fontSize:13,cursor:"pointer",fontFamily:"sans-serif",textAlign:"left",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                       <div>
                         <span style={{fontWeight:600}}>{s.label}</span>
-                        <span style={{fontSize:11,color:"#5c4e7a",marginLeft:8}}>→ {s.goal}</span>
+                        <span style={{fontSize:11,color:stage===s.id?"#f4f1ec":"#9a88b8",marginLeft:8}}>→ {s.goal}</span>
                       </div>
                       <span style={{fontSize:10,color:"#362d52",background:"#e1df2c",padding:"2px 8px",borderRadius:10,flexShrink:0,fontWeight:700}}>{s.share}</span>
                     </button>
@@ -510,7 +551,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
               </div>
 
               {/* Rubric */}
-              <div style={{marginBottom:18}}>
+              <div style={{marginBottom:0}}>
                 <Label text="Рубрика" />
                 <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:8}}>
                   {RUBRICS.map(r=>(
@@ -525,6 +566,43 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                   ))}
                 </div>
               </div>
+            </Card>
+
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>setStep(2)} style={{flex:1,padding:12,borderRadius:10,border:`1px solid ${S.border}`,background:"transparent",color:"#5c4e7a",fontSize:13,cursor:"pointer",fontFamily:"sans-serif"}}>← Назад</button>
+              <button onClick={()=>setStep(4)} style={{flex:3,padding:15,borderRadius:12,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"sans-serif"}}>
+                Далее → Как подать
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 4 — Как подать */}
+        {step===4&&(
+          <div>
+            <Card>
+              <div style={{fontFamily:"'Cormorant Garamond', serif",fontSize:19,color:"#362d52",fontWeight:600,marginBottom:18,display:"flex",alignItems:"center",gap:9}}>
+                <StepNum n="4" /> Как подать
+              </div>
+
+              {/* Матрица Сорделл */}
+              <div style={{marginBottom:18}}>
+                <Label text="Угол подачи — матрица Сорделл" />
+                <div style={{fontSize:11,color:"#5c4e7a",marginBottom:10,lineHeight:1.6,fontStyle:"italic"}}>Как зайти в тему — с какой стороны</div>
+                <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  {SORDELL_MATRIX.map(q=>(
+                    <button key={q.id} onClick={()=>setSordellQuad(q.id)}
+                      style={{padding:"12px 14px",borderRadius:9,border:`1px solid ${sordellQuad===q.id?"#362d52":"#d8d0e0"}`,background:sordellQuad===q.id?"#362d52":"#f0eef8",color:sordellQuad===q.id?"#f4f1ec":"#362d52",fontSize:13,cursor:"pointer",fontFamily:"'Nunito Sans', sans-serif",textAlign:"left",transition:"all .2s"}}>
+                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:3}}>
+                        <span style={{fontWeight:700}}>{q.icon} {q.label}</span>
+                        <span style={{fontSize:10,color:"#362d52",background:"#e1df2c",padding:"1px 8px",borderRadius:8,fontWeight:700,flexShrink:0}}>{q.share}</span>
+                      </div>
+                      <div style={{fontSize:11,color:sordellQuad===q.id?"#f4f1ec":"#5c4e7a"}}>{q.desc}</div>
+                      {sordellQuad===q.id && <div style={{fontSize:10,color:"rgba(244,241,236,.8)",marginTop:6,fontStyle:"italic",lineHeight:1.5}}>{q.hint}</div>}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
               {/* Length */}
               <div style={{marginBottom:18}}>
@@ -533,7 +611,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                   {LENGTH_OPTIONS.map(l=>(
                     <button key={l.id} onClick={()=>setLength(l.id)} style={{padding:"10px 14px",borderRadius:9,border:`1px solid ${length===l.id?"#362d52":"#d8d0e0"}`,background:length===l.id?"#362d52":"#fff",color:length===l.id?"#f4f1ec":"#362d52",fontSize:13,cursor:"pointer",fontFamily:"sans-serif",textAlign:"left"}}>
                       <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
-                        <span style={{color:S.accent,fontWeight:700,fontSize:11}}>{l.icon}</span>
+                        <span style={{color:length===l.id?"#e1df2c":"#9a88b8",fontWeight:700,fontSize:11}}>{l.icon}</span>
                         <span style={{fontWeight:600}}>{l.label}</span>
                       </div>
                       <div style={{fontSize:11,color:length===l.id?"#f4f1ec":"#5c4e7a",marginBottom:2}}>{l.desc}</div>
@@ -542,6 +620,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                   ))}
                 </div>
               </div>
+
               {/* CTA */}
               <div style={{marginBottom:0}}>
                 <Label text="CTA — призыв к действию" />
@@ -556,7 +635,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
             </Card>
 
             <div style={{display:"flex",gap:8}}>
-              <button onClick={()=>setStep(2)} style={{flex:1,padding:12,borderRadius:10,border:`1px solid ${S.border}`,background:"transparent",color:"#5c4e7a",fontSize:13,cursor:"pointer",fontFamily:"sans-serif"}}>← Назад</button>
+              <button onClick={()=>setStep(3)} style={{flex:1,padding:12,borderRadius:10,border:`1px solid ${S.border}`,background:"transparent",color:"#5c4e7a",fontSize:13,cursor:"pointer",fontFamily:"sans-serif"}}>← Назад</button>
               <button onClick={generate} style={{flex:3,padding:15,borderRadius:12,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"sans-serif"}}>
                 ✦ Создать посты
               </button>
@@ -626,6 +705,8 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
               <div style={{padding:"10px 14px",background:"#362d52",borderRadius:9,border:"none",fontSize:11,color:"#f4f1ec",lineHeight:1.7,textAlign:"center"}}>
                 {[
                   pillar && `📌 Блок: ${pillar}`,
+                  sordellQuad && `${selectedSordell?.icon} ${selectedSordell?.label}`,
+                  sordellQuad && `${selectedSordell?.icon} ${selectedSordell?.label}`,
                   pillarAngle && `📐 Угол: ${PILLAR_ANGLES.find(a=>a.id===pillarAngle)?.label}`,
                   stage && `👥 Стадия: ${selectedStage?.label}`,
                   rubric && `📂 Рубрика: ${selectedRubric?.icon} ${selectedRubric?.label}`,
@@ -660,14 +741,16 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
           </div>
         )}
 
-        {/* STEP 4 — Result */}
-        {step===4&&result&&(
+        {/* STEP 5 — Result */}
+        {step===5&&result&&(
           <div>
             {/* Strategy badge */}
             <div style={{padding:"10px 16px",background:"#f4f1ec",border:"1px solid #e8e0f0",borderRadius:10,marginBottom:14,fontSize:11,color:"#5c4e7a",lineHeight:1.9,display:"flex",flexWrap:"wrap",gap:2,alignItems:"center"}}>
               {[
                 length && {label:"📏 Формат:", value:LENGTH_OPTIONS.find(l=>l.id===length)?.label},
                 pillar && {label:"📌 Блок:", value:pillar},
+                sordellQuad && {label:`${selectedSordell?.icon} Угол:`, value:selectedSordell?.label},
+                sordellQuad && {label:`${selectedSordell?.icon} Угол:`, value:selectedSordell?.label},
                 pillarAngle && {label:"📐 Угол:", value:PILLAR_ANGLES.find(a=>a.id===pillarAngle)?.label},
                 stage && {label:"👥 Стадия:", value:selectedStage?.label},
                 rubric && {label:`${selectedRubric?.icon} Рубрика:`, value:selectedRubric?.label},
@@ -718,10 +801,10 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
               </button>
             </div>
             <div style={{display:"flex",gap:8,flexDirection:isMobile?"column":"row"}}>
-              <button onClick={()=>{setResult(null);setStep(3);}} style={{flex:1,padding:12,borderRadius:10,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"sans-serif"}}>
+              <button onClick={()=>{setResult(null);setStep(4);}} style={{flex:1,padding:12,borderRadius:10,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"sans-serif"}}>
                 Изменить тему
               </button>
-              <button onClick={()=>{setResult(null);setStep(2);}} style={{flex:1,padding:12,borderRadius:10,border:`1px solid ${S.border}`,background:"transparent",color:"#5c4e7a",fontSize:13,cursor:"pointer",fontFamily:"sans-serif"}}>
+              <button onClick={()=>{setResult(null);setStep(3);}} style={{flex:1,padding:12,borderRadius:10,border:`1px solid ${S.border}`,background:"transparent",color:"#5c4e7a",fontSize:13,cursor:"pointer",fontFamily:"sans-serif"}}>
                 Изменить стратегию
               </button>
               <button onClick={()=>{setResult(null);setTopic("");setDetails("");setPain("");setCaseBefore("");setCaseAfter("");setCaseResult("");setStep(1);}} style={{flex:1,padding:12,borderRadius:10,border:`1px solid ${S.border}`,background:"transparent",color:"#5c4e7a",fontSize:13,cursor:"pointer",fontFamily:"sans-serif"}}>
