@@ -12,6 +12,14 @@ const PLATFORM_FREQ_HINTS = {
   yt_long:   { rec: 1,  hint: "1-2 в нед",   max: 4  },
 };
 
+const RUBRIC_SORDELL_MAP = {
+  expert:    ["professional_unexpected", "professional_known"],
+  personal:  ["personal_unexpected", "personal_known"],
+  engaging:  ["personal_unexpected", "professional_unexpected", "personal_known", "professional_known"],
+  pain:      ["personal_unexpected", "professional_unexpected", "personal_known", "professional_known"],
+  selling:   ["professional_unexpected", "professional_known"],
+};
+
 const useIsMobile = () => {
   const [mobile, setMobile] = React.useState(window.innerWidth < 600);
   React.useEffect(() => {
@@ -296,6 +304,12 @@ export default function App() {
   const [planResult, setPlanResult] = useState(() => {
     try { const s = localStorage.getItem("lia_plan_result"); return s ? JSON.parse(s) : null; } catch { return null; }
   });
+  const [sordellStep, setSordellStep] = useState(0);
+  const [sordellAnswers, setSordellAnswers] = useState([]);
+  const [sordellCurrentAnswer, setSordellCurrentAnswer] = useState("");
+  const [sordellResult, setSordellResult] = useState(null);
+  const [sordellLoading, setSordellLoading] = useState(false);
+  const [sordellError, setSordellError] = useState("");
   const [planPlatformFreqs, setPlanPlatformFreqs] = useState(() => {
     try { const s = localStorage.getItem("lia_plan_freqs"); return s ? JSON.parse(s) : {}; } catch { return {}; }
   });
@@ -339,6 +353,7 @@ export default function App() {
 
   function startCase() { setMode("case"); setStep(1); setResult(null); }
   function startPlan() { setMode("plan"); setStep(1); setPlanResult(null); setResult(null); }
+  function startSordell() { setMode("sordell"); setStep(1); setSordellStep(0); setSordellAnswers([]); setSordellCurrentAnswer(""); setSordellResult(null); }
   function startPost() { setMode("post"); setStep(1); setResult(null); }
 
   function toggle(id) {
@@ -346,11 +361,70 @@ export default function App() {
   }
 
   const selectedStage = AWARENESS_STAGES.find(s => s.id === stage);
+  const painHintByStage = {
+    unaware:  "Симптом, а не диагноз. Что человек чувствует, но ещё не называет проблемой? Например: «почему я всегда чувствую вину»",
+    aware:    "Боль уже признана. Что он осознаёт но не может изменить? Например: «понимаю что это разрушает, но не могу уйти»",
+    seeking:  "Боль от безуспешных попыток. Что пробовал — не сработало? Например: «пробовал(а) терапию, но ничего не изменилось»",
+    choosing: "Боль сомнения и выбора. Что мешает принять решение? Например: «не знаю какой подход мне подойдёт»",
+    ready:    "Боль промедления. Что теряет каждый день без решения? Например: «уже год собираюсь, но так и не начал(а)»",
+  };
+  const currentPainHint = stage ? painHintByStage[stage] : "Что конкретно болит у читателя — одна конкретная боль";
   const selectedSordell = SORDELL_MATRIX.find(q => q.id === sordellQuad);
   const selectedRubric = RUBRICS.find(r => r.id === rubric);
   const selectedCta = CTA_OPTIONS.find(c => c.id === cta);
   const isCase = mode === "case";
   const isPlan = mode === "plan";
+
+  const SORDELL_QUESTIONS = [
+    "Что вы никогда не говорите клиентам вслух — но думаете во время сессии или работы?",
+    "Что в вашей практике идёт против того что написано в учебниках или принято в профессии?",
+    "Что вас удивило или разочаровало в своей профессии за последние год-два?",
+    "Что вы сами переживаете или переживали — и что не принято признавать среди коллег в вашей сфере?",
+    "Какое спорное профессиональное убеждение вы боитесь высказывать публично?",
+    "Какие паттерны вы замечаете у клиентов или аудитории — которые никто не называет прямо?",
+    "Что вы перестали делать в работе — хотя раньше считали это важным? Почему?",
+    "Какой совет вы слышите чаще всего в вашей нише — который на самом деле не работает или вреден?",
+    "Что вы узнали о себе через свою профессию — что было неожиданным или неприятным?",
+    "Какой момент в вашей практике или карьере перевернул ваше понимание работы?",
+    "Что клиенты или аудитория хотят услышать — но вы знаете что это неправда или упрощение?",
+    "Если бы вы могли сказать своей аудитории одну вещь которую обычно не говорят эксперты в вашей теме — что бы это было?",
+  ];
+
+  async function generateSordellResult() {
+    setSordellLoading(true); setSordellError("");
+    const qa = SORDELL_QUESTIONS.map((q,i) => `Вопрос ${i+1}: ${q}\nОтвет: ${sordellAnswers[i]||"-"}`).join("\n\n");
+    const prompt = `Ты — контент-стратег по личным брендам. Проанализируй ответы эксперта и найди сильные темы для контента.
+
+Эксперт: ${expert||"-"}. Ниша: ${niche||"-"}.
+
+ОТВЕТЫ НА ВОПРОСЫ:
+${qa}
+
+ЗАДАЧА:
+1. Выдели 10 самых сильных тем для контента на основе ответов
+2. Для каждой темы напиши готовый хук — первую строку поста до 12 слов
+3. Укажи квадрант матрицы Сорделл: "Личное + Неожиданное" или "Профессиональное + Неожиданное"
+4. Отметь топ-3 темы с наибольшим потенциалом охвата и объясни почему (поле top:true)
+
+ТОЛЬКО валидный JSON:
+{"topics":[{"n":1,"topic":"тема","hook":"хук до 12 слов","quadrant":"Личное + Неожиданное","top":false,"reason":""}]}`;
+
+    try {
+      const resp = await fetch("/api/claude", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:4000, messages:[{role:"user",content:prompt}] }),
+      });
+      const data = await resp.json();
+      if (data.error) throw new Error(data.error.message);
+      const text = data.content.map(b=>b.text||"").join("");
+      let parsed;
+      try { parsed = JSON.parse(text.replace(/```json|```/g,"").trim()); }
+      catch { setSordellError("Ошибка разбора. Попробуй снова."); setSordellLoading(false); return; }
+      setSordellResult(parsed.topics);
+      setSordellStep(13);
+    } catch(e) { setSordellError("Ошибка: " + e.message); }
+    setSordellLoading(false);
+  }
 
   async function generatePlan() {
     setLoading(true); setError("");
@@ -649,6 +723,130 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
           </div>
         )}
 
+        {/* STEP SORDELL — Интервью */}
+        {mode==="sordell"&&step===1&&(
+          <div>
+            {sordellStep < 12 ? (
+              <Card>
+                <div style={{fontFamily:"'Cormorant Garamond', serif",fontSize:19,color:"#362d52",fontWeight:600,marginBottom:6,display:"flex",alignItems:"center",gap:9}}>
+                  🎯 Найти темы по матрице Сорделл
+                </div>
+                <p style={{fontSize:11,color:"#9a88b8",marginBottom:20}}>Вопрос {sordellStep+1} из 12</p>
+
+                {/* Progress bar */}
+                <div style={{height:4,background:"#e8e0f0",borderRadius:4,marginBottom:20,overflow:"hidden"}}>
+                  <div style={{height:"100%",width:`${((sordellStep)/12)*100}%`,background:"#362d52",borderRadius:4,transition:"width .3s"}} />
+                </div>
+
+                <div style={{padding:"14px 16px",background:"#362d52",borderRadius:10,marginBottom:16}}>
+                  <p style={{fontSize:14,color:"#f4f1ec",lineHeight:1.7,fontWeight:500}}>{SORDELL_QUESTIONS[sordellStep]}</p>
+                </div>
+
+                {/* Previous answers */}
+                {sordellStep > 0 && (
+                  <div style={{marginBottom:14,padding:"10px 14px",background:"#f4f1ec",borderRadius:9,border:"1px solid #e8e0f0"}}>
+                    <div style={{fontSize:10,color:"#9a88b8",marginBottom:4,textTransform:"uppercase",letterSpacing:".06em"}}>Предыдущий ответ</div>
+                    <div style={{fontSize:12,color:"#5c4e7a",fontStyle:"italic",lineHeight:1.5}}>{sordellAnswers[sordellStep-1]||"—"}</div>
+                  </div>
+                )}
+
+                <Label text="Ваш ответ" hint="Отвечайте честно и конкретно — чем откровеннее, тем сильнее темы" />
+                <textarea
+                  value={sordellCurrentAnswer}
+                  onChange={e=>setSordellCurrentAnswer(e.target.value)}
+                  placeholder="Напишите свой ответ здесь..."
+                  rows={4}
+                  style={{...inp, marginBottom:12, minHeight:100}}
+                />
+                <div style={{display:"flex",gap:8}}>
+                  {sordellStep > 0 && (
+                    <button onClick={()=>{
+                      setSordellStep(s=>s-1);
+                      setSordellCurrentAnswer(sordellAnswers[sordellStep-1]||"");
+                    }} style={{flex:1,padding:12,borderRadius:10,border:"1px solid #d8d0e0",background:"transparent",color:"#5c4e7a",fontSize:13,cursor:"pointer"}}>← Назад</button>
+                  )}
+                  <button onClick={()=>{
+                    const newAnswers = [...sordellAnswers];
+                    newAnswers[sordellStep] = sordellCurrentAnswer;
+                    setSordellAnswers(newAnswers);
+                    if (sordellStep < 11) {
+                      setSordellStep(s=>s+1);
+                      setSordellCurrentAnswer(newAnswers[sordellStep+1]||"");
+                    } else {
+                      setSordellStep(12);
+                    }
+                  }} style={{flex:3,padding:15,borderRadius:12,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:15,fontWeight:700,cursor:"pointer"}}>
+                    {sordellStep < 11 ? "Далее →" : "Получить темы →"}
+                  </button>
+                </div>
+              </Card>
+            ) : (
+              <Card>
+                <div style={{fontFamily:"'Cormorant Garamond', serif",fontSize:19,color:"#362d52",fontWeight:600,marginBottom:8}}>
+                  🎯 Все вопросы пройдены
+                </div>
+                <p style={{fontSize:13,color:"#5c4e7a",marginBottom:20,lineHeight:1.6}}>Готово — {sordellAnswers.filter(a=>a?.trim()).length} из 12 ответов. Анализирую ваши ответы и нахожу сильные темы по матрице Сорделл.</p>
+                {sordellLoading ? (
+                  <div style={{textAlign:"center",padding:"20px 0"}}>
+                    <div style={{width:28,height:28,border:"2px solid #d8d0e0",borderTopColor:"#362d52",borderRadius:"50%",animation:"sp .8s linear infinite",margin:"0 auto 12px"}} />
+                    <p style={{fontSize:13,color:"#9a88b8"}}>Анализирую ваши ответы…</p>
+                  </div>
+                ) : (
+                  <>
+                    {sordellError && <p style={{color:"#e05c5c",fontSize:13,marginBottom:10}}>{sordellError}</p>}
+                    <button onClick={generateSordellResult} style={{width:"100%",padding:15,borderRadius:12,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:15,fontWeight:700,cursor:"pointer",marginBottom:8}}>
+                      🎯 Найти мои темы
+                    </button>
+                    <button onClick={()=>setSordellStep(11)} style={{width:"100%",padding:10,borderRadius:10,border:"1px solid #d8d0e0",background:"transparent",color:"#5c4e7a",fontSize:13,cursor:"pointer"}}>
+                      ← Вернуться к вопросам
+                    </button>
+                  </>
+                )}
+              </Card>
+            )}
+
+            {/* Sordell Results */}
+            {sordellStep===13&&sordellResult&&(
+              <Card>
+                <div style={{fontFamily:"'Cormorant Garamond', serif",fontSize:19,color:"#362d52",fontWeight:600,marginBottom:4}}>
+                  ✨ Ваши темы по матрице Сорделл
+                </div>
+                <p style={{fontSize:11,color:"#9a88b8",marginBottom:16}}>10 тем · ⭐ отмечены 3 с наибольшим потенциалом охвата</p>
+                <div style={{display:"flex",flexDirection:"column",gap:12}}>
+                  {sordellResult.map((t,i)=>{
+                    const [copied,setCopied] = React.useState(false);
+                    return (
+                      <div key={i} style={{padding:"12px 14px",background:t.top?"#f4f1ec":"#fafafa",borderRadius:10,border:t.top?"2px solid #362d52":"1px solid #e8e0f0"}}>
+                        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
+                          {t.top && <span style={{fontSize:16}}>⭐</span>}
+                          <span style={{fontSize:10,background:t.quadrant?.includes("Личное")?"#e1df2c":"rgba(54,45,82,.08)",color:"#362d52",padding:"1px 8px",borderRadius:6,fontWeight:700}}>{t.quadrant}</span>
+                        </div>
+                        <div style={{fontSize:14,fontWeight:600,color:"#362d52",marginBottom:4,lineHeight:1.4}}>{t.topic}</div>
+                        <div style={{fontSize:12,color:"#5c4e7a",fontStyle:"italic",marginBottom:t.top?8:0,lineHeight:1.5}}>💡 {t.hook}</div>
+                        {t.top && t.reason && (
+                          <div style={{fontSize:11,color:"#7a6a9a",background:"rgba(54,45,82,.05)",padding:"6px 10px",borderRadius:7,marginBottom:8,lineHeight:1.5}}>🔥 {t.reason}</div>
+                        )}
+                        <div style={{display:"flex",gap:6}}>
+                          <button onClick={()=>{setTopic(t.topic);setMode("post");setStep(3);setResult(null);}} style={{flex:2,padding:"6px 10px",borderRadius:7,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:11,fontWeight:700,cursor:"pointer"}}>
+                            ✦ Создать пост
+                          </button>
+                          <button onClick={()=>{navigator.clipboard.writeText(t.topic+"\n"+t.hook);setCopied(true);setTimeout(()=>setCopied(false),1500);}}
+                            style={{flex:1,padding:"6px 10px",borderRadius:7,border:"1px solid #d8d0e0",background:"#fff",color:copied?"#4a9a6a":"#5c4e7a",fontSize:11,cursor:"pointer"}}>
+                            {copied?"✓":"📋"}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <button onClick={()=>{setSordellStep(0);setSordellAnswers([]);setSordellCurrentAnswer("");setSordellResult(null);}} style={{width:"100%",padding:12,borderRadius:10,border:"1px solid #d8d0e0",background:"transparent",color:"#5c4e7a",fontSize:13,cursor:"pointer",marginTop:12}}>
+                  ↻ Пройти интервью заново
+                </button>
+              </Card>
+            )}
+          </div>
+        )}
+
         {/* STEP PLAN — Контент-план */}
         {mode==="plan"&&step===2&&(
           <div>
@@ -803,7 +1001,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
         )}
 
         {/* STEP 3 — О чём писать */}
-        {step===3&&mode!=="plan"&&(
+        {step===3&&mode!=="plan"&&mode!=="sordell"&&(
           <div>
             <Card>
               <div style={{fontFamily:"'Cormorant Garamond', serif",fontSize:19,color:"#362d52",fontWeight:600,marginBottom:18,display:"flex",alignItems:"center",gap:9}}>
@@ -851,22 +1049,6 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                 </div>
               </div>
 
-              {/* Rubric */}
-              <div style={{marginBottom:0}}>
-                <Label text="Рубрика" />
-                <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:8}}>
-                  {RUBRICS.map(r=>(
-                    <button key={r.id} onClick={()=>setRubric(r.id)} style={{padding:"10px 14px",borderRadius:9,border:`1px solid ${rubric===r.id?"#362d52":"#d8d0e0"}`,background:rubric===r.id?"#362d52":"#fff",color:rubric===r.id?"#f4f1ec":"#362d52",fontSize:13,cursor:"pointer",fontFamily:"sans-serif",textAlign:"left"}}>
-                      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
-                        <span>{r.icon}</span>
-                        <span style={{fontWeight:600}}>{r.label}</span>
-                        <span style={{fontSize:10,color:"#362d52",background:"#e1df2c",padding:"1px 7px",borderRadius:8,marginLeft:"auto",fontWeight:700}}>{r.share}</span>
-                      </div>
-                      <div style={{fontSize:11,color:rubric===r.id?"#f4f1ec":"#5c4e7a"}}>{r.desc}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
             </Card>
 
             <div style={{display:"flex",gap:8}}>
@@ -879,7 +1061,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
         )}
 
         {/* STEP 4 — Как подать */}
-        {step===4&&mode!=="plan"&&(
+        {step===4&&mode!=="plan"&&mode!=="sordell"&&(
           <div>
             <Card>
               <div style={{fontFamily:"'Cormorant Garamond', serif",fontSize:19,color:"#362d52",fontWeight:600,marginBottom:18,display:"flex",alignItems:"center",gap:9}}>
@@ -890,18 +1072,30 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
               <div style={{marginBottom:18}}>
                 <Label text="Угол подачи — матрица Сорделл" />
                 <div style={{fontSize:11,color:"#5c4e7a",marginBottom:10,lineHeight:1.6,fontStyle:"italic"}}>Как зайти в тему — с какой стороны</div>
+                {rubric && !["engaging","pain"].includes(rubric) && (
+                  <div style={{padding:"8px 12px",background:"rgba(54,45,82,.06)",borderRadius:8,marginBottom:8,fontSize:11,color:"#5c4e7a"}}>
+                    💡 Доступные углы отфильтрованы по рубрике <strong>«{selectedRubric?.label}»</strong>
+                  </div>
+                )}
                 <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                  {SORDELL_MATRIX.map(q=>(
-                    <button key={q.id} onClick={()=>setSordellQuad(q.id)}
-                      style={{padding:"12px 14px",borderRadius:9,border:`1px solid ${sordellQuad===q.id?"#362d52":"#d8d0e0"}`,background:sordellQuad===q.id?"#362d52":"#f0eef8",color:sordellQuad===q.id?"#f4f1ec":"#362d52",fontSize:13,cursor:"pointer",fontFamily:"'Nunito Sans', sans-serif",textAlign:"left",transition:"all .2s"}}>
-                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:3}}>
-                        <span style={{fontWeight:700}}>{q.icon} {q.label}</span>
-                        <span style={{fontSize:10,color:"#362d52",background:"#e1df2c",padding:"1px 8px",borderRadius:8,fontWeight:700,flexShrink:0}}>{q.share}</span>
-                      </div>
-                      <div style={{fontSize:11,color:sordellQuad===q.id?"#f4f1ec":"#5c4e7a"}}>{q.desc}</div>
-                      {sordellQuad===q.id && <div style={{fontSize:10,color:"rgba(244,241,236,.8)",marginTop:6,fontStyle:"italic",lineHeight:1.5}}>{q.hint}</div>}
-                    </button>
-                  ))}
+                  {SORDELL_MATRIX.map(q=>{
+                    const allowed = rubric ? (RUBRIC_SORDELL_MAP[rubric] || []) : SORDELL_MATRIX.map(x=>x.id);
+                    const isAllowed = !rubric || allowed.includes(q.id);
+                    return (
+                      <button key={q.id} onClick={()=>isAllowed&&setSordellQuad(q.id)}
+                        style={{padding:"12px 14px",borderRadius:9,border:`1px solid ${sordellQuad===q.id?"#362d52":isAllowed?"#d8d0e0":"#ece8f0"}`,background:sordellQuad===q.id?"#362d52":isAllowed?"#f0eef8":"#f8f6fc",color:sordellQuad===q.id?"#f4f1ec":isAllowed?"#362d52":"#c4b8d8",fontSize:13,cursor:isAllowed?"pointer":"not-allowed",fontFamily:"'Nunito Sans', sans-serif",textAlign:"left",transition:"all .2s",opacity:isAllowed?1:.55}}>
+                        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:3}}>
+                          <span style={{fontWeight:700}}>{q.icon} {q.label}</span>
+                          {isAllowed
+                            ? <span style={{fontSize:10,color:"#362d52",background:"#e1df2c",padding:"1px 8px",borderRadius:8,fontWeight:700,flexShrink:0}}>{q.share}</span>
+                            : <span style={{fontSize:10,color:"#c4b8d8",padding:"1px 8px"}}>недоступно</span>
+                          }
+                        </div>
+                        <div style={{fontSize:11,color:sordellQuad===q.id?"#f4f1ec":isAllowed?"#5c4e7a":"#c4b8d8"}}>{q.desc}</div>
+                        {sordellQuad===q.id && <div style={{fontSize:10,color:"rgba(244,241,236,.8)",marginTop:6,fontStyle:"italic",lineHeight:1.5}}>{q.hint}</div>}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -945,12 +1139,31 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
         )}
 
         {/* STEP 2 — Topic */}
-        {step===2&&mode!=="plan"&&(
+        {step===2&&mode!=="plan"&&mode!=="sordell"&&(
           <div>
             <Card>
               <div style={{fontFamily:"'Cormorant Garamond', serif",fontSize:19,color:"#362d52",fontWeight:600,marginBottom:18,display:"flex",alignItems:"center",gap:9}}>
                 <StepNum n={isCase?"2":"3"} /> {isCase ? "Данные кейса" : "Тема поста"}
               </div>
+
+              {/* Rubric — first for post mode */}
+              {!isCase && (
+                <div style={{marginBottom:18}}>
+                  <Label text="Рубрика" hint="Выбери тип поста — это определит тему и угол подачи" />
+                  <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:8}}>
+                    {RUBRICS.map(r=>(
+                      <button key={r.id} onClick={()=>{setRubric(r.id);}} style={{padding:"10px 14px",borderRadius:9,border:`1px solid ${rubric===r.id?"#362d52":"#d8d0e0"}`,background:rubric===r.id?"#362d52":"#fff",color:rubric===r.id?"#f4f1ec":"#362d52",fontSize:13,cursor:"pointer",fontFamily:"sans-serif",textAlign:"left"}}>
+                        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
+                          <span>{r.icon}</span>
+                          <span style={{fontWeight:600}}>{r.label}</span>
+                          <span style={{fontSize:10,color:"#362d52",background:"#e1df2c",padding:"1px 7px",borderRadius:8,marginLeft:"auto",fontWeight:700}}>{r.share}</span>
+                        </div>
+                        <div style={{fontSize:11,color:rubric===r.id?"#f4f1ec":"#5c4e7a"}}>{r.desc}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {isCase ? (
                 <>
@@ -992,7 +1205,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                     <textarea style={inp} rows={2} placeholder="Например: чистка ноутбука от пыли" value={topic} onChange={e=>setTopic(e.target.value)} />
                   </div>
                   <div style={{marginBottom:14}}>
-                    <Label text="Боль аудитории" hint="Что конкретно болит у читателя — одна конкретная боль" />
+                    <Label text="Боль аудитории" hint={currentPainHint} />
                     <input style={inp} placeholder="Например: боится что ноутбук сломается и потеряет все данные" value={pain} onChange={e=>setPain(e.target.value)} />
                   </div>
                   <div style={{marginBottom:14}}>
@@ -1043,16 +1256,16 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
         )}
 
         {/* STEP 5 — Result */}
-        {step===5&&result&&mode!=="plan"&&(
+        {step===5&&result&&mode!=="plan"&&mode!=="sordell"&&(
           <div>
             {/* Strategy badge */}
             <div style={{padding:"10px 16px",background:"#f4f1ec",border:"1px solid #e8e0f0",borderRadius:10,marginBottom:14,fontSize:11,color:"#5c4e7a",lineHeight:1.9,display:"flex",flexWrap:"wrap",gap:2,alignItems:"center"}}>
               {[
+                platforms.length && {label:"📱 Платформы:", value:platforms.map(pid=>PLATFORMS.find(p=>p.id===pid)?.icon).join(" ")},
                 length && {label:"📏 Формат:", value:LENGTH_OPTIONS.find(l=>l.id===length)?.label},
                 pillar && {label:"📌 Блок:", value:pillar},
-                sordellQuad && {label:`${selectedSordell?.icon} Угол:`, value:selectedSordell?.label},
-                sordellQuad && {label:`${selectedSordell?.icon} Угол:`, value:selectedSordell?.label},
-                pillarAngle && {label:"📐 Угол:", value:PILLAR_ANGLES.find(a=>a.id===pillarAngle)?.label},
+                pillarAngle && {label:"📐 Угол блока:", value:PILLAR_ANGLES.find(a=>a.id===pillarAngle)?.label},
+                sordellQuad && {label:`${selectedSordell?.icon} Подача:`, value:selectedSordell?.label},
                 stage && {label:"👥 Стадия:", value:selectedStage?.label},
                 rubric && {label:`${selectedRubric?.icon} Рубрика:`, value:selectedRubric?.label},
                 cta && {label:"🎯 CTA:", value:selectedCta?.label},
