@@ -1,5 +1,17 @@
 import React, { useState, useEffect } from "react";
 
+const PLATFORM_FREQ_HINTS = {
+  telegram:  { rec: 3,  hint: "3-5 в нед",   max: 7  },
+  vk:        { rec: 3,  hint: "3-5 в нед",   max: 7  },
+  facebook:  { rec: 4,  hint: "4-5 в нед",   max: 7  },
+  threads:   { rec: 14, hint: "1-3 в день",  max: 21 },
+  instagram: { rec: 4,  hint: "4-5 в нед",   max: 7  },
+  zen:       { rec: 2,  hint: "1-3 в нед",   max: 5  },
+  linkedin:  { rec: 3,  hint: "3-5 в нед",   max: 7  },
+  yt_shorts: { rec: 5,  hint: "3-7 в нед",   max: 14 },
+  yt_long:   { rec: 1,  hint: "1-2 в нед",   max: 4  },
+};
+
 const useIsMobile = () => {
   const [mobile, setMobile] = React.useState(window.innerWidth < 600);
   React.useEffect(() => {
@@ -97,10 +109,10 @@ const PILLAR_ANGLES = [
 
 const AWARENESS_STAGES = [
   { id: "unaware",   label: "Не осознаёт проблему",  goal: "заставить задуматься",       share: "40%", color: "#5a8a6a" },
-  { id: "aware",     label: "Осознаёт проблему",      goal: "углубить понимание",          share: "30%", color: "#7a9a5a" },
-  { id: "seeking",   label: "Ищет решение",           goal: "показать правильный путь",    share: "30%", color: "#9a8a4a" },
-  { id: "choosing",  label: "Выбирает решение",       goal: "сформировать доверие",        share: "20%", color: "#c4954a" },
-  { id: "ready",     label: "Готов к покупке",        goal: "перевести в действие",        share: "10%", color: "#c46a4a" },
+  { id: "aware",     label: "Осознаёт проблему",      goal: "углубить понимание",          share: "25%", color: "#7a9a5a" },
+  { id: "seeking",   label: "Ищет решение",           goal: "показать правильный путь",    share: "20%", color: "#9a8a4a" },
+  { id: "choosing",  label: "Выбирает решение",       goal: "сформировать доверие",        share: "10%", color: "#c4954a" },
+  { id: "ready",     label: "Готов к покупке",        goal: "перевести в действие",        share: "5%",  color: "#c46a4a" },
 ];
 
 const RUBRICS = [
@@ -238,7 +250,7 @@ export default function App() {
   const [sordellQuad, setSordellQuad] = useState("");
 
   // Mode
-  const [mode, setMode] = useState("post"); // "post" | "case"
+  const [mode, setMode] = useState("post"); // "post" | "case" | "plan"
 
   // Step 3 — content
   const [topic, setTopic] = useState("");
@@ -248,6 +260,14 @@ export default function App() {
   const [caseAfter, setCaseAfter] = useState("");
   const [caseResult, setCaseResult] = useState("");
   const [caseClient, setCaseClient] = useState("");
+  const [planPeriod, setPlanPeriod] = useState(() => localStorage.getItem("lia_plan_period") || "week");
+  const [planMainFreq, setPlanMainFreq] = useState(() => parseInt(localStorage.getItem("lia_plan_freq") || "3"));
+  const [planResult, setPlanResult] = useState(() => {
+    try { const s = localStorage.getItem("lia_plan_result"); return s ? JSON.parse(s) : null; } catch { return null; }
+  });
+  const [planPlatformFreqs, setPlanPlatformFreqs] = useState(() => {
+    try { const s = localStorage.getItem("lia_plan_freqs"); return s ? JSON.parse(s) : {}; } catch { return {}; }
+  });
   const [length, setLength] = useState("standard");
   const [caseNiche, setCaseNiche] = useState("");
 
@@ -263,6 +283,10 @@ export default function App() {
   useEffect(() => { localStorage.setItem("lia_tone", tone); }, [tone]);
   useEffect(() => { localStorage.setItem("lia_tov", toneOfVoice); }, [toneOfVoice]);
   useEffect(() => { localStorage.setItem("lia_platforms", JSON.stringify(platforms)); }, [platforms]);
+  useEffect(() => { localStorage.setItem("lia_plan_period", planPeriod); }, [planPeriod]);
+  useEffect(() => { localStorage.setItem("lia_plan_freq", String(planMainFreq)); }, [planMainFreq]);
+  useEffect(() => { if (planResult) localStorage.setItem("lia_plan_result", JSON.stringify(planResult)); }, [planResult]);
+  useEffect(() => { localStorage.setItem("lia_plan_freqs", JSON.stringify(planPlatformFreqs)); }, [planPlatformFreqs]);
   useEffect(() => { localStorage.setItem("lia_niche", niche); }, [niche]);
   useEffect(() => { localStorage.setItem("lia_audience", audience); }, [audience]);
 
@@ -283,6 +307,7 @@ export default function App() {
   }
 
   function startCase() { setMode("case"); setStep(1); setResult(null); }
+  function startPlan() { setMode("plan"); setStep(1); setPlanResult(null); setResult(null); }
   function startPost() { setMode("post"); setStep(1); setResult(null); }
 
   function toggle(id) {
@@ -294,6 +319,77 @@ export default function App() {
   const selectedRubric = RUBRICS.find(r => r.id === rubric);
   const selectedCta = CTA_OPTIONS.find(c => c.id === cta);
   const isCase = mode === "case";
+  const isPlan = mode === "plan";
+
+  async function generatePlan() {
+    setLoading(true); setError("");
+
+    const weekTotal = platforms.reduce((sum,pid)=>sum+(planPlatformFreqs[pid]??PLATFORM_FREQ_HINTS[pid]?.rec??3),0);
+    const totalPosts = planPeriod === "week" ? weekTotal : weekTotal * 4;
+    const blocksText = pillars.length > 0 ? pillars.join(", ") : "темы ниши";
+
+    // Per-platform breakdown
+    const platBreakdown = platforms.map(pid=>{
+      const p = PLATFORMS.find(pl=>pl.id===pid);
+      const freq = planPlatformFreqs[pid] ?? PLATFORM_FREQ_HINTS[pid]?.rec ?? 3;
+      const total = planPeriod==="week" ? freq : freq*4;
+      return `${p?.label}: ${total} постов`;
+    }).join(", ");
+
+    const dist = {
+      unaware:  Math.round(totalPosts * 0.40),
+      aware:    Math.round(totalPosts * 0.25),
+      seeking:  Math.round(totalPosts * 0.20),
+      choosing: Math.round(totalPosts * 0.10),
+      ready:    Math.max(1, Math.round(totalPosts * 0.05)),
+    };
+
+    const prompt = `Ты опытный контент-стратег. Составь контент-план на ${planPeriod === "week" ? "1 неделю" : "1 месяц"}.
+
+Эксперт: ${expert || "-"}
+Ниша: ${niche || "-"}
+Аудитория: ${audience || "-"}
+Смысловые блоки: ${blocksText}
+Тональность: ${tone}
+
+Платформы и количество постов: ${platBreakdown}
+Всего постов: ${totalPosts}
+
+СТРОГОЕ распределение по стадиям осознанности (сумма = ${totalPosts}):
+- Не осознаёт проблему (40%): ${dist.unaware} постов — заставить задуматься
+- Осознаёт проблему (25%): ${dist.aware} постов — углубить понимание
+- Ищет решение (20%): ${dist.seeking} постов — показать путь
+- Выбирает решение (10%): ${dist.choosing} постов — сформировать доверие
+- Готов к покупке (5%): ${dist.ready} постов — перевести в действие
+
+По матрице Сорделл: 40% Личное+Неожиданное, 30% Профессиональное+Неожиданное, 20% Личное+Известное, 10% Профессиональное+Известное.
+
+Для каждого поста укажи платформу из списка: ${platforms.join(", ")}.
+
+Темы должны быть конкретными, цепляющими, на русском языке — не абстрактными.
+
+ТОЛЬКО валидный JSON без markdown:
+{"posts":[{"day":"День 1","platform":"telegram","block":"блок","topic":"конкретная тема","stage":"стадия","sordell":"угол по Сорделл","function":"узнавание"}]}`;
+
+    try {
+      const resp = await fetch("/api/claude", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:5000, messages:[{role:"user",content:prompt}] }),
+      });
+      const data = await resp.json();
+      if (data.error) throw new Error(data.error.message);
+      const text = data.content.map(b=>b.text||"").join("");
+      let parsed;
+      try { parsed = JSON.parse(text.replace(/```json|```/g,"").trim()); }
+      catch { setError("Ошибка разбора. Попробуй снова."); setLoading(false); return; }
+      setPlanResult(parsed.posts);
+      setStep(5);
+    } catch(e) {
+      setError("Ошибка: " + e.message);
+    }
+    setLoading(false);
+  }
 
   async function generate() {
     if (!topic.trim()) { setError("Укажи тему поста"); return; }
@@ -384,14 +480,22 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
         },
         body:JSON.stringify({
           model:"claude-haiku-4-5-20251001",
-          max_tokens:3500,
+          max_tokens:platforms.includes("yt_long") ? 5000 : 3500,
           messages:[{role:"user",content:prompt}],
         }),
       });
       const data = await resp.json();
       if (data.error) throw new Error(data.error.message);
       const text = data.content.map(b=>b.text||"").join("");
-      const parsed = JSON.parse(text.replace(/```json|```/g,"").trim());
+      let parsed;
+      try {
+        parsed = JSON.parse(text.replace(/```json|```/g,"").trim());
+      } catch(jsonErr) {
+        // JSON broken - try to extract what we got
+        setError("Ошибка разбора ответа. Попробуй снова или выбери меньше платформ.");
+        setLoading(false);
+        return;
+      }
       setResult(parsed);
       setActiveTab(platforms[0]);
       setStep(5);
@@ -419,10 +523,13 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
           </h1>
           <p style={{fontSize:12,color:"#9a88b8",marginTop:6}}>Смысловые блоки · Стадия · Рубрика · CTA · Платформы</p>
           <div style={{display:"flex",justifyContent:"center",gap:8,marginTop:14,flexWrap:"wrap",flexDirection:isMobile?"column":"row",alignItems:"center"}}>
-            <button onClick={startPost} style={{padding:"10px 22px",borderRadius:10,border:`2px solid ${mode==="post"?"#362d52":"#9a88b8"}`,background:mode==="post"?"#f4f1ec":"#9a88b8",color:mode==="post"?"#362d52":"#f4f1ec",fontWeight:mode==="post"?700:600,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"sans-serif"}}>
+            <button onClick={startPlan} style={{padding:"10px 22px",borderRadius:10,border:`2px solid ${mode==="plan"?"#362d52":"#9a88b8"}`,background:mode==="plan"?"#f4f1ec":"#9a88b8",color:mode==="plan"?"#362d52":"#f4f1ec",fontWeight:mode==="plan"?700:600,fontSize:13,cursor:"pointer",fontFamily:"sans-serif"}}>
+              📅 Контент-план
+            </button>
+            <button onClick={startPost} style={{padding:"10px 22px",borderRadius:10,border:`2px solid ${mode==="post"?"#362d52":"#9a88b8"}`,background:mode==="post"?"#f4f1ec":"#9a88b8",color:mode==="post"?"#362d52":"#f4f1ec",fontWeight:mode==="post"?700:600,fontSize:13,cursor:"pointer",fontFamily:"sans-serif"}}>
               ✦ Создать пост
             </button>
-            <button onClick={startCase} style={{padding:"10px 22px",borderRadius:10,border:`2px solid ${mode==="case"?"#362d52":"#9a88b8"}`,background:mode==="case"?"#f4f1ec":"#9a88b8",color:mode==="case"?"#362d52":"#f4f1ec",fontWeight:mode==="case"?700:600,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"sans-serif"}}>
+            <button onClick={startCase} style={{padding:"10px 22px",borderRadius:10,border:`2px solid ${mode==="case"?"#362d52":"#9a88b8"}`,background:mode==="case"?"#f4f1ec":"#9a88b8",color:mode==="case"?"#362d52":"#f4f1ec",fontWeight:mode==="case"?700:600,fontSize:13,cursor:"pointer",fontFamily:"sans-serif"}}>
               ⭐ Создать кейс
             </button>
           </div>
@@ -506,8 +613,168 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
               </div>
             </Card>
             <button onClick={()=>setStep(isCase ? 3 : 2)} style={{width:"100%",padding:15,borderRadius:12,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"sans-serif"}}>
-              {isCase ? "Далее → Данные кейса" : "Далее → Тема поста"}
+              {isCase ? "Далее → Данные кейса" : isPlan ? "Далее → Параметры плана" : "Далее → Тема поста"}
             </button>
+          </div>
+        )}
+
+        {/* STEP PLAN — Контент-план */}
+        {mode==="plan"&&step===2&&(
+          <div>
+            <Card>
+              <div style={{fontFamily:"'Cormorant Garamond', serif",fontSize:19,color:"#362d52",fontWeight:600,marginBottom:18,display:"flex",alignItems:"center",gap:9}}>
+                <StepNum n="2" /> Параметры плана
+              </div>
+
+              {/* Period */}
+              <div style={{marginBottom:18}}>
+                <Label text="Период" />
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                  {[{id:"week",label:"Неделя",icon:"📅"},{id:"month",label:"Месяц",icon:"🗓"}].map(p=>(
+                    <button key={p.id} onClick={()=>setPlanPeriod(p.id)}
+                      style={{padding:"12px 14px",borderRadius:9,border:`1px solid ${planPeriod===p.id?"#362d52":"#d8d0e0"}`,background:planPeriod===p.id?"#362d52":"#f0eef8",color:planPeriod===p.id?"#f4f1ec":"#362d52",fontSize:14,fontWeight:600,cursor:"pointer",textAlign:"center"}}>
+                      {p.icon} {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Per-platform frequency */}
+              <div style={{marginBottom:18}}>
+                <Label text="Частота по платформам" hint="Укажи количество постов в неделю для каждой платформы" />
+                <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                  {platforms.map(pid=>{
+                    const hint = PLATFORM_FREQ_HINTS[pid];
+                    if (!hint) return null;
+                    const val = planPlatformFreqs[pid] ?? hint.rec;
+                    const plat = PLATFORMS.find(p=>p.id===pid);
+                    return (
+                      <div key={pid} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:"#f4f1ec",borderRadius:9,border:"1px solid #e8e0f0"}}>
+                        <span style={{fontSize:13,flex:1}}>
+                          <span style={{marginRight:6}}>{plat?.icon}</span>
+                          <strong>{plat?.label}</strong>
+                          <span style={{fontSize:11,color:"#9a88b8",marginLeft:8}}>{hint.hint}</span>
+                        </span>
+                        <div style={{display:"flex",alignItems:"center",gap:6}}>
+                          <button onClick={()=>setPlanPlatformFreqs(f=>({...f,[pid]:Math.max(1,(f[pid]??hint.rec)-1)}))}
+                            style={{width:28,height:28,borderRadius:6,border:"1px solid #d8d0e0",background:"#fff",color:"#362d52",fontSize:16,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>−</button>
+                          <span style={{width:32,textAlign:"center",fontWeight:700,fontSize:14,color:"#362d52"}}>{val}</span>
+                          <button onClick={()=>setPlanPlatformFreqs(f=>({...f,[pid]:Math.min(hint.max,(f[pid]??hint.rec)+1)}))}
+                            style={{width:28,height:28,borderRadius:6,border:"1px solid #d8d0e0",background:"#fff",color:"#362d52",fontSize:16,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>+</button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <p style={{fontSize:11,color:"#9a88b8",marginTop:10}}>
+                  Итого постов в неделю: <strong style={{color:"#362d52"}}>{platforms.reduce((sum,pid)=>sum+(planPlatformFreqs[pid]??PLATFORM_FREQ_HINTS[pid]?.rec??3),0)}</strong>
+                  {planPeriod==="month" && <span> · в месяц: <strong style={{color:"#362d52"}}>{platforms.reduce((sum,pid)=>sum+(planPlatformFreqs[pid]??PLATFORM_FREQ_HINTS[pid]?.rec??3),0)*4}</strong></span>}
+                </p>
+              </div>
+
+              {/* Distribution preview */}
+              <div style={{padding:"12px 14px",background:"#362d52",borderRadius:9,marginBottom:0}}>
+                <div style={{fontSize:11,color:"rgba(244,241,236,.7)",marginBottom:8,textTransform:"uppercase",letterSpacing:".06em"}}>Распределение по стадиям осознанности</div>
+                {[
+                  {label:"Не осознаёт проблему",pct:0.40},
+                  {label:"Осознаёт проблему",pct:0.25},
+                  {label:"Ищет решение",pct:0.20},
+                  {label:"Выбирает решение",pct:0.10},
+                  {label:"Готов к покупке",pct:0.05},
+                ].map((s,i)=>{
+                  const weekTotal = platforms.reduce((sum,pid)=>sum+(planPlatformFreqs[pid]??PLATFORM_FREQ_HINTS[pid]?.rec??3),0);
+                  const total = planPeriod==="week"?weekTotal:weekTotal*4;
+                  const n = Math.max(i===4?1:0, Math.round(total*s.pct));
+                  return (
+                    <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5,fontSize:12,color:"#f4f1ec"}}>
+                      <span>{s.label}</span>
+                      <span style={{background:"#e1df2c",color:"#362d52",padding:"1px 8px",borderRadius:8,fontSize:11,fontWeight:700}}>{n} постов</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+
+            {loading ? (
+              <Card>
+                <div style={{textAlign:"center",padding:"10px 0"}}>
+                  <div style={{width:28,height:28,border:`2px solid #d8d0e0`,borderTopColor:"#362d52",borderRadius:"50%",animation:"sp .8s linear infinite",margin:"0 auto 12px"}} />
+                  <style>{`@keyframes sp{to{transform:rotate(360deg)}}`}</style>
+                  <p style={{fontSize:13,color:"#9a88b8"}}>Составляю контент-план…</p>
+                </div>
+              </Card>
+            ) : (
+              <>
+                {error&&<p style={{color:"#e05c5c",fontSize:13,textAlign:"center",marginBottom:10}}>{error}</p>}
+                <div style={{display:"flex",gap:8}}>
+                  <button onClick={()=>setStep(1)} style={{flex:1,padding:12,borderRadius:10,border:`1px solid ${S.border}`,background:"transparent",color:"#5c4e7a",fontSize:13,cursor:"pointer"}}>← Назад</button>
+                  <button onClick={generatePlan} style={{flex:3,padding:15,borderRadius:12,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:15,fontWeight:700,cursor:"pointer"}}>
+                    📅 Создать план
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* STEP PLAN RESULT */}
+        {mode==="plan"&&step===5&&planResult&&(
+          <div>
+            <Card>
+              <div style={{fontFamily:"'Cormorant Garamond', serif",fontSize:19,color:"#362d52",fontWeight:600,marginBottom:4,display:"flex",alignItems:"center",gap:9}}>
+                📅 Контент-план
+              </div>
+              <p style={{fontSize:12,color:"#9a88b8",marginBottom:16}}>{planPeriod==="week"?"Неделя":"Месяц"} · {planResult.length} постов</p>
+
+              <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                {planResult.map((post,i)=>{
+                  const platInfo = PLATFORMS.find(p=>p.id===post.platform);
+                  const [copied, setCopied] = React.useState(false);
+                  return (
+                    <div key={i} style={{padding:"12px 14px",background:"#f4f1ec",borderRadius:10,border:"1px solid #e8e0f0"}}>
+                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6,flexWrap:"wrap",gap:4}}>
+                        <div style={{display:"flex",alignItems:"center",gap:6}}>
+                          <span style={{fontSize:11,fontWeight:700,color:"#362d52",textTransform:"uppercase",letterSpacing:".06em"}}>{post.day}</span>
+                          {platInfo && <span style={{fontSize:10,background:"#362d52",color:"#f4f1ec",padding:"1px 8px",borderRadius:6,fontWeight:600}}>{platInfo.icon} {platInfo.label}</span>}
+                        </div>
+                        <span style={{fontSize:10,background:"#e1df2c",color:"#362d52",padding:"1px 8px",borderRadius:8,fontWeight:700}}>{post.function}</span>
+                      </div>
+                      <div style={{fontSize:14,fontWeight:600,color:"#362d52",marginBottom:8,lineHeight:1.4}}>{post.topic}</div>
+                      <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:10}}>
+                        <span style={{fontSize:10,background:"rgba(54,45,82,.08)",color:"#5c4e7a",padding:"2px 8px",borderRadius:6}}>📌 {post.block}</span>
+                        <span style={{fontSize:10,background:"rgba(54,45,82,.08)",color:"#5c4e7a",padding:"2px 8px",borderRadius:6}}>👥 {post.stage}</span>
+                        <span style={{fontSize:10,background:"rgba(54,45,82,.08)",color:"#5c4e7a",padding:"2px 8px",borderRadius:6}}>{post.sordell}</span>
+                      </div>
+                      <div style={{display:"flex",gap:6}}>
+                        <button onClick={()=>{
+                          setTopic(post.topic);
+                          setPillar(post.block||"");
+                          setStage(AWARENESS_STAGES.find(s=>s.label===post.stage||s.id===post.stage)?.id||"");
+                          setSordellQuad(SORDELL_MATRIX.find(q=>post.sordell?.includes(q.label)||post.sordell?.includes(q.id))?.id||"");
+                          setMode("post");
+                          setStep(3);
+                          setResult(null);
+                        }} style={{flex:2,padding:"7px 10px",borderRadius:8,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:11,fontWeight:700,cursor:"pointer"}}>
+                          ✦ Создать пост
+                        </button>
+                        <button onClick={()=>{
+                          navigator.clipboard.writeText(post.topic);
+                          setCopied(true);
+                          setTimeout(()=>setCopied(false),1500);
+                        }} style={{flex:1,padding:"7px 10px",borderRadius:8,border:"1px solid #d8d0e0",background:"#fff",color:copied?"#4a9a6a":"#5c4e7a",fontSize:11,cursor:"pointer"}}>
+                          {copied?"✓ Скопировано":"📋 Скопировать"}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+
+            <div style={{display:"flex",gap:8,marginTop:8}}>
+              <button onClick={()=>{setPlanResult(null);setStep(2);}} style={{flex:1,padding:12,borderRadius:10,border:"1px solid #d8d0e0",background:"transparent",color:"#5c4e7a",fontSize:13,cursor:"pointer"}}>← Изменить</button>
+              <button onClick={()=>{setPlanResult(null);generatePlan();}} style={{flex:1,padding:12,borderRadius:10,border:"1px solid #362d52",background:"transparent",color:"#362d52",fontSize:13,fontWeight:700,cursor:"pointer"}}>↻ Пересоздать план</button>
+            </div>
           </div>
         )}
 
