@@ -333,7 +333,12 @@ export default function App() {
   const [sordellStep, setSordellStep] = useState(0);
   const [sordellAnswers, setSordellAnswers] = useState([]);
   const [sordellCurrentAnswer, setSordellCurrentAnswer] = useState("");
-  const [sordellResult, setSordellResult] = useState(null);
+  const [sordellResult, setSordellResult] = useState(() => {
+    try { const s = localStorage.getItem("lia_sordell_result"); return s ? JSON.parse(s) : null; } catch { return null; }
+  });
+  const [sordellAnswersSaved, setSordellAnswersSaved] = useState(() => {
+    try { const s = localStorage.getItem("lia_sordell_answers"); return s ? JSON.parse(s) : []; } catch { return []; }
+  });
   const [sordellLoading, setSordellLoading] = useState(false);
   const [sordellError, setSordellError] = useState("");
   const [planPlatformFreqs, setPlanPlatformFreqs] = useState(() => {
@@ -379,7 +384,16 @@ export default function App() {
 
   function startCase() { setMode("case"); setStep(1); setResult(null); }
   function startPlan() { setMode("plan"); setStep(1); setPlanResult(null); setResult(null); }
-  function startSordell() { setMode("sordell"); setStep(1); setSordellStep(0); setSordellAnswers([]); setSordellCurrentAnswer(""); setSordellResult(null); setPlanResult(null); }
+  function startSordell() {
+    if (sordellResult) {
+      // Already have results - show them directly
+      setMode("sordell"); setSordellStep(13);
+    } else {
+      // Start fresh interview
+      setMode("sordell"); setStep(1); setSordellStep(0); setSordellAnswers([]); setSordellCurrentAnswer(""); setPlanResult(null);
+    }
+  }
+  function startSordellFresh() { setMode("sordell"); setStep(1); setSordellStep(0); setSordellAnswers([]); setSordellCurrentAnswer(""); setSordellResult(null); localStorage.removeItem("lia_sordell_result"); setPlanResult(null); }
   function startPost() { setMode("post"); setStep(1); setResult(null); }
 
   function toggle(id) {
@@ -495,6 +509,8 @@ ${qa}
       try { parsed = JSON.parse(text.replace(/```json|```/g,"").trim()); }
       catch { setSordellError("Ошибка разбора. Попробуй снова."); setSordellLoading(false); return; }
       setSordellResult(parsed.topics);
+      localStorage.setItem("lia_sordell_result", JSON.stringify(parsed.topics));
+      localStorage.setItem("lia_sordell_answers", JSON.stringify(sordellAnswers));
       setSordellStep(13);
     } catch(e) { setSordellError("Ошибка: " + e.message); }
     setSordellLoading(false);
@@ -705,6 +721,11 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
             <button onClick={startSordell} style={{padding:"10px 22px",borderRadius:10,border:`2px solid ${mode==="sordell"?"#362d52":"#9a88b8"}`,background:mode==="sordell"?"#f4f1ec":"#9a88b8",color:mode==="sordell"?"#362d52":"#f4f1ec",fontWeight:mode==="sordell"?700:600,fontSize:13,cursor:"pointer",fontFamily:"sans-serif"}}>
               🎯 Найти темы
             </button>
+            {sordellResult && mode!=="sordell" && (
+              <button onClick={()=>{setMode("sordell");setSordellStep(13);}} style={{padding:"10px 22px",borderRadius:10,border:"2px solid #e1df2c",background:"transparent",color:"#f4f1ec",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"sans-serif"}}>
+                ✨ Мои темы ({sordellResult.length})
+              </button>
+            )}
             <button onClick={startPlan} style={{padding:"10px 22px",borderRadius:10,border:`2px solid ${mode==="plan"?"#362d52":"#9a88b8"}`,background:mode==="plan"?"#f4f1ec":"#9a88b8",color:mode==="plan"?"#362d52":"#f4f1ec",fontWeight:mode==="plan"?700:600,fontSize:13,cursor:"pointer",fontFamily:"sans-serif"}}>
               📅 Контент-план
             </button>
@@ -806,7 +827,32 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
             <div style={{display:"flex",justifyContent:"flex-end",marginBottom:8}}>
               <button onClick={()=>setStep(1)} style={{padding:"7px 14px",borderRadius:8,border:"1px solid #d8d0e0",background:"transparent",color:"#5c4e7a",fontSize:12,cursor:"pointer"}}>← Изменить контекст</button>
             </div>
-            {sordellStep < 12 ? (
+            {sordellStep === "overview" ? (
+              <Card>
+                <div style={{fontFamily:"'Cormorant Garamond', serif",fontSize:19,color:"#362d52",fontWeight:600,marginBottom:6}}>
+                  ✏️ Ваши ответы
+                </div>
+                <p style={{fontSize:11,color:"#9a88b8",marginBottom:16}}>Нажмите на любой вопрос чтобы изменить ответ</p>
+                <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  {SORDELL_QUESTIONS.map((q,i)=>(
+                    <button key={i} onClick={()=>{setSordellCurrentAnswer(sordellAnswers[i]||"");setSordellStep(i);}}
+                      style={{padding:"10px 14px",borderRadius:9,border:`1px solid ${sordellAnswers[i]?.trim()?"#362d52":"#d8d0e0"}`,background:sordellAnswers[i]?.trim()?"#f4f1ec":"#fafafa",textAlign:"left",cursor:"pointer"}}>
+                      <div style={{fontSize:10,color:"#9a88b8",marginBottom:3,textTransform:"uppercase",letterSpacing:".05em"}}>Вопрос {i+1} · {q.tag}</div>
+                      <div style={{fontSize:12,fontWeight:600,color:"#362d52",marginBottom:sordellAnswers[i]?4:0}}>{q.q}</div>
+                      {sordellAnswers[i] ? (
+                        <div style={{fontSize:11,color:"#5c4e7a",fontStyle:"italic",lineHeight:1.5}}>{sordellAnswers[i]}</div>
+                      ) : (
+                        <div style={{fontSize:11,color:"#c4b8d8"}}>— нет ответа</div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+                <div style={{display:"flex",gap:8,marginTop:14}}>
+                  <button onClick={()=>setSordellStep(13)} style={{flex:1,padding:12,borderRadius:10,border:"1px solid #d8d0e0",background:"transparent",color:"#5c4e7a",fontSize:13,cursor:"pointer"}}>← Назад к темам</button>
+                  <button onClick={generateSordellResult} style={{flex:2,padding:12,borderRadius:10,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:13,fontWeight:700,cursor:"pointer"}}>↻ Пересоздать темы</button>
+                </div>
+              </Card>
+            ) : sordellStep < 12 ? (
               <Card>
                 <div style={{fontFamily:"'Cormorant Garamond', serif",fontSize:19,color:"#362d52",fontWeight:600,marginBottom:6,display:"flex",alignItems:"center",gap:9}}>
                   🎯 Найти темы по матрице Сорделл
@@ -901,13 +947,18 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                 <div style={{display:"flex",flexDirection:"column",gap:12}}>
                   {sordellResult.map((t,i)=>(
                     <SordellCard key={i} t={t}
-                      onCreatePost={()=>{setTopic(t.topic);setMode("post");setStep(3);setResult(null);}}
+                      onCreatePost={()=>{setTopic(t.topic);setResult(null);setMode("post");setStep(2);}}
                     />
                   ))}
                 </div>
-                <button onClick={()=>{setSordellStep(0);setSordellAnswers([]);setSordellCurrentAnswer("");setSordellResult(null);}} style={{width:"100%",padding:12,borderRadius:10,border:"1px solid #d8d0e0",background:"transparent",color:"#5c4e7a",fontSize:13,cursor:"pointer",marginTop:12}}>
-                  ↻ Пройти интервью заново
-                </button>
+                <div style={{display:"flex",gap:8,marginTop:12}}>
+                  <button onClick={()=>{setSordellStep("overview");setSordellAnswers(JSON.parse(localStorage.getItem("lia_sordell_answers")||"[]"));}} style={{flex:1,padding:12,borderRadius:10,border:"1px solid #362d52",background:"transparent",color:"#362d52",fontSize:13,fontWeight:600,cursor:"pointer"}}>
+                    ✏️ Изменить ответы
+                  </button>
+                  <button onClick={startSordellFresh} style={{flex:1,padding:12,borderRadius:10,border:"1px solid #d8d0e0",background:"transparent",color:"#9a88b8",fontSize:13,cursor:"pointer"}}>
+                    ↻ Начать заново
+                  </button>
+                </div>
               </Card>
             )}
           </div>
