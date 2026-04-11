@@ -231,6 +231,32 @@ function StepNum({ n }) {
   return <span style={{ width:26, height:26, background:S.accent, color:"#f4f1ec", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:700, flexShrink:0 }}>{n}</span>;
 }
 
+function SordellCard({ t, onCreatePost }) {
+  const [copied, setCopied] = React.useState(false);
+  return (
+    <div style={{padding:"12px 14px",background:t.top?"#f4f1ec":"#fafafa",borderRadius:10,border:t.top?"2px solid #362d52":"1px solid #e8e0f0"}}>
+      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
+        {t.top && <span style={{fontSize:16}}>⭐</span>}
+        <span style={{fontSize:10,background:t.quadrant?.includes("Личное")?"#e1df2c":"rgba(54,45,82,.08)",color:"#362d52",padding:"1px 8px",borderRadius:6,fontWeight:700}}>{t.quadrant}</span>
+      </div>
+      <div style={{fontSize:14,fontWeight:600,color:"#362d52",marginBottom:4,lineHeight:1.4}}>{t.topic}</div>
+      <div style={{fontSize:12,color:"#5c4e7a",fontStyle:"italic",marginBottom:t.top?8:8,lineHeight:1.5}}>💡 {t.hook}</div>
+      {t.top && t.reason && (
+        <div style={{fontSize:11,color:"#7a6a9a",background:"rgba(54,45,82,.05)",padding:"6px 10px",borderRadius:7,marginBottom:8,lineHeight:1.5}}>🔥 {t.reason}</div>
+      )}
+      <div style={{display:"flex",gap:6}}>
+        <button onClick={onCreatePost} style={{flex:2,padding:"6px 10px",borderRadius:7,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:11,fontWeight:700,cursor:"pointer"}}>
+          ✦ Создать пост
+        </button>
+        <button onClick={()=>{navigator.clipboard.writeText(t.topic+"\n"+t.hook);setCopied(true);setTimeout(()=>setCopied(false),1500);}}
+          style={{flex:1,padding:"6px 10px",borderRadius:7,border:"1px solid #d8d0e0",background:"#fff",color:copied?"#4a9a6a":"#5c4e7a",fontSize:11,cursor:"pointer"}}>
+          {copied?"✓":"📋"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function PlanCard({ post, onCreatePost }) {
   const [copied, setCopied] = React.useState(false);
   const platInfo = PLATFORMS.find(p=>p.id===post.platform);
@@ -873,31 +899,11 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                 </div>
                 <p style={{fontSize:11,color:"#9a88b8",marginBottom:16}}>10 тем · ⭐ отмечены 3 с наибольшим потенциалом охвата</p>
                 <div style={{display:"flex",flexDirection:"column",gap:12}}>
-                  {sordellResult.map((t,i)=>{
-                    const [copied,setCopied] = React.useState(false);
-                    return (
-                      <div key={i} style={{padding:"12px 14px",background:t.top?"#f4f1ec":"#fafafa",borderRadius:10,border:t.top?"2px solid #362d52":"1px solid #e8e0f0"}}>
-                        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
-                          {t.top && <span style={{fontSize:16}}>⭐</span>}
-                          <span style={{fontSize:10,background:t.quadrant?.includes("Личное")?"#e1df2c":"rgba(54,45,82,.08)",color:"#362d52",padding:"1px 8px",borderRadius:6,fontWeight:700}}>{t.quadrant}</span>
-                        </div>
-                        <div style={{fontSize:14,fontWeight:600,color:"#362d52",marginBottom:4,lineHeight:1.4}}>{t.topic}</div>
-                        <div style={{fontSize:12,color:"#5c4e7a",fontStyle:"italic",marginBottom:t.top?8:0,lineHeight:1.5}}>💡 {t.hook}</div>
-                        {t.top && t.reason && (
-                          <div style={{fontSize:11,color:"#7a6a9a",background:"rgba(54,45,82,.05)",padding:"6px 10px",borderRadius:7,marginBottom:8,lineHeight:1.5}}>🔥 {t.reason}</div>
-                        )}
-                        <div style={{display:"flex",gap:6}}>
-                          <button onClick={()=>{setTopic(t.topic);setMode("post");setStep(3);setResult(null);}} style={{flex:2,padding:"6px 10px",borderRadius:7,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:11,fontWeight:700,cursor:"pointer"}}>
-                            ✦ Создать пост
-                          </button>
-                          <button onClick={()=>{navigator.clipboard.writeText(t.topic+"\n"+t.hook);setCopied(true);setTimeout(()=>setCopied(false),1500);}}
-                            style={{flex:1,padding:"6px 10px",borderRadius:7,border:"1px solid #d8d0e0",background:"#fff",color:copied?"#4a9a6a":"#5c4e7a",fontSize:11,cursor:"pointer"}}>
-                            {copied?"✓":"📋"}
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
+                  {sordellResult.map((t,i)=>(
+                    <SordellCard key={i} t={t}
+                      onCreatePost={()=>{setTopic(t.topic);setMode("post");setStep(3);setResult(null);}}
+                    />
+                  ))}
                 </div>
                 <button onClick={()=>{setSordellStep(0);setSordellAnswers([]);setSordellCurrentAnswer("");setSordellResult(null);}} style={{width:"100%",padding:12,borderRadius:10,border:"1px solid #d8d0e0",background:"transparent",color:"#5c4e7a",fontSize:13,cursor:"pointer",marginTop:12}}>
                   ↻ Пройти интервью заново
