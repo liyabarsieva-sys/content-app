@@ -353,7 +353,7 @@ export default function App() {
 
   function startCase() { setMode("case"); setStep(1); setResult(null); }
   function startPlan() { setMode("plan"); setStep(1); setPlanResult(null); setResult(null); }
-  function startSordell() { setMode("sordell"); setStep(1); setSordellStep(0); setSordellAnswers([]); setSordellCurrentAnswer(""); setSordellResult(null); }
+  function startSordell() { setMode("sordell"); setStep(1); setSordellStep(0); setSordellAnswers([]); setSordellCurrentAnswer(""); setSordellResult(null); setPlanResult(null); }
   function startPost() { setMode("post"); setStep(1); setResult(null); }
 
   function toggle(id) {
@@ -721,14 +721,17 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
               </div>
             </Card>
             <button onClick={()=>setStep(isCase ? 3 : 2)} style={{width:"100%",padding:15,borderRadius:12,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"sans-serif"}}>
-              {isCase ? "Далее → Данные кейса" : isPlan ? "Далее → Параметры плана" : "Далее → Тема поста"}
+              {isCase ? "Далее → Данные кейса" : isPlan ? "Далее → Параметры плана" : mode==="sordell" ? "Далее → Интервью" : "Далее → Тема поста"}
             </button>
           </div>
         )}
 
         {/* STEP SORDELL — Интервью */}
-        {mode==="sordell"&&step===1&&(
+        {mode==="sordell"&&step===2&&(
           <div>
+            <div style={{display:"flex",justifyContent:"flex-end",marginBottom:8}}>
+              <button onClick={()=>setStep(1)} style={{padding:"7px 14px",borderRadius:8,border:"1px solid #d8d0e0",background:"transparent",color:"#5c4e7a",fontSize:12,cursor:"pointer"}}>← Изменить контекст</button>
+            </div>
             {sordellStep < 12 ? (
               <Card>
                 <div style={{fontFamily:"'Cormorant Garamond', serif",fontSize:19,color:"#362d52",fontWeight:600,marginBottom:6,display:"flex",alignItems:"center",gap:9}}>
