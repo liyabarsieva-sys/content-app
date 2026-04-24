@@ -257,6 +257,52 @@ function SordellCard({ t, onCreatePost }) {
   );
 }
 
+function formatPlanText(planResult, period) {
+  const header = `КОНТЕНТ-ПЛАН · ${period === "week" ? "НЕДЕЛЯ" : "МЕСЯЦ"} · ${planResult.length} постов\n${"─".repeat(50)}\n\n`;
+  const posts = planResult.map((post, i) => {
+    const plat = PLATFORMS.find(p => p.id === post.platform);
+    return [
+      `${post.day} · ${plat ? plat.label : post.platform || ""}`,
+      `Функция: ${post.function || "—"}`,
+      `Тема: ${post.topic}`,
+      `Блок: ${post.block || "—"}`,
+      `Стадия: ${post.stage || "—"}`,
+      `Угол: ${post.sordell || "—"}`,
+    ].join("\n");
+  }).join("\n\n" + "─".repeat(40) + "\n\n");
+  return header + posts;
+}
+
+function CopyAllPlanBtn({ planResult }) {
+  const [copied, setCopied] = React.useState(false);
+  return (
+    <button onClick={()=>{
+      navigator.clipboard.writeText(formatPlanText(planResult));
+      setCopied(true);
+      setTimeout(()=>setCopied(false), 2000);
+    }} style={{padding:"8px 14px",borderRadius:8,border:"1px solid #362d52",background:"transparent",color:copied?"#4a9a6a":"#362d52",fontSize:12,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap"}}>
+      {copied ? "✓ Скопировано" : "📋 Копировать всё"}
+    </button>
+  );
+}
+
+function DownloadPlanBtn({ planResult, period }) {
+  return (
+    <button onClick={()=>{
+      const text = formatPlanText(planResult, period);
+      const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `контент-план-${period === "week" ? "неделя" : "месяц"}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }} style={{padding:"8px 14px",borderRadius:8,border:"1px solid #362d52",background:"#362d52",color:"#f4f1ec",fontSize:12,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap"}}>
+      ⬇ Скачать .txt
+    </button>
+  );
+}
+
 function PlanCard({ post, onCreatePost }) {
   const [copied, setCopied] = React.useState(false);
   const platInfo = PLATFORMS.find(p=>p.id===post.platform);
@@ -1092,10 +1138,19 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
         {mode==="plan"&&step===5&&planResult&&(
           <div>
             <Card>
-              <div style={{fontFamily:"'Cormorant Garamond', serif",fontSize:19,color:"#362d52",fontWeight:600,marginBottom:4,display:"flex",alignItems:"center",gap:9}}>
-                📅 Контент-план
+              <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:4,flexWrap:"wrap",gap:8}}>
+                <div>
+                  <div style={{fontFamily:"'Cormorant Garamond', serif",fontSize:19,color:"#362d52",fontWeight:600,marginBottom:4}}>
+                    📅 Контент-план
+                  </div>
+                  <p style={{fontSize:12,color:"#9a88b8"}}>{planPeriod==="week"?"Неделя":"Месяц"} · {planResult.length} постов</p>
+                </div>
+                <div style={{display:"flex",gap:6}}>
+                  <CopyAllPlanBtn planResult={planResult} />
+                  <DownloadPlanBtn planResult={planResult} period={planPeriod} />
+                </div>
               </div>
-              <p style={{fontSize:12,color:"#9a88b8",marginBottom:16}}>{planPeriod==="week"?"Неделя":"Месяц"} · {planResult.length} постов</p>
+              <div style={{marginBottom:16}} />
 
               <div style={{display:"flex",flexDirection:"column",gap:10}}>
                 {planResult.map((post,i)=>(
