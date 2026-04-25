@@ -412,6 +412,43 @@ export default function App() {
   useEffect(() => { localStorage.setItem("lia_niche", niche); }, [niche]);
   useEffect(() => { localStorage.setItem("lia_audience", audience); }, [audience]);
 
+  const [suggestingPillars, setSuggestingPillars] = useState(false);
+  const [suggestedPillars, setSuggestedPillars] = useState([]);
+
+  async function suggestPillars() {
+    if (!niche && !audience) { return; }
+    setSuggestingPillars(true);
+    const prompt = `Ты опытный контент-стратег. Предложи 4 смысловых блока (темы) для контента эксперта.
+
+Ниша: ${niche || "не указана"}
+Аудитория: ${audience || "не указана"}
+Тональность: ${tone}
+${toneOfVoice ? `Голос бренда / пример поста: ${toneOfVoice}` : ""}
+
+Смысловой блок — это широкая тема вокруг которой строится контент. По методу Pillar-Based Marketing: 3-4 блока × 4 угла = бесконечный поток идей.
+
+Требования:
+- Ровно 4 блока
+- Каждый блок 2-4 слова, конкретный и понятный
+- Релевантны нише и аудитории
+- Не повторяют друг друга по смыслу
+- На русском языке
+
+ТОЛЬКО валидный JSON: {"pillars":["блок 1","блок 2","блок 3","блок 4"]}`;
+
+    try {
+      const resp = await fetch("/api/claude", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:300, messages:[{role:"user",content:prompt}] }),
+      });
+      const data = await resp.json();
+      const text = data.content.map(b=>b.text||"").join("");
+      const parsed = JSON.parse(text.replace(/```json|```/g,"").trim());
+      setSuggestedPillars(parsed.pillars || []);
+    } catch(e) { console.error(e); }
+    setSuggestingPillars(false);
+  }
+
   function savePillar() {
     const p = pillarInput.trim();
     if (!p || pillars.length >= 4) return;
@@ -808,6 +845,54 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
               ))}
               {pillars.length===0&&<span style={{fontSize:12,color:"#5c4e7a",fontStyle:"italic"}}>Смысловые блоки не добавлены</span>}
             </div>
+            {/* AI suggest button */}
+            {pillars.length < 4 && (
+              <div style={{marginBottom:12}}>
+                <button onClick={suggestPillars} disabled={suggestingPillars||(!niche&&!audience)}
+                  style={{width:"100%",padding:"10px 14px",borderRadius:9,border:"1px dashed #362d52",background:"rgba(54,45,82,.05)",color:suggestingPillars?"#9a88b8":"#362d52",fontSize:13,fontWeight:600,cursor:(!niche&&!audience)?"not-allowed":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                  {suggestingPillars ? (
+                    <><div style={{width:14,height:14,border:"2px solid #d8d0e0",borderTopColor:"#362d52",borderRadius:"50%",animation:"sp .8s linear infinite"}} /> Подбираю блоки…</>
+                  ) : (
+                    <>✨ Предложить блоки автоматически</>
+                  )}
+                </button>
+                {!niche && !audience && <div style={{fontSize:11,color:"#9a88b8",marginTop:4,textAlign:"center"}}>Заполните нишу и аудиторию на шаге 1</div>}
+              </div>
+            )}
+
+            {/* Suggested pillars */}
+            {suggestedPillars.length > 0 && (
+              <div style={{marginBottom:14,padding:"12px 14px",background:"#f4f1ec",borderRadius:10,border:"1px solid #e8e0f0"}}>
+                <div style={{fontSize:11,color:"#5c4e7a",fontWeight:600,textTransform:"uppercase",letterSpacing:".06em",marginBottom:8}}>✨ Предложения AI — нажми чтобы добавить:</div>
+                <div style={{display:"flex",flexWrap:"wrap",gap:7}}>
+                  {suggestedPillars.map((p,i)=>{
+                    const already = pillars.includes(p);
+                    return (
+                      <button key={i} onClick={()=>{
+                        if (!already && pillars.length < 4) {
+                          const updated = [...pillars, p];
+                          setPillars(updated);
+                          localStorage.setItem("lia_pillars", JSON.stringify(updated));
+                          setSuggestedPillars(prev=>prev.filter((_,idx)=>idx!==i));
+                        }
+                      }} style={{padding:"7px 14px",borderRadius:20,border:`1px solid ${already?"#9a88b8":"#362d52"}`,background:already?"transparent":"#362d52",color:already?"#9a88b8":"#f4f1ec",fontSize:12,cursor:already||pillars.length>=4?"default":"pointer",fontWeight:600}}>
+                        {already?"✓ ":""}{p}
+                      </button>
+                    );
+                  })}
+                </div>
+                <button onClick={()=>{
+                  const toAdd = suggestedPillars.filter(p=>!pillars.includes(p)).slice(0, 4-pillars.length);
+                  const updated = [...pillars, ...toAdd];
+                  setPillars(updated);
+                  localStorage.setItem("lia_pillars", JSON.stringify(updated));
+                  setSuggestedPillars([]);
+                }} style={{marginTop:8,padding:"6px 12px",borderRadius:8,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:11,fontWeight:700,cursor:"pointer"}}>
+                  + Добавить все
+                </button>
+              </div>
+            )}
+
             {pillars.length<4&&(
               <div style={{display:"flex",gap:8}}>
                 <input style={{...inp,flex:1}} placeholder="Например: Психология отношений" value={pillarInput} onChange={e=>setPillarInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&savePillar()} />
