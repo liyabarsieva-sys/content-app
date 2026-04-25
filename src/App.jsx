@@ -880,49 +880,60 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
       <div style={{maxWidth:660,margin:"0 auto",padding:isMobile?"0 2px":"0 8px"}}>
 
         {/* Header */}
-        <div style={{textAlign:"center",padding:"18px 20px 16px",background:"#362d52",marginBottom:0}}>
-          <div style={{fontSize:10,letterSpacing:".2em",textTransform:"uppercase",color:"rgba(225,223,44,.8)",fontWeight:600,marginBottom:8}}>Content Intelligence</div>
-          <h1 style={{fontFamily:"Georgia,serif",fontSize:isMobile?"22px":"clamp(20px,5vw,34px)",color:"#f4f1ec",lineHeight:1.2,marginBottom:6}}>
-            Тема → <em>стратегия</em> → посты
-          </h1>
-          <p style={{fontSize:12,color:"#9a88b8",marginTop:6}}>Смысловые блоки · Стадия · Рубрика · CTA · Платформы</p>
-          <div style={{display:"flex",justifyContent:"center",gap:8,marginTop:14,flexWrap:"wrap",flexDirection:isMobile?"column":"row",alignItems:"center"}}>
-            <button onClick={startSordell} style={{padding:"10px 22px",borderRadius:10,border:`2px solid ${mode==="sordell"?"#362d52":"#9a88b8"}`,background:mode==="sordell"?"#f4f1ec":"#9a88b8",color:mode==="sordell"?"#362d52":"#f4f1ec",fontWeight:mode==="sordell"?700:600,fontSize:13,cursor:"pointer",fontFamily:"sans-serif"}}>
-              🎯 Найти темы
+        <div style={{background:"#362d52",marginBottom:0}}>
+          {/* Top bar: logo + auth */}
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 20px 0"}}>
+            <div>
+              <div style={{fontSize:9,letterSpacing:".2em",textTransform:"uppercase",color:"rgba(225,223,44,.8)",fontWeight:600}}>Content Intelligence</div>
+              <div style={{fontFamily:"Georgia,serif",fontSize:isMobile?"18px":"22px",color:"#f4f1ec",lineHeight:1.2,fontStyle:"italic"}}>
+                Тема → стратегия → посты
+              </div>
+            </div>
+            {/* Auth top right */}
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              {user ? (
+                <>
+                  <button onClick={()=>setShowHistory(!showHistory)} style={{padding:"6px 12px",borderRadius:8,border:"1px solid rgba(244,241,236,.2)",background:"transparent",color:"#f4f1ec",fontSize:11,cursor:"pointer",whiteSpace:"nowrap"}}>
+                    📋 {!isMobile && `История (${history.length})`}{isMobile && history.length}
+                  </button>
+                  <button onClick={signOut} title={`Выйти (${user.email})`} style={{padding:"6px 12px",borderRadius:8,border:"1px solid rgba(244,241,236,.2)",background:"transparent",color:"rgba(244,241,236,.7)",fontSize:11,cursor:"pointer",whiteSpace:"nowrap"}}>
+                    {isMobile ? "↩" : `↩ ${user.email?.split("@")[0]}`}
+                  </button>
+                </>
+              ) : (
+                <button onClick={()=>setShowAuth(true)} style={{padding:"7px 14px",borderRadius:8,border:"none",background:"#e1df2c",color:"#362d52",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>
+                  Войти
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Row 1: Смысловые блоки · Найти темы · Контент-план */}
+          <div style={{display:"flex",gap:6,padding:"12px 20px 0",justifyContent:"center",flexWrap:"wrap"}}>
+            <button onClick={()=>setShowPillarSetup(!showPillarSetup)}
+              style={{padding:"8px 14px",borderRadius:9,border:`1px solid ${showPillarSetup?"#e1df2c":"rgba(244,241,236,.25)"}`,background:showPillarSetup?"rgba(225,223,44,.15)":"transparent",color:showPillarSetup?"#e1df2c":"rgba(244,241,236,.8)",fontSize:12,cursor:"pointer",fontWeight:showPillarSetup?700:400}}>
+              📌 {pillars.length ? `Блоки (${pillars.length})` : "Блоки"}
             </button>
-            {sordellResult && mode!=="sordell" && (
-              <button onClick={()=>{setMode("sordell");setSordellStep(13);}} style={{padding:"10px 22px",borderRadius:10,border:"2px solid #e1df2c",background:"transparent",color:"#f4f1ec",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"sans-serif"}}>
-                ✨ Мои темы ({sordellResult.length})
-              </button>
-            )}
-            <button onClick={startPlan} style={{padding:"10px 22px",borderRadius:10,border:`2px solid ${mode==="plan"?"#362d52":"#9a88b8"}`,background:mode==="plan"?"#f4f1ec":"#9a88b8",color:mode==="plan"?"#362d52":"#f4f1ec",fontWeight:mode==="plan"?700:600,fontSize:13,cursor:"pointer",fontFamily:"sans-serif"}}>
+            <button onClick={startSordell}
+              style={{padding:"8px 14px",borderRadius:9,border:`1px solid ${mode==="sordell"?"#e1df2c":"rgba(244,241,236,.25)"}`,background:mode==="sordell"?"rgba(225,223,44,.15)":"transparent",color:mode==="sordell"?"#e1df2c":"rgba(244,241,236,.8)",fontSize:12,cursor:"pointer",fontWeight:mode==="sordell"?700:400}}>
+              🎯 Найти темы{sordellResult?` (${sordellResult.length})`:""}
+            </button>
+            <button onClick={startPlan}
+              style={{padding:"8px 14px",borderRadius:9,border:`1px solid ${mode==="plan"?"#e1df2c":"rgba(244,241,236,.25)"}`,background:mode==="plan"?"rgba(225,223,44,.15)":"transparent",color:mode==="plan"?"#e1df2c":"rgba(244,241,236,.8)",fontSize:12,cursor:"pointer",fontWeight:mode==="plan"?700:400}}>
               📅 Контент-план
             </button>
-            <button onClick={startPost} style={{padding:"10px 22px",borderRadius:10,border:`2px solid ${mode==="post"?"#362d52":"#9a88b8"}`,background:mode==="post"?"#f4f1ec":"#9a88b8",color:mode==="post"?"#362d52":"#f4f1ec",fontWeight:mode==="post"?700:600,fontSize:13,cursor:"pointer",fontFamily:"sans-serif"}}>
+          </div>
+
+          {/* Row 2: Создать пост · Создать кейс */}
+          <div style={{display:"flex",gap:8,padding:"10px 20px 16px",justifyContent:"center"}}>
+            <button onClick={startPost}
+              style={{padding:"10px 24px",borderRadius:10,border:"none",background:mode==="post"?"#f4f1ec":"#9a88b8",color:mode==="post"?"#362d52":"#f4f1ec",fontSize:13,fontWeight:700,cursor:"pointer",flex:isMobile?1:0}}>
               ✦ Создать пост
             </button>
-            <button onClick={startCase} style={{padding:"10px 22px",borderRadius:10,border:`2px solid ${mode==="case"?"#362d52":"#9a88b8"}`,background:mode==="case"?"#f4f1ec":"#9a88b8",color:mode==="case"?"#362d52":"#f4f1ec",fontWeight:mode==="case"?700:600,fontSize:13,cursor:"pointer",fontFamily:"sans-serif"}}>
+            <button onClick={startCase}
+              style={{padding:"10px 24px",borderRadius:10,border:"none",background:mode==="case"?"#f4f1ec":"#9a88b8",color:mode==="case"?"#362d52":"#f4f1ec",fontSize:13,fontWeight:700,cursor:"pointer",flex:isMobile?1:0}}>
               ⭐ Создать кейс
             </button>
-          </div>
-          <div style={{display:"flex",justifyContent:"center",gap:16,marginTop:10,flexWrap:"wrap"}}>
-            <button onClick={()=>setShowPillarSetup(!showPillarSetup)} style={{fontSize:11,color:"#f4f1ec",background:"transparent",border:"none",cursor:"pointer",textDecoration:"underline",opacity:.85}}>
-              {pillars.length ? `Смысловые блоки (${pillars.length})` : "Настроить блоки"}
-            </button>
-            {user ? (
-              <>
-                <button onClick={()=>setShowHistory(!showHistory)} style={{fontSize:11,color:"#f4f1ec",background:"transparent",border:"none",cursor:"pointer",textDecoration:"underline",opacity:.85}}>
-                  📋 История ({history.length})
-                </button>
-                <button onClick={signOut} style={{fontSize:11,color:"rgba(244,241,236,.6)",background:"transparent",border:"none",cursor:"pointer",textDecoration:"underline"}}>
-                  Выйти ({user.email?.split("@")[0]})
-                </button>
-              </>
-            ) : (
-              <button onClick={()=>setShowAuth(true)} style={{fontSize:11,color:"#e1df2c",background:"transparent",border:"none",cursor:"pointer",textDecoration:"underline",fontWeight:600}}>
-                Войти / Регистрация
-              </button>
-            )}
           </div>
         </div>
 
@@ -1748,6 +1759,19 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                 <CopyBtn text={result.headline+"\n\n"+result[activeTab]} />
               </div>
             </div>
+
+            {/* Save prompt for non-auth users */}
+            {!user && (
+              <div style={{padding:"12px 16px",background:"#362d52",borderRadius:10,marginBottom:12,display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8}}>
+                <div>
+                  <div style={{fontSize:12,fontWeight:700,color:"#e1df2c",marginBottom:2}}>💾 Этот пост не сохранён</div>
+                  <div style={{fontSize:11,color:"rgba(244,241,236,.7)"}}>Войдите чтобы сохранять все генерации и возвращаться к ним</div>
+                </div>
+                <button onClick={()=>setShowAuth(true)} style={{padding:"8px 16px",borderRadius:8,border:"none",background:"#e1df2c",color:"#362d52",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>
+                  Войти →
+                </button>
+              </div>
+            )}
 
             <div style={{display:"flex",gap:8,marginBottom:8,flexDirection:isMobile?"column":"row"}}>
               <button onClick={()=>{setResult(null);generate();}} style={{flex:1,padding:12,borderRadius:10,border:"1px solid #362d52",background:"rgba(54,45,82,.08)",color:S.accent,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"sans-serif",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
