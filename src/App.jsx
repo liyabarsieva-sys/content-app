@@ -738,7 +738,7 @@ ${qa}
       const resp = await fetch("/api/claude", {
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:5000, messages:[{role:"user",content:prompt}] }),
+        body:JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:totalPosts > 20 ? 8000 : 5000, messages:[{role:"user",content:prompt}] }),
       });
       const data = await resp.json();
       if (data.error) throw new Error(data.error.message);
@@ -1360,6 +1360,11 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                         {planPeriod==="month" && <span> · в месяц: <strong style={{color:"#362d52"}}>{monthTotal}</strong></span>}
                         <span style={{color:"#9a88b8"}}> · рекомендуется: <strong>{recTotal}</strong> в нед</span>
                       </p>
+                      {(planPeriod==="month"?monthTotal:weekTotal) > 30 && (
+                        <div style={{marginTop:8,padding:"8px 12px",background:"rgba(225,100,50,.08)",border:"1px solid rgba(225,100,50,.25)",borderRadius:9,fontSize:11,color:"#c46a4a"}}>
+                          ⚠️ Много постов ({planPeriod==="month"?monthTotal:weekTotal}) — генерация может занять больше времени. Рекомендуем не более 30 постов за раз.
+                        </div>
+                      )}
                       {isLow && (
                         <div style={{marginTop:8,padding:"10px 14px",background:"rgba(225,100,50,.08)",border:"1px solid rgba(225,100,50,.25)",borderRadius:9}}>
                           <div style={{fontSize:12,color:"#c46a4a",fontWeight:600,marginBottom:3}}>⚠️ Постов меньше рекомендуемого</div>
@@ -1385,13 +1390,13 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                   {label:"Выбирает решение",pct:0.10},
                   {label:"Готов к покупке",pct:0.05},
                 ].map((s,i)=>{
-                  const weekTotal = platforms.reduce((sum,pid)=>sum+(planPlatformFreqs[pid]??PLATFORM_FREQ_HINTS[pid]?.rec??3),0);
-                  const total = planPeriod==="week"?weekTotal:weekTotal*4;
-                  const pcts = [0.40,0.25,0.20,0.10,0.05];
-                  let counts = pcts.map(p=>Math.round(total*p));
-                  const diff = total - counts.reduce((a,b)=>a+b,0);
-                  counts[0] = Math.max(0, counts[0] + diff);
-                  const n = counts[i];
+                  const weekTotalDisp = platforms.reduce((sum,pid)=>sum+(planPlatformFreqs[pid]??PLATFORM_FREQ_HINTS[pid]?.rec??3),0);
+                  const totalDisp = planPeriod==="week"?weekTotalDisp:weekTotalDisp*4;
+                  const pctsDisp = [0.40,0.25,0.20,0.10,0.05];
+                  let countsDisp = pctsDisp.map(p=>Math.round(totalDisp*p));
+                  const diffDisp = totalDisp - countsDisp.reduce((a,b)=>a+b,0);
+                  countsDisp[0] = Math.max(0, countsDisp[0] + diffDisp);
+                  const n = countsDisp[i];
                   return (
                     <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5,fontSize:12,color:"#f4f1ec"}}>
                       <span>{s.label}</span>
