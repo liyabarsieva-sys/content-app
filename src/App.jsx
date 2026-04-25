@@ -429,6 +429,7 @@ export default function App() {
   const [authPassword, setAuthPassword] = useState("");
   const [authError, setAuthError] = useState("");
   const [authSuccess, setAuthSuccess] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   // History
   const [history, setHistory] = useState([]);
@@ -1038,9 +1039,15 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
               </div>
               <div style={{marginBottom:16}}>
                 <label style={{fontSize:11,color:"#5c4e7a",fontWeight:600,textTransform:"uppercase",letterSpacing:".06em"}}>Пароль</label>
-                <input type="password" value={authPassword} onChange={e=>setAuthPassword(e.target.value)}
-                  style={{width:"100%",marginTop:4,padding:"10px 14px",borderRadius:8,border:"1px solid #d8d0e0",fontSize:13,color:"#362d52",outline:"none",boxSizing:"border-box"}}
-                  placeholder="минимум 6 символов" onKeyDown={e=>e.key==="Enter"&&(authMode==="login"?signIn():signUp())} />
+                <div style={{position:"relative",marginTop:4}}>
+                  <input type={showPassword?"text":"password"} value={authPassword} onChange={e=>setAuthPassword(e.target.value)}
+                    style={{width:"100%",padding:"10px 40px 10px 14px",borderRadius:8,border:"1px solid #d8d0e0",fontSize:13,color:"#362d52",outline:"none",boxSizing:"border-box"}}
+                    placeholder="минимум 6 символов" onKeyDown={e=>e.key==="Enter"&&(authMode==="login"?signIn():signUp())} />
+                  <button onClick={()=>setShowPassword(p=>!p)} type="button"
+                    style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"transparent",border:"none",cursor:"pointer",color:"#9a88b8",fontSize:16,padding:4,lineHeight:1}}>
+                    {showPassword ? "🙈" : "👁"}
+                  </button>
+                </div>
               </div>
               {authError && <p style={{color:"#e05c5c",fontSize:12,marginBottom:10}}>{authError}</p>}
               {authSuccess && <p style={{color:"#4a9a6a",fontSize:12,marginBottom:10}}>{authSuccess}</p>}
