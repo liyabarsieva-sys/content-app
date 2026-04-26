@@ -319,6 +319,103 @@ function StepNum({ n }) {
   return <span style={{ width:26, height:26, background:S.accent, color:"#f4f1ec", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:700, flexShrink:0 }}>{n}</span>;
 }
 
+function HistoryModal({ item, onClose, onUsePost, onUsePlan }) {
+  const [copiedIdx, setCopiedIdx] = React.useState(null);
+  if (!item) return null;
+  const isPlan = item.type === "plan";
+  const isPost = item.type === "post";
+
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.6)",zIndex:2000,display:"flex",alignItems:"flex-start",justifyContent:"center",padding:"20px",overflowY:"auto"}}
+      onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div style={{background:"#fff",borderRadius:16,padding:24,maxWidth:640,width:"100%",position:"relative",marginTop:20,marginBottom:20}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
+          <div>
+            <div style={{fontFamily:"'Cormorant Garamond', serif",fontSize:20,color:"#362d52",fontWeight:600}}>
+              {isPlan?"📅 Контент-план":isPost?"✦ Пост":"⭐ Кейс"}
+            </div>
+            <div style={{fontSize:11,color:"#9a88b8",marginTop:2}}>
+              {new Date(item.created_at).toLocaleDateString("ru",{day:"numeric",month:"long",year:"numeric"})}
+            </div>
+          </div>
+          <button onClick={onClose} style={{background:"transparent",border:"none",fontSize:24,cursor:"pointer",color:"#9a88b8",lineHeight:1}}>×</button>
+        </div>
+
+        {/* POST VIEW */}
+        {isPost && item.result && (
+          <div>
+            <div style={{padding:"14px 16px",background:"#362d52",borderRadius:10,marginBottom:14}}>
+              <div style={{fontSize:10,color:"rgba(244,241,236,.6)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:4}}>Заголовок</div>
+              <div style={{fontSize:16,color:"#f4f1ec",fontWeight:600,fontFamily:"'Cormorant Garamond', serif"}}>{item.result.headline}</div>
+              {item.result.hook && <>
+                <div style={{fontSize:10,color:"rgba(244,241,236,.6)",textTransform:"uppercase",letterSpacing:".06em",marginTop:10,marginBottom:4}}>Хук</div>
+                <div style={{fontSize:13,color:"rgba(244,241,236,.85)",fontStyle:"italic"}}>{item.result.hook}</div>
+              </>}
+            </div>
+            {["telegram","vk","facebook","threads","instagram","zen","linkedin","yt_shorts","yt_long"].map(pid=>{
+              if (!item.result[pid]) return null;
+              const plat = {telegram:"✈️ Telegram",vk:"🔵 ВКонтакте",facebook:"📘 Facebook",threads:"◎ Threads",instagram:"📸 Instagram",zen:"🟡 Дзен",linkedin:"💼 LinkedIn",yt_shorts:"▶️ Shorts",yt_long:"🎬 YouTube"}[pid];
+              return (
+                <div key={pid} style={{marginBottom:12,border:"1px solid #e8e0f0",borderRadius:10,overflow:"hidden"}}>
+                  <div style={{padding:"8px 14px",background:"#f4f1ec",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                    <span style={{fontSize:13,fontWeight:600,color:"#362d52"}}>{plat}</span>
+                    <button onClick={()=>{navigator.clipboard.writeText(item.result[pid]);setCopiedIdx(pid);setTimeout(()=>setCopiedIdx(null),1500);}}
+                      style={{padding:"4px 10px",borderRadius:6,border:"1px solid #d8d0e0",background:"#fff",fontSize:11,color:copiedIdx===pid?"#4a9a6a":"#5c4e7a",cursor:"pointer"}}>
+                      {copiedIdx===pid?"✓":"Скопировать"}
+                    </button>
+                  </div>
+                  <div style={{padding:"12px 14px",fontSize:13,lineHeight:1.8,color:"#362d52",whiteSpace:"pre-wrap"}}>{item.result[pid]}</div>
+                </div>
+              );
+            })}
+            <button onClick={()=>{onUsePost(item.result, item.topic);onClose();}}
+              style={{width:"100%",padding:12,borderRadius:10,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:13,fontWeight:700,cursor:"pointer",marginTop:4}}>
+              ✦ Открыть в редакторе
+            </button>
+          </div>
+        )}
+
+        {/* PLAN VIEW */}
+        {isPlan && Array.isArray(item.result) && (
+          <div>
+            <div style={{display:"flex",gap:8,marginBottom:14}}>
+              <button onClick={()=>{
+                const text = item.result.map(p=>`${p.day} · ${p.platform||""}
+Тема: ${p.topic}
+Стадия: ${p.stage||""} · ${p.sordell||""}
+Функция: ${p.function||""}`).join("\n\n---\n\n");
+                navigator.clipboard.writeText(text);setCopiedIdx("all");setTimeout(()=>setCopiedIdx(null),2000);
+              }} style={{flex:1,padding:"8px 14px",borderRadius:8,border:"1px solid #362d52",background:"transparent",color:"#362d52",fontSize:12,fontWeight:600,cursor:"pointer"}}>
+                {copiedIdx==="all"?"✓ Скопировано":"📋 Копировать всё"}
+              </button>
+              <button onClick={()=>{onUsePlan(item);onClose();}}
+                style={{flex:1,padding:"8px 14px",borderRadius:8,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                📅 Открыть план
+              </button>
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:8,maxHeight:"60vh",overflowY:"auto"}}>
+              {item.result.map((post,i)=>(
+                <div key={i} style={{padding:"10px 14px",background:"#f4f1ec",borderRadius:9,border:"1px solid #e8e0f0"}}>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4,flexWrap:"wrap",gap:4}}>
+                    <span style={{fontSize:10,fontWeight:700,color:"#362d52",textTransform:"uppercase"}}>{post.day}</span>
+                    {post.function && <span style={{fontSize:10,background:"#e1df2c",color:"#362d52",padding:"1px 8px",borderRadius:6,fontWeight:700}}>{post.function}</span>}
+                  </div>
+                  <div style={{fontSize:13,fontWeight:600,color:"#362d52",marginBottom:4,lineHeight:1.4}}>{post.topic}</div>
+                  <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+                    {post.stage && <span style={{fontSize:10,background:"rgba(54,45,82,.08)",color:"#5c4e7a",padding:"1px 7px",borderRadius:5}}>👥 {post.stage}</span>}
+                    {post.sordell && <span style={{fontSize:10,background:"rgba(54,45,82,.08)",color:"#5c4e7a",padding:"1px 7px",borderRadius:5}}>{post.sordell}</span>}
+                    {post.block && <span style={{fontSize:10,background:"rgba(54,45,82,.08)",color:"#5c4e7a",padding:"1px 7px",borderRadius:5}}>📌 {post.block}</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function SordellCard({ t, onCreatePost }) {
   const [copied, setCopied] = React.useState(false);
   return (
@@ -525,6 +622,7 @@ export default function App() {
   // History
   const [history, setHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [selectedHistory, setSelectedHistory] = useState(null);
   const [planProgress, setPlanProgress] = useState("");
 
   const [suggestingPillars, setSuggestingPillars] = useState(false);
@@ -1180,6 +1278,16 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
           </Card>
         )}
 
+        {/* HISTORY MODAL */}
+        {selectedHistory && (
+          <HistoryModal
+            item={selectedHistory}
+            onClose={()=>setSelectedHistory(null)}
+            onUsePost={(result, topic)=>{setResult(result);setTopic(topic||"");setStep(5);setMode("post");setShowHistory(false);}}
+            onUsePlan={(item)=>{setPlanResult(item.result);setMode("plan");setStep(5);setShowHistory(false);}}
+          />
+        )}
+
         {/* AUTH MODAL */}
         {showAuth && (
           <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.5)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
@@ -1245,19 +1353,15 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                     </div>
                     <div style={{fontSize:13,fontWeight:600,color:"#362d52",marginBottom:4,lineHeight:1.3}}>{h.topic || "—"}</div>
                     {h.type==="post" && h.result?.headline && (
-                      <div style={{fontSize:11,color:"#5c4e7a",fontStyle:"italic"}}>{h.result.headline}</div>
+                      <div style={{fontSize:11,color:"#5c4e7a",fontStyle:"italic",marginBottom:4}}>{h.result.headline}</div>
                     )}
-                    {h.type==="post" && (
-                      <button onClick={()=>{
-                        setResult(h.result);
-                        setTopic(h.topic||"");
-                        setStep(5);
-                        setMode("post");
-                        setShowHistory(false);
-                      }} style={{marginTop:8,padding:"5px 12px",borderRadius:7,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:11,fontWeight:700,cursor:"pointer"}}>
-                        Открыть →
-                      </button>
+                    {h.type==="plan" && Array.isArray(h.result) && (
+                      <div style={{fontSize:11,color:"#9a88b8",marginBottom:4}}>{h.result.length} постов</div>
                     )}
+                    <button onClick={()=>setSelectedHistory(h)}
+                      style={{marginTop:4,padding:"5px 14px",borderRadius:7,border:"1px solid #362d52",background:"transparent",color:"#362d52",fontSize:11,fontWeight:600,cursor:"pointer"}}>
+                      👁 Просмотреть →
+                    </button>
                   </div>
                 ))}
               </div>
