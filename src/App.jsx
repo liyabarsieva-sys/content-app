@@ -376,7 +376,7 @@ function HistoryModal({ item, onClose, onUsePost, onUsePlan }) {
         )}
 
         {/* PLAN VIEW */}
-        {isPlan && Array.isArray(item.result) && (
+        {isPlan && (item.result?.posts || Array.isArray(item.result)) && (
           <div>
             <div style={{display:"flex",gap:8,marginBottom:14}}>
               <button onClick={()=>{
@@ -394,7 +394,7 @@ function HistoryModal({ item, onClose, onUsePost, onUsePlan }) {
               </button>
             </div>
             <div style={{display:"flex",flexDirection:"column",gap:8,maxHeight:"60vh",overflowY:"auto"}}>
-              {item.result.map((post,i)=>(
+              {(item.result?.posts || item.result || []).map((post,i)=>(
                 <div key={i} style={{padding:"10px 14px",background:"#f4f1ec",borderRadius:9,border:"1px solid #e8e0f0"}}>
                   <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4,flexWrap:"wrap",gap:4}}>
                     <span style={{fontSize:10,fontWeight:700,color:"#362d52",textTransform:"uppercase"}}>{post.day}</span>
@@ -995,7 +995,7 @@ ${sordellCtx ? "Для личных тем используй ТОЛЬКО ре�
       setPlanResult(allPosts);
       setStep(5);
       setPlanProgress("");
-      saveGeneration("plan", `План ${planPeriod==="week"?"неделя":planPeriod==="month"?"месяц":"квартал"}`, allPosts, { planPeriod, platforms });
+      saveGeneration("plan", `План ${planPeriod==="week"?"неделя":planPeriod==="month"?"месяц":"квартал"}`, { posts: allPosts }, { planPeriod, platforms });
     } catch(e) {
       setError("Ошибка: " + e.message);
       setPlanProgress("");
@@ -1284,7 +1284,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
             item={selectedHistory}
             onClose={()=>setSelectedHistory(null)}
             onUsePost={(result, topic)=>{setResult(result);setTopic(topic||"");setStep(5);setMode("post");setShowHistory(false);}}
-            onUsePlan={(item)=>{setPlanResult(item.result);setMode("plan");setStep(5);setShowHistory(false);}}
+            onUsePlan={(item)=>{setPlanResult(item.result?.posts||item.result||[]);setMode("plan");setStep(5);setShowHistory(false);}}
           />
         )}
 
@@ -1355,8 +1355,8 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                     {h.type==="post" && h.result?.headline && (
                       <div style={{fontSize:11,color:"#5c4e7a",fontStyle:"italic",marginBottom:4}}>{h.result.headline}</div>
                     )}
-                    {h.type==="plan" && Array.isArray(h.result) && (
-                      <div style={{fontSize:11,color:"#9a88b8",marginBottom:4}}>{h.result.length} постов</div>
+                    {h.type==="plan" && h.result && (
+                      <div style={{fontSize:11,color:"#9a88b8",marginBottom:4}}>{(h.result?.posts||h.result||[]).length} постов</div>
                     )}
                     <button onClick={()=>setSelectedHistory(h)}
                       style={{marginTop:4,padding:"5px 14px",borderRadius:7,border:"1px solid #362d52",background:"transparent",color:"#362d52",fontSize:11,fontWeight:600,cursor:"pointer"}}>
@@ -2088,9 +2088,14 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                 <span>{activePlatform?.icon} {activePlatform?.label}</span>
                 <span style={{fontSize:11,color:"#5c4e7a",fontWeight:400}}>{(result[activeTab]||"").split(/\s+/).filter(Boolean).length} слов</span>
               </div>
-              <div style={{padding:18,fontSize:14,lineHeight:1.85,color:"#362d52",whiteSpace:"pre-wrap"}}>{result[activeTab]||"—"}</div>
+              <div style={{padding:18}}>
+                {result.headline && (
+                  <div style={{fontSize:18,fontWeight:700,color:"#362d52",fontFamily:"'Cormorant Garamond', serif",lineHeight:1.3,marginBottom:14}}>{result.headline}</div>
+                )}
+                <div style={{fontSize:14,lineHeight:1.85,color:"#362d52",whiteSpace:"pre-wrap"}}>{result[activeTab]||"—"}</div>
+              </div>
               <div style={{padding:"10px 18px",borderTop:"1px solid #e8e0f0",display:"flex",justifyContent:"flex-end"}}>
-                <CopyBtn text={result.headline+"\n\n"+result[activeTab]} />
+<CopyBtn text={(result.headline?result.headline+"\n\n":"")+result[activeTab]} />
               </div>
             </div>
 
