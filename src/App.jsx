@@ -589,10 +589,15 @@ export default function App() {
   const [caseAfter, setCaseAfter] = useState("");
   const [caseResult, setCaseResult] = useState("");
   const [caseClient, setCaseClient] = useState("");
+  const [audiencePains, setAudiencePains] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("lia_audience_pains") || "[]"); } catch { return []; }
+  });
+  const [suggestingPains, setSuggestingPains] = useState(false);
   const [brandQ1, setBrandQ1] = useState(() => localStorage.getItem("lia_brand_q1") || "");
   const [brandQ2, setBrandQ2] = useState(() => localStorage.getItem("lia_brand_q2") || "");
   const [planPeriod, setPlanPeriod] = useState(() => localStorage.getItem("lia_plan_period") || "week");
   const [planMainFreq, setPlanMainFreq] = useState(() => parseInt(localStorage.getItem("lia_plan_freq") || "3"));
+  const [planGeneratedAt, setPlanGeneratedAt] = useState(() => localStorage.getItem("lia_plan_generated_at") || "");
   const [planResult, setPlanResult] = useState(() => {
     try { const s = localStorage.getItem("lia_plan_result"); return s ? JSON.parse(s) : null; } catch { return null; }
   });
@@ -632,10 +637,12 @@ export default function App() {
   useEffect(() => { localStorage.setItem("lia_plan_period", planPeriod); }, [planPeriod]);
   useEffect(() => { localStorage.setItem("lia_personal_stories", JSON.stringify(personalStories)); }, [personalStories]);
   useEffect(() => { localStorage.setItem("lia_brand_q1", brandQ1); }, [brandQ1]);
+  useEffect(() => { localStorage.setItem("lia_audience_pains", JSON.stringify(audiencePains)); }, [audiencePains]);
   useEffect(() => { localStorage.setItem("lia_personal_stories", JSON.stringify(personalStories)); }, [personalStories]);
   useEffect(() => { localStorage.setItem("lia_brand_q2", brandQ2); }, [brandQ2]);
   useEffect(() => { localStorage.setItem("lia_plan_freq", String(planMainFreq)); }, [planMainFreq]);
   useEffect(() => { if (planResult) localStorage.setItem("lia_plan_result", JSON.stringify(planResult)); }, [planResult]);
+  useEffect(() => { if (planGeneratedAt) localStorage.setItem("lia_plan_generated_at", planGeneratedAt); }, [planGeneratedAt]);
   useEffect(() => { localStorage.setItem("lia_plan_freqs", JSON.stringify(planPlatformFreqs)); }, [planPlatformFreqs]);
   useEffect(() => { localStorage.setItem("lia_niche", niche); }, [niche]);
   useEffect(() => { localStorage.setItem("lia_audience", audience); }, [audience]);
@@ -660,6 +667,33 @@ export default function App() {
 
   const [suggestingPillars, setSuggestingPillars] = useState(false);
   const [suggestedPillars, setSuggestedPillars] = useState([]);
+
+  async function suggestPains() {
+    if (!niche && !audience) return;
+    setSuggestingPains(true);
+    const prompt = `Ты контент-стратег. Определи 6-7 главных болей целевой аудитории эксперта.
+
+Ниша: ${niche || "-"}
+Аудитория: ${audience || "-"}
+
+Боли — это конкретные проблемы, страхи, разочарования, барьеры которые аудитория переживает прямо сейчас.
+Каждая боль: 1 конкретное предложение, от первого лица аудитории.
+Например: "Я знаю что надо делать, но никак не могу начать" или "Боюсь что вложу деньги и ничего не изменится".
+
+ТОЛЬКО валидный JSON: {"pains":["боль 1","боль 2","боль 3","боль 4","боль 5","боль 6"]}`;
+
+    try {
+      const resp = await fetch("/api/claude", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:500, messages:[{role:"user",content:prompt}] }),
+      });
+      const data = await resp.json();
+      const text = data.content.map(b=>b.text||"").join("");
+      const parsed = JSON.parse(text.replace(/```json|```/g,"").trim());
+      setAudiencePains(parsed.pains || []);
+    } catch(e) { console.error(e); }
+    setSuggestingPains(false);
+  }
 
   async function suggestPillars() {
     if (!niche && !audience) { return; }
@@ -774,7 +808,16 @@ ${toneOfVoice ? `Голос бренда / пример поста: ${toneOfVoic
   }
 
   function startCase() { setMode("case"); setStep(1); setResult(null); }
-  function startPlan() { setMode("plan"); setStep(1); setPlanResult(null); setResult(null); }
+  function startPlan() {
+    setMode("plan");
+    setResult(null);
+    if (planResult && planResult.length > 0) {
+      setStep(5); // show existing plan directly
+    } else {
+      setStep(1); // start fresh
+    }
+  }
+  function startNewPlan() { setMode("plan"); setStep(1); setPlanResult(null); setResult(null); }
   function startSordell() {
     if (sordellResult) {
       // Already have results - show them directly
@@ -1026,6 +1069,7 @@ ${sordellCtx ? "Для личных тем используй ТОЛЬКО ре�
       }
 
       setPlanResult(allPosts);
+      setPlanGeneratedAt(new Date().toLocaleString("ru", {day:"numeric",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit"}));
       setStep(5);
       setPlanProgress("");
       saveGeneration("plan", `План ${planPeriod==="week"?"неделя":planPeriod==="month"?"месяц":"квартал"}`, { posts: allPosts }, { planPeriod, platforms });
@@ -1066,6 +1110,7 @@ ${sordellCtx ? "Для личных тем используй ТОЛЬКО ре�
 Эксперт/бренд: ${expert || "-"}
 Ниша: ${niche || "-"}
 Аудитория: ${audience || "-"}
+Боли аудитории: ${audiencePains.length > 0 ? audiencePains.map((p,i)=>`${i+1}. ${p}`).join("; ") : "не указаны"}
 Тональность: ${tone}
 ${tovSection}
 Тема: ${isCase ? (pain || "история успеха клиента") : topic}
@@ -1420,9 +1465,44 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                 </div>
               </div>
               <div style={{marginBottom:14}}>
-                <Label text="Целевая аудитория" hint="Возраст, пол, город, интересы, боли" />
+                <Label text="Целевая аудитория" hint="Чем подробнее — тем точнее контент. Включи: возраст и пол · профессия или статус · где живёт · главная проблема которую решает твой продукт · что пробовала раньше · чего боится · о чём мечтает. Пример: Женщины 35-50, владелицы малого бизнеса, Тбилиси — хотят системный контент, пробовали SMM-агентства, разочарованы, боятся потратить деньги впустую" />
                 <textarea style={inpAuto} rows={1} placeholder="Женщины 35-50, г. Тбилиси, владелицы малого бизнеса" value={audience} onChange={e=>{setAudience(e.target.value);e.target.style.height="auto";e.target.style.height=e.target.scrollHeight+"px";}} />
               </div>
+              {/* Audience Pains */}
+              <div style={{marginBottom:14}}>
+                <Label text="Боли аудитории" hint="Конкретные проблемы и страхи которые переживает аудитория прямо сейчас" />
+
+                {/* Suggest button */}
+                <button onClick={suggestPains} disabled={suggestingPains||(!niche&&!audience)}
+                  style={{width:"100%",padding:"10px 14px",borderRadius:9,border:"1px dashed #362d52",background:"rgba(54,45,82,.04)",color:suggestingPains?"#9a88b8":"#362d52",fontSize:12,fontWeight:600,cursor:(!niche&&!audience)?"not-allowed":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:audiencePains.length?10:0}}>
+                  {suggestingPains
+                    ? <><div style={{width:13,height:13,border:"2px solid #d8d0e0",borderTopColor:"#362d52",borderRadius:"50%",animation:"sp .8s linear infinite"}} /> Определяю боли…</>
+                    : <>✨ {audiencePains.length?"Обновить боли":"Определить боли аудитории"}</>
+                  }
+                </button>
+                {!niche && !audience && <div style={{fontSize:10,color:"#9a88b8",marginTop:4,textAlign:"center"}}>Заполните нишу и аудиторию выше</div>}
+
+                {/* Pain chips */}
+                {audiencePains.length > 0 && (
+                  <div style={{display:"flex",flexDirection:"column",gap:6,marginTop:6}}>
+                    {audiencePains.map((pain,i)=>(
+                      <div key={i} style={{display:"flex",alignItems:"flex-start",gap:8,padding:"8px 12px",background:"#f4f1ec",borderRadius:8,border:"1px solid #e8e0f0"}}>
+                        <span style={{fontSize:12,color:"#9a88b8",marginTop:1,flexShrink:0}}>{i+1}.</span>
+                        <span style={{fontSize:12,color:"#362d52",flex:1,lineHeight:1.5}}>{pain}</span>
+                        <button onClick={()=>setAudiencePains(prev=>prev.filter((_,idx)=>idx!==i))}
+                          style={{background:"transparent",border:"none",color:"#c4b8d8",cursor:"pointer",fontSize:15,padding:0,lineHeight:1,flexShrink:0}}>×</button>
+                      </div>
+                    ))}
+                    <button onClick={()=>{
+                      const custom = window.prompt("Добавить свою боль:");
+                      if (custom?.trim()) setAudiencePains(prev=>[...prev, custom.trim()]);
+                    }} style={{padding:"7px 12px",borderRadius:8,border:"1px dashed #d8d0e0",background:"transparent",color:"#5c4e7a",fontSize:11,cursor:"pointer",textAlign:"center"}}>
+                      + Добавить свою боль
+                    </button>
+                  </div>
+                )}
+              </div>
+
               <div style={{marginBottom:14}}>
                 <Label text="Тональность" />
                 <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
@@ -1783,8 +1863,9 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                       setPillar(post.block||"");
                       setStage(AWARENESS_STAGES.find(s=>s.label===post.stage||s.id===post.stage)?.id||"");
                       setSordellQuad(SORDELL_MATRIX.find(q=>post.sordell?.includes(q.label)||post.sordell?.includes(q.id))?.id||"");
+                      setRubric("");
                       setMode("post");
-                      setStep(3);
+                      setStep(2);
                       setResult(null);
                     }}
                   />
@@ -1793,8 +1874,8 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
             </Card>
 
             <div style={{display:"flex",gap:8,marginTop:8}}>
-              <button onClick={()=>{setPlanResult(null);setStep(2);}} style={{flex:1,padding:12,borderRadius:10,border:"1px solid #d8d0e0",background:"transparent",color:"#5c4e7a",fontSize:13,cursor:"pointer"}}>← Изменить</button>
-              <button onClick={()=>{setPlanResult(null);generatePlan();}} style={{flex:1,padding:12,borderRadius:10,border:"1px solid #362d52",background:"transparent",color:"#362d52",fontSize:13,fontWeight:700,cursor:"pointer"}}>↻ Пересоздать план</button>
+              <button onClick={()=>setStep(1)} style={{flex:1,padding:12,borderRadius:10,border:"1px solid #d8d0e0",background:"transparent",color:"#5c4e7a",fontSize:13,cursor:"pointer"}}>⚙️ Параметры</button>
+              <button onClick={()=>{setPlanResult(null);generatePlan();}} style={{flex:2,padding:12,borderRadius:10,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:13,fontWeight:700,cursor:"pointer"}}>↻ Пересоздать план</button>
             </div>
           </div>
         )}
@@ -2133,6 +2214,14 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                   Войти →
                 </button>
               </div>
+            )}
+
+            {/* Back to plan button if plan exists */}
+            {planResult && planResult.length > 0 && (
+              <button onClick={()=>{setResult(null);setMode("plan");setStep(5);}}
+                style={{width:"100%",padding:11,borderRadius:10,border:"1px solid #e1df2c",background:"rgba(225,223,44,.1)",color:"#362d52",fontSize:12,fontWeight:700,cursor:"pointer",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                📅 Вернуться к контент-плану
+              </button>
             )}
 
             <div style={{display:"flex",gap:8,marginBottom:8,flexDirection:isMobile?"column":"row"}}>
