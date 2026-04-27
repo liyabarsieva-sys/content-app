@@ -319,6 +319,41 @@ function StepNum({ n }) {
   return <span style={{ width:26, height:26, background:S.accent, color:"#f4f1ec", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:700, flexShrink:0 }}>{n}</span>;
 }
 
+function EditablePostView({ result }) {
+  const platforms = ["telegram","vk","facebook","threads","instagram","zen","linkedin","yt_shorts","yt_long"];
+  const platLabels = {telegram:"✈️ Telegram",vk:"🔵 ВКонтакте",facebook:"📘 Facebook",threads:"◎ Threads",instagram:"📸 Instagram",zen:"🟡 Дзен",linkedin:"💼 LinkedIn",yt_shorts:"▶️ Shorts",yt_long:"🎬 YouTube"};
+  const available = platforms.filter(pid=>result[pid]);
+  const [activeTab, setActiveTab] = React.useState(available[0]||"telegram");
+  const [texts, setTexts] = React.useState(() => {
+    const t = {};
+    platforms.forEach(pid=>{ if(result[pid]) t[pid] = (result.headline ? result.headline+"\n\n" : "") + result[pid]; });
+    return t;
+  });
+  const [copied, setCopied] = React.useState(false);
+
+  return (
+    <div style={{marginTop:16,borderTop:"1px solid #e8e0f0",paddingTop:16}}>
+      <div style={{fontSize:12,fontWeight:700,color:"#362d52",marginBottom:10}}>✏️ Редактор — правь текст прямо здесь</div>
+      <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}}>
+        {available.map(pid=>(
+          <button key={pid} onClick={()=>setActiveTab(pid)}
+            style={{padding:"5px 10px",borderRadius:7,border:`1px solid ${activeTab===pid?"#362d52":"#d8d0e0"}`,background:activeTab===pid?"#362d52":"#f0eef8",color:activeTab===pid?"#f4f1ec":"#362d52",fontSize:11,cursor:"pointer"}}>
+            {platLabels[pid]}
+          </button>
+        ))}
+      </div>
+      <textarea value={texts[activeTab]||""} onChange={e=>setTexts(t=>({...t,[activeTab]:e.target.value}))}
+        style={{width:"100%",minHeight:220,padding:"12px 14px",borderRadius:9,border:"1px solid #d8d0e0",fontSize:13,lineHeight:1.85,color:"#362d52",resize:"vertical",fontFamily:"'Nunito Sans', sans-serif",boxSizing:"border-box",outline:"none"}} />
+      <div style={{display:"flex",gap:8,marginTop:8}}>
+        <button onClick={()=>{navigator.clipboard.writeText(texts[activeTab]||"");setCopied(true);setTimeout(()=>setCopied(false),1500);}}
+          style={{flex:1,padding:"9px 14px",borderRadius:8,border:"1px solid #362d52",background:"transparent",color:copied?"#4a9a6a":"#362d52",fontSize:12,fontWeight:600,cursor:"pointer"}}>
+          {copied?"✓ Скопировано":"📋 Скопировать"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function HistoryModal({ item, onClose, onUsePost, onUsePlan }) {
   const [copiedIdx, setCopiedIdx] = React.useState(null);
   if (!item) return null;
@@ -368,10 +403,7 @@ function HistoryModal({ item, onClose, onUsePost, onUsePlan }) {
                 </div>
               );
             })}
-            <button onClick={()=>{onUsePost(item.result, item.topic);onClose();}}
-              style={{width:"100%",padding:12,borderRadius:10,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:13,fontWeight:700,cursor:"pointer",marginTop:4}}>
-              ✦ Открыть в редакторе
-            </button>
+            <EditablePostView result={item.result} onClose={onClose} />
           </div>
         )}
 
@@ -623,6 +655,7 @@ export default function App() {
   const [history, setHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
   const [selectedHistory, setSelectedHistory] = useState(null);
+  const [editablePost, setEditablePost] = useState(null); // {platform, text}
   const [planProgress, setPlanProgress] = useState("");
 
   const [suggestingPillars, setSuggestingPillars] = useState(false);
@@ -2061,17 +2094,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
               ))}
             </div>
 
-            {/* Headline + Hook */}
-            <Card accent>
-              <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:".08em",color:"#5c4e7a",fontWeight:600,marginBottom:8}}>Заголовок поста</div>
-              <div style={{fontFamily:"'Cormorant Garamond', serif",fontSize:22,color:"#362d52",lineHeight:1.3,marginBottom:16,fontWeight:600}}>{result.headline}</div>
-              <div style={{height:2,background:"#e1df2c",marginBottom:14,borderRadius:2,width:32}} />
-              <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:".08em",color:"#5c4e7a",fontWeight:600,marginBottom:8}}>Хук</div>
-              <div style={{fontSize:14,color:"#5c4e7a",lineHeight:1.7,fontStyle:"italic"}}>{result.hook}</div>
-              <div style={{display:"flex",justifyContent:"flex-end",marginTop:12}}>
-                <CopyBtn text={result.headline+"\n\nХук: "+result.hook} />
-              </div>
-            </Card>
+
 
             {/* Tabs */}
             <div style={{display:"flex",flexWrap:"wrap",gap:isMobile?5:6,marginBottom:12}}>
