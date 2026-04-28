@@ -667,7 +667,6 @@ export default function App() {
   const [sordellQuad, setSordellQuad] = useState("");
   const [hookType, setHookType] = useState("");
   const [carouselTemplate, setCarouselTemplate] = useState("");
-  const [carouselSlides, setCarouselSlides] = useState(7);
   const [carouselResult, setCarouselResult] = useState(null);
   const [carouselLoading, setCarouselLoading] = useState(false);
   const [carouselSlideCount, setCarouselSlideCount] = useState(7);
