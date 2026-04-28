@@ -1951,7 +1951,6 @@ ${slide.text}`} />
                 <div style={{display:"flex",gap:8,marginTop:12}}>
                   <button onClick={()=>setCarouselResult(null)} style={{flex:1,padding:12,borderRadius:10,border:"1px solid #d8d0e0",background:"transparent",color:"#5c4e7a",fontSize:13,cursor:"pointer"}}>← Изменить</button>
                   <button onClick={generateCarousel} style={{flex:1,padding:12,borderRadius:10,border:"1px solid #362d52",background:"transparent",color:"#362d52",fontSize:13,fontWeight:700,cursor:"pointer"}}>↻ Пересоздать</button>
-                  <button onClick={exportCarouselToHTML} style={{flex:1,padding:12,borderRadius:10,border:"1px solid #e1df2c",background:"#e1df2c",color:"#362d52",fontSize:13,fontWeight:700,cursor:"pointer"}}>📸 Экспорт в HTML</button>
                 </div>
               </Card>
             )}
