@@ -1111,6 +1111,47 @@ ${tmpl?.prompt}
     } catch(e) { console.error(e); }
     setCarouselLoading(false);
   }
+  
+  async function generateCarousel() {
+    if (!topic.trim()) { return; }
+    setCarouselLoading(true); setCarouselResult(null);
+    const tmpl = CAROUSEL_TEMPLATES.find(t=>t.id===carouselTemplate) || CAROUSEL_TEMPLATES[0];
+
+    const prompt = `Ты эксперт по контент-маркетингу. Создай карусель для Instagram/Telegram.
+
+Эксперт: ${expert||"-"}, Ниша: ${niche||"-"}, Аудитория: ${audience||"-"}
+Тема карусели: ${topic}
+Боли аудитории: ${audiencePains.length>0?audiencePains.join("; "):"-"}
+Голос бренда: ${tone}${toneOfVoice?"\n"+toneOfVoice:""}
+
+Шаблон: ${tmpl.label} — ${tmpl.desc}
+${tmpl.prompt}
+
+Количество слайдов: ${carouselSlides}
+Структура слайдов: ${tmpl.structure.slice(0,carouselSlides).join(" | ")}
+
+Правила текста (Will Storr + Хиз):
+- Заголовок обложки: до 8 слов, цепляющий, с неожиданным элементом
+- Каждый слайд: заголовок (до 6 слов) + текст (2-4 строки, конкретно и сенсорно)
+- Никаких абстракций — только конкретные детали и образы
+- Финальный слайд: чёткий CTA
+
+ТОЛЬКО валидный JSON:
+{"title":"заголовок карусели","slides":[{"n":1,"heading":"заголовок слайда","text":"текст 2-4 строки","note":"тип: обложка/контент/финал"}]}`;
+
+    try {
+      const resp = await fetch("/api/claude", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:3000, messages:[{role:"user",content:prompt}] }),
+      });
+      const data = await resp.json();
+      if (data.error) throw new Error(data.error.message);
+      const text = data.content.map(b=>b.text||"").join("");
+      const parsed = JSON.parse(text.replace(/```json|```/g,"").trim());
+      setCarouselResult(parsed);
+    } catch(e) { console.error(e); }
+    setCarouselLoading(false);
+  }
   async function generatePlanChunk(chunkLabel, chunkPosts, sordellCtx, archetypeCtx, prevCtx, blocksText) {
     const dist = {
       unaware:  Math.max(0, Math.round(chunkPosts * 0.40)),
