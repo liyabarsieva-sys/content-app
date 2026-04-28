@@ -913,7 +913,6 @@ ${toneOfVoice ? `Голос бренда / пример поста: ${toneOfVoic
   }
   function startNewPlan() { setMode("plan"); setStep(1); setPlanResult(null); setResult(null); }
   function startCarousel() { setMode("carousel"); setStep(1); setCarouselResult(null); setResult(null); }
-  function startCarousel() { setMode("carousel"); setStep(2); setCarouselResult(null); setResult(null); }
   function startSordell() {
     if (sordellResult) {
       // Already have results - show them directly
