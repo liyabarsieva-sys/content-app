@@ -1111,7 +1111,6 @@ ${tmpl?.prompt}
     } catch(e) { console.error(e); }
     setCarouselLoading(false);
   }
-
   async function generatePlanChunk(chunkLabel, chunkPosts, sordellCtx, archetypeCtx, prevCtx, blocksText) {
     const dist = {
       unaware:  Math.max(0, Math.round(chunkPosts * 0.40)),
