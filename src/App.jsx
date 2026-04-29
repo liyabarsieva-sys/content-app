@@ -399,7 +399,7 @@ function CopyAllCarouselBtn({ result }) {
   const [copied, setCopied] = React.useState(false);
   return (
     <button onClick={()=>{
-      const text = result.title + "\n\n" + (result.slides||[]).map(s=>`[Слайд ${s.n||""}] ${s.heading}\n${s.text}`).join("\n\n---\n\n");
+      const text = (result.title||"") + "\n\n" + (result.slides||[]).map(s=>`[Слайд ${s.n||""}] ${s.title||s.heading||""}\n${s.text||""}`).join("\n\n---\n\n");
       navigator.clipboard.writeText(text);
       setCopied(true); setTimeout(()=>setCopied(false),2000);
     }} style={{flex:2,padding:"9px 14px",borderRadius:8,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:12,fontWeight:700,cursor:"pointer"}}>
@@ -667,6 +667,7 @@ export default function App() {
   const [sordellQuad, setSordellQuad] = useState("");
   const [hookType, setHookType] = useState("");
   const [carouselTemplate, setCarouselTemplate] = useState("");
+  const [carouselSlides, setCarouselSlides] = useState(7);
   const [carouselResult, setCarouselResult] = useState(null);
   const [carouselLoading, setCarouselLoading] = useState(false);
   const [carouselSlideCount, setCarouselSlideCount] = useState(7);
@@ -912,6 +913,7 @@ ${toneOfVoice ? `Голос бренда / пример поста: ${toneOfVoic
   }
   function startNewPlan() { setMode("plan"); setStep(1); setPlanResult(null); setResult(null); }
   function startCarousel() { setMode("carousel"); setStep(1); setCarouselResult(null); setResult(null); }
+  function startCarousel() { setMode("carousel"); setStep(2); setCarouselResult(null); setResult(null); }
   function startSordell() {
     if (sordellResult) {
       // Already have results - show them directly
@@ -1111,7 +1113,48 @@ ${tmpl?.prompt}
     } catch(e) { console.error(e); }
     setCarouselLoading(false);
   }
-  
+
+  async function generateCarousel() {
+    if (!topic.trim()) { return; }
+    setCarouselLoading(true); setCarouselResult(null);
+    const tmpl = CAROUSEL_TEMPLATES.find(t=>t.id===carouselTemplate) || CAROUSEL_TEMPLATES[0];
+
+    const prompt = `Ты эксперт по контент-маркетингу. Создай карусель для Instagram/Telegram.
+
+Эксперт: ${expert||"-"}, Ниша: ${niche||"-"}, Аудитория: ${audience||"-"}
+Тема карусели: ${topic}
+Боли аудитории: ${audiencePains.length>0?audiencePains.join("; "):"-"}
+Голос бренда: ${tone}${toneOfVoice?"\n"+toneOfVoice:""}
+
+Шаблон: ${tmpl.label} — ${tmpl.desc}
+${tmpl.prompt}
+
+Количество слайдов: ${carouselSlides}
+Структура слайдов: ${tmpl.structure.slice(0,carouselSlides).join(" | ")}
+
+Правила текста (Will Storr + Хиз):
+- Заголовок обложки: до 8 слов, цепляющий, с неожиданным элементом
+- Каждый слайд: заголовок (до 6 слов) + текст (2-4 строки, конкретно и сенсорно)
+- Никаких абстракций — только конкретные детали и образы
+- Финальный слайд: чёткий CTA
+
+ТОЛЬКО валидный JSON:
+{"title":"заголовок карусели","slides":[{"n":1,"heading":"заголовок слайда","text":"текст 2-4 строки","note":"тип: обложка/контент/финал"}]}`;
+
+    try {
+      const resp = await fetch("/api/claude", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:3000, messages:[{role:"user",content:prompt}] }),
+      });
+      const data = await resp.json();
+      if (data.error) throw new Error(data.error.message);
+      const text = data.content.map(b=>b.text||"").join("");
+      const parsed = JSON.parse(text.replace(/```json|```/g,"").trim());
+      setCarouselResult(parsed);
+    } catch(e) { console.error(e); }
+    setCarouselLoading(false);
+  }
+
   async function generatePlanChunk(chunkLabel, chunkPosts, sordellCtx, archetypeCtx, prevCtx, blocksText) {
     const dist = {
       unaware:  Math.max(0, Math.round(chunkPosts * 0.40)),
@@ -1418,7 +1461,11 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
             </button>
             <button onClick={startCarousel}
               style={{padding:"10px 24px",borderRadius:10,border:"none",background:mode==="carousel"?"#f4f1ec":"#9a88b8",color:mode==="carousel"?"#362d52":"#f4f1ec",fontSize:13,fontWeight:700,cursor:"pointer",flex:isMobile?1:0}}>
-              🎨 Создать карусель
+              🎨 Карусель
+            </button>
+            <button onClick={startCarousel}
+              style={{padding:"10px 24px",borderRadius:10,border:"none",background:mode==="carousel"?"#f4f1ec":"#9a88b8",color:mode==="carousel"?"#362d52":"#f4f1ec",fontSize:13,fontWeight:700,cursor:"pointer",flex:isMobile?1:0}}>
+              🎨 Карусель
             </button>
           </div>
         </div>
@@ -1855,7 +1902,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
           <div>
             <Card>
               <div style={{fontFamily:"'Cormorant Garamond', serif",fontSize:19,color:"#362d52",fontWeight:600,marginBottom:18}}>
-                🎨 Создать карусель
+                🎨 Карусель
               </div>
 
               {/* Topic */}
@@ -1921,7 +1968,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                     {selectedCarouselTemplate?.icon} {carouselResult.title}
                   </div>
                   <button onClick={()=>{
-                    const text = (carouselResult.slides||[]).map(s=>`[Слайд ${s.n||""}] ${s.heading}\n${s.text}`).join("\n\n---\n\n");
+                    const text = (carouselResult.slides||[]).map(s=>`[Слайд ${s.n||""}] ${s.title||s.heading||""}\n${s.text||""}`).join("\n\n---\n\n");
                     navigator.clipboard.writeText(text);
                   }} style={{padding:"7px 14px",borderRadius:8,border:"1px solid #362d52",background:"transparent",color:"#362d52",fontSize:11,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>
                     📋 Скопировать всё
@@ -1937,10 +1984,9 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                         <div style={{padding:"10px 14px",background:isCover?"#362d52":isCta?"#e1df2c":"#f4f1ec",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                           <div style={{display:"flex",alignItems:"center",gap:8}}>
                             <span style={{width:22,height:22,borderRadius:"50%",background:isCover?"#e1df2c":isCta?"#362d52":"#362d52",color:isCover?"#362d52":isCta?"#f4f1ec":"#f4f1ec",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{slide.n}</span>
-                            <span style={{fontSize:12,fontWeight:700,color:isCover?"#f4f1ec":isCta?"#362d52":"#362d52"}}>{slide.title}</span>
+                            <span style={{fontSize:12,fontWeight:700,color:isCover?"#f4f1ec":isCta?"#362d52":"#362d52"}}>{slide.title||slide.heading||""}</span>
                           </div>
-                          <SlidecopybtnInline text={`${slide.title}
-${slide.text}`} />
+                          <SlidecopybtnInline text={`${slide.title||slide.heading||""}\n${slide.text||""}`} />
                         </div>
                         <div style={{padding:"12px 14px",background:"#fff",fontSize:13,lineHeight:1.7,color:"#362d52",whiteSpace:"pre-wrap"}}>{slide.text}</div>
                       </div>
