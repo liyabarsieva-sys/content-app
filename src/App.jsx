@@ -395,11 +395,12 @@ function SlidecopybtnInline({ text }) {
   );
 }
 
-function CopyAllCarouselBtn({ result }) {
+function CopyAllCarouselBtn({ result, topic }) {
   const [copied, setCopied] = React.useState(false);
   return (
     <button onClick={()=>{
-      const text = (result.title||"") + "\n\n" + (result.slides||[]).map(s=>`[Слайд ${s.n||""}] ${s.title||s.heading||""}\n${s.text||""}`).join("\n\n---\n\n");
+      const header = topic ? `Тема: ${topic}\n${result.title||""}` : (result.title||"");
+      const text = header + "\n\n" + (result.slides||[]).map(s=>`[Слайд ${s.n||""}] ${s.title||s.heading||""}\n${s.text||""}`).join("\n\n---\n\n");
       navigator.clipboard.writeText(text);
       setCopied(true); setTimeout(()=>setCopied(false),2000);
     }} style={{flex:2,padding:"9px 14px",borderRadius:8,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:12,fontWeight:700,cursor:"pointer"}}>
@@ -493,6 +494,37 @@ function HistoryModal({ item, onClose, onUsePost, onUsePlan }) {
               );
             })}
             <EditablePostView result={item.result} onClose={onClose} />
+          </div>
+        )}
+
+        {/* CAROUSEL VIEW */}
+        {item.type==="carousel" && item.result && (
+          <div>
+            <div style={{marginBottom:12,padding:"10px 14px",background:"#362d52",borderRadius:9}}>
+              <div style={{fontSize:15,fontWeight:600,color:"#f4f1ec",fontFamily:"'Cormorant Garamond', serif"}}>{item.result.title}</div>
+              <div style={{fontSize:10,color:"rgba(244,241,236,.6)",marginTop:3}}>{item.result.slides?.length} слайдов</div>
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:8,maxHeight:"60vh",overflowY:"auto"}}>
+              {(item.result.slides||[]).map((slide,i)=>{
+                const isCover = slide.n===1 || slide.type==="cover";
+                const isCta = slide.n===(item.result.slides||[]).length || slide.type==="cta";
+                return (
+                  <div key={i} style={{borderRadius:10,overflow:"hidden",border:`1px solid ${isCover?"#362d52":isCta?"#e1df2c":"#e8e0f0"}`}}>
+                    <div style={{padding:"8px 12px",background:isCover?"#362d52":isCta?"#e1df2c":"#f4f1ec",display:"flex",alignItems:"center",gap:8}}>
+                      <span style={{width:20,height:20,borderRadius:"50%",background:isCover?"#e1df2c":isCta?"#362d52":"#362d52",color:isCover?"#362d52":"#f4f1ec",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,flexShrink:0}}>{slide.n}</span>
+                      <span style={{fontSize:12,fontWeight:700,color:isCover?"#f4f1ec":isCta?"#362d52":"#362d52"}}>{slide.title||slide.heading||""}</span>
+                    </div>
+                    <div style={{padding:"8px 12px",fontSize:12,lineHeight:1.6,color:"#362d52",whiteSpace:"pre-wrap"}}>{slide.text||""}</div>
+                  </div>
+                );
+              })}
+            </div>
+            <button onClick={()=>{
+              const text = (item.result.title||"") + "\n\n" + (item.result.slides||[]).map(s=>`[Слайд ${s.n}] ${s.title||s.heading||""}\n${s.text||""}`).join("\n\n---\n\n");
+              navigator.clipboard.writeText(text);
+            }} style={{width:"100%",marginTop:12,padding:"9px 14px",borderRadius:8,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+              📋 Скопировать все слайды
+            </button>
           </div>
         )}
 
@@ -605,6 +637,36 @@ function DownloadPlanBtn({ planResult, period }) {
       URL.revokeObjectURL(url);
     }} style={{padding:"8px 14px",borderRadius:8,border:"1px solid #362d52",background:"#362d52",color:"#f4f1ec",fontSize:12,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap"}}>
       ⬇ Скачать .txt
+    </button>
+  );
+}
+
+function DownloadCSVBtn({ planResult, period }) {
+  return (
+    <button onClick={()=>{
+      const headers = ["День","Платформа","Тема","Блок","Стадия","Угол Сорделл","Функция"];
+      const rows = planResult.map(post => {
+        const plat = PLATFORMS.find(p=>p.id===post.platform);
+        return [
+          post.day||"",
+          plat?.label||post.platform||"",
+          post.topic||"",
+          post.block||"",
+          post.stage||"",
+          post.sordell||"",
+          post.function||"",
+        ].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(",");
+      });
+      const csv = "\uFEFF" + [headers.join(","), ...rows].join("\n");
+      const blob = new Blob([csv], { type:"text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `контент-план-${period==="week"?"неделя":period==="month"?"месяц":"квартал"}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }} style={{padding:"8px 14px",borderRadius:8,border:"1px solid #362d52",background:"transparent",color:"#362d52",fontSize:12,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap"}}>
+      📊 Скачать .csv
     </button>
   );
 }
@@ -1054,7 +1116,7 @@ ${qa}
     try {
       const resp = await fetch("/api/claude", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:4000, messages:[{role:"user",content:prompt}] }),
+        body:JSON.stringify({ model:"claude-sonnet-4-20250514", max_tokens:4000, messages:[{role:"user",content:prompt}] }),
       });
       const data = await resp.json();
       if (data.error) throw new Error(data.error.message);
@@ -1101,7 +1163,7 @@ ${tmpl?.prompt}
     try {
       const resp = await fetch("/api/claude", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:3000, messages:[{role:"user",content:prompt}] }),
+        body:JSON.stringify({ model:"claude-sonnet-4-20250514", max_tokens:3000, messages:[{role:"user",content:prompt}] }),
       });
       const data = await resp.json();
       if (data.error) throw new Error(data.error.message);
@@ -1110,6 +1172,7 @@ ${tmpl?.prompt}
       try { parsed = JSON.parse(text.replace(/```json|```/g,"").trim()); }
       catch { setCarouselLoading(false); return; }
       setCarouselResult(parsed);
+      saveGeneration("carousel", topic, parsed, { carouselTemplate, carouselSlideCount });
     } catch(e) { console.error(e); }
     setCarouselLoading(false);
   }
@@ -1144,13 +1207,14 @@ ${tmpl.prompt}
     try {
       const resp = await fetch("/api/claude", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:3000, messages:[{role:"user",content:prompt}] }),
+        body:JSON.stringify({ model:"claude-sonnet-4-5-20251022", max_tokens:3000, messages:[{role:"user",content:prompt}] }),
       });
       const data = await resp.json();
       if (data.error) throw new Error(data.error.message);
       const text = data.content.map(b=>b.text||"").join("");
       const parsed = JSON.parse(text.replace(/```json|```/g,"").trim());
       setCarouselResult(parsed);
+      saveGeneration("carousel", topic, parsed, { carouselTemplate, carouselSlideCount });
     } catch(e) { console.error(e); }
     setCarouselLoading(false);
   }
@@ -1196,7 +1260,7 @@ ${sordellCtx ? "Для личных тем используй ТОЛЬКО ре�
 
     const resp = await fetch("/api/claude", {
       method:"POST", headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:4000, messages:[{role:"user",content:prompt}] }),
+      body:JSON.stringify({ model:"claude-sonnet-4-20250514", max_tokens:4000, messages:[{role:"user",content:prompt}] }),
     });
     const data = await resp.json();
     if (data.error) throw new Error(data.error.message);
@@ -1359,7 +1423,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
           "Content-Type":"application/json",
         },
         body:JSON.stringify({
-          model:"claude-haiku-4-5-20251001",
+          model:"claude-sonnet-4-20250514",
           max_tokens:platforms.includes("yt_long") ? 5000 : 3500,
           messages:[{role:"user",content:prompt}],
         }),
@@ -1609,7 +1673,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
                       <div style={{display:"flex",alignItems:"center",gap:8}}>
                         <span style={{fontSize:10,background:"#362d52",color:"#f4f1ec",padding:"1px 8px",borderRadius:6,fontWeight:600}}>
-                          {h.type==="post"?"✦ Пост":h.type==="plan"?"📅 План":"⭐ Кейс"}
+                          {h.type==="post"?"✦ Пост":h.type==="plan"?"📅 План":h.type==="carousel"?"🎨 Карусель":"⭐ Кейс"}
                         </span>
                         <span style={{fontSize:10,color:"#9a88b8"}}>{new Date(h.created_at).toLocaleDateString("ru")}</span>
                       </div>
@@ -1621,6 +1685,9 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                     )}
                     {h.type==="plan" && h.result && (
                       <div style={{fontSize:11,color:"#9a88b8",marginBottom:4}}>{(h.result?.posts||h.result||[]).length} постов</div>
+                    )}
+                    {h.type==="carousel" && h.result && (
+                      <div style={{fontSize:11,color:"#9a88b8",marginBottom:4}}>{h.result.slides?.length||0} слайдов · {h.topic}</div>
                     )}
                     <button onClick={()=>setSelectedHistory(h)}
                       style={{marginTop:4,padding:"5px 14px",borderRadius:7,border:"1px solid #362d52",background:"transparent",color:"#362d52",fontSize:11,fontWeight:600,cursor:"pointer"}}>
@@ -1963,7 +2030,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                   <div style={{fontFamily:"'Cormorant Garamond', serif",fontSize:18,color:"#362d52",fontWeight:600}}>
                     {selectedCarouselTemplate?.icon} {carouselResult.title}
                   </div>
-                  <CopyAllCarouselBtn result={carouselResult} />
+                  <CopyAllCarouselBtn result={carouselResult} topic={topic} />
                 </div>
 
                 <div style={{display:"flex",flexDirection:"column",gap:10}}>
@@ -2135,9 +2202,10 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                   </div>
                   <p style={{fontSize:12,color:"#9a88b8"}}>{planPeriod==="week"?"Неделя":"Месяц"} · {planResult.length} постов</p>
                 </div>
-                <div style={{display:"flex",gap:6}}>
+                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
                   <CopyAllPlanBtn planResult={planResult} />
                   <DownloadPlanBtn planResult={planResult} period={planPeriod} />
+                  <DownloadCSVBtn planResult={planResult} period={planPeriod} />
                 </div>
               </div>
               <div style={{marginBottom:16}} />
