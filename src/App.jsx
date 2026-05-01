@@ -749,6 +749,7 @@ export default function App() {
     try { return JSON.parse(localStorage.getItem("lia_audience_pains") || "[]"); } catch { return []; }
   });
   const [suggestingPains, setSuggestingPains] = useState(false);
+  const [showPains, setShowPains] = useState(false);
   const [brandQ1, setBrandQ1] = useState(() => localStorage.getItem("lia_brand_q1") || "");
   const [brandQ2, setBrandQ2] = useState(() => localStorage.getItem("lia_brand_q2") || "");
   const [planPeriod, setPlanPeriod] = useState(() => localStorage.getItem("lia_plan_period") || "week");
@@ -1735,23 +1736,32 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                 </button>
                 {!niche && !audience && <div style={{fontSize:10,color:"#9a88b8",marginTop:4,textAlign:"center"}}>Заполните нишу и аудиторию выше</div>}
 
-                {/* Pain chips */}
+                {/* Pain chips — collapsible */}
                 {audiencePains.length > 0 && (
-                  <div style={{display:"flex",flexDirection:"column",gap:6,marginTop:6}}>
-                    {audiencePains.map((pain,i)=>(
-                      <div key={i} style={{display:"flex",alignItems:"flex-start",gap:8,padding:"8px 12px",background:"#f4f1ec",borderRadius:8,border:"1px solid #e8e0f0"}}>
-                        <span style={{fontSize:12,color:"#9a88b8",marginTop:1,flexShrink:0}}>{i+1}.</span>
-                        <span style={{fontSize:12,color:"#362d52",flex:1,lineHeight:1.5}}>{pain}</span>
-                        <button onClick={()=>setAudiencePains(prev=>prev.filter((_,idx)=>idx!==i))}
-                          style={{background:"transparent",border:"none",color:"#c4b8d8",cursor:"pointer",fontSize:15,padding:0,lineHeight:1,flexShrink:0}}>×</button>
-                      </div>
-                    ))}
-                    <button onClick={()=>{
-                      const custom = window.prompt("Добавить свою боль:");
-                      if (custom?.trim()) setAudiencePains(prev=>[...prev, custom.trim()]);
-                    }} style={{padding:"7px 12px",borderRadius:8,border:"1px dashed #d8d0e0",background:"transparent",color:"#5c4e7a",fontSize:11,cursor:"pointer",textAlign:"center"}}>
-                      + Добавить свою боль
+                  <div style={{marginTop:6}}>
+                    <button onClick={()=>setShowPains(p=>!p)}
+                      style={{width:"100%",padding:"7px 12px",borderRadius:8,border:"1px solid #e8e0f0",background:"#f4f1ec",color:"#362d52",fontSize:11,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:showPains?8:0}}>
+                      <span>💊 Боли определены ({audiencePains.length})</span>
+                      <span style={{fontSize:10,color:"#9a88b8"}}>{showPains?"Скрыть ▲":"Показать ▼"}</span>
                     </button>
+                    {showPains && (
+                      <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                        {audiencePains.map((pain,i)=>(
+                          <div key={i} style={{display:"flex",alignItems:"flex-start",gap:8,padding:"8px 12px",background:"#f4f1ec",borderRadius:8,border:"1px solid #e8e0f0"}}>
+                            <span style={{fontSize:12,color:"#9a88b8",marginTop:1,flexShrink:0}}>{i+1}.</span>
+                            <span style={{fontSize:12,color:"#362d52",flex:1,lineHeight:1.5}}>{pain}</span>
+                            <button onClick={()=>setAudiencePains(prev=>prev.filter((_,idx)=>idx!==i))}
+                              style={{background:"transparent",border:"none",color:"#c4b8d8",cursor:"pointer",fontSize:15,padding:0,lineHeight:1,flexShrink:0}}>×</button>
+                          </div>
+                        ))}
+                        <button onClick={()=>{
+                          const custom = window.prompt("Добавить свою боль:");
+                          if (custom?.trim()) setAudiencePains(prev=>[...prev, custom.trim()]);
+                        }} style={{padding:"7px 12px",borderRadius:8,border:"1px dashed #d8d0e0",background:"transparent",color:"#5c4e7a",fontSize:11,cursor:"pointer",textAlign:"center"}}>
+                          + Добавить свою боль
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
