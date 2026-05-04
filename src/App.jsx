@@ -594,28 +594,52 @@ function HistoryModal({ item, onClose, onUsePost, onUsePlan }) {
   );
 }
 
-function SordellCard({ t, onCreatePost }) {
+function SordellCard({ t, onCreatePost, onExpand, expanded, expanding }) {
   const [copied, setCopied] = React.useState(false);
+  const ANGLE_COLORS = { "Причины":"#5a8a6a","Ошибки":"#c46a4a","Примеры":"#7a6a9a","Решения":"#362d52" };
   return (
-    <div style={{padding:"12px 14px",background:t.top?"#f4f1ec":"#fafafa",borderRadius:10,border:t.top?"2px solid #362d52":"1px solid #e8e0f0"}}>
-      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
-        {t.top && <span style={{fontSize:16}}>⭐</span>}
-        <span style={{fontSize:10,background:t.quadrant?.includes("Личное")?"#e1df2c":"rgba(54,45,82,.08)",color:"#362d52",padding:"1px 8px",borderRadius:6,fontWeight:700}}>{t.quadrant}</span>
+    <div style={{borderRadius:10,border:t.top?"2px solid #362d52":"1px solid #e8e0f0",overflow:"hidden",marginBottom:0}}>
+      <div style={{padding:"12px 14px",background:t.top?"#f4f1ec":"#fafafa"}}>
+        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
+          {t.top && <span style={{fontSize:16}}>⭐</span>}
+          <span style={{fontSize:10,background:t.quadrant?.includes("Личное")?"#e1df2c":"rgba(54,45,82,.08)",color:"#362d52",padding:"1px 8px",borderRadius:6,fontWeight:700}}>{t.quadrant}</span>
+        </div>
+        <div style={{fontSize:14,fontWeight:600,color:"#362d52",marginBottom:4,lineHeight:1.4}}>{t.topic}</div>
+        <div style={{fontSize:12,color:"#5c4e7a",fontStyle:"italic",marginBottom:8,lineHeight:1.5}}>💡 {t.hook}</div>
+        {t.top && t.reason && (
+          <div style={{fontSize:11,color:"#7a6a9a",background:"rgba(54,45,82,.05)",padding:"6px 10px",borderRadius:7,marginBottom:8,lineHeight:1.5}}>🔥 {t.reason}</div>
+        )}
+        <div style={{display:"flex",gap:5}}>
+          <button onClick={onCreatePost} style={{flex:2,padding:"6px 8px",borderRadius:7,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:10,fontWeight:700,cursor:"pointer"}}>
+            ✦ Создать пост
+          </button>
+          <button onClick={onExpand} disabled={expanding}
+            style={{flex:2,padding:"6px 8px",borderRadius:7,border:"1px solid #362d52",background:"transparent",color:"#362d52",fontSize:10,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>
+            {expanding?<><div style={{width:9,height:9,border:"1.5px solid #d8d0e0",borderTopColor:"#362d52",borderRadius:"50%",animation:"sp .8s linear infinite"}}/>Загружаю…</>:expanded?"▲ Свернуть":"⊞ Развернуть"}
+          </button>
+          <button onClick={()=>{navigator.clipboard.writeText(t.topic+"\n"+t.hook);setCopied(true);setTimeout(()=>setCopied(false),1500);}}
+            style={{flex:1,padding:"6px 8px",borderRadius:7,border:"1px solid #d8d0e0",background:"#fff",color:copied?"#4a9a6a":"#5c4e7a",fontSize:11,cursor:"pointer"}}>
+            {copied?"✓":"📋"}
+          </button>
+        </div>
       </div>
-      <div style={{fontSize:14,fontWeight:600,color:"#362d52",marginBottom:4,lineHeight:1.4}}>{t.topic}</div>
-      <div style={{fontSize:12,color:"#5c4e7a",fontStyle:"italic",marginBottom:t.top?8:8,lineHeight:1.5}}>💡 {t.hook}</div>
-      {t.top && t.reason && (
-        <div style={{fontSize:11,color:"#7a6a9a",background:"rgba(54,45,82,.05)",padding:"6px 10px",borderRadius:7,marginBottom:8,lineHeight:1.5}}>🔥 {t.reason}</div>
+      {expanded && expanded.length > 0 && (
+        <div style={{borderTop:"1px solid #e8e0f0",background:"#f8f6fc",padding:"10px 14px"}}>
+          <div style={{fontSize:10,color:"#9a88b8",textTransform:"uppercase",letterSpacing:".06em",marginBottom:8,fontWeight:600}}>8 идей для постов:</div>
+          <div style={{display:"flex",flexDirection:"column",gap:6}}>
+            {expanded.map((post,i)=>(
+              <div key={i} style={{padding:"8px 10px",background:"#fff",borderRadius:8,border:"1px solid #e8e0f0"}}>
+                <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:3}}>
+                  <span style={{fontSize:9,fontWeight:700,color:"#fff",background:ANGLE_COLORS[post.angle]||"#362d52",padding:"1px 6px",borderRadius:4}}>{post.angle}</span>
+                  <span style={{fontSize:9,color:"#9a88b8"}}>{post.sordell}</span>
+                </div>
+                <div style={{fontSize:12,fontWeight:600,color:"#362d52",marginBottom:2,lineHeight:1.4}}>{post.title}</div>
+                <div style={{fontSize:11,color:"#5c4e7a",fontStyle:"italic"}}>{post.hook}</div>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
-      <div style={{display:"flex",gap:6}}>
-        <button onClick={onCreatePost} style={{flex:2,padding:"6px 10px",borderRadius:7,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:11,fontWeight:700,cursor:"pointer"}}>
-          ✦ Создать пост
-        </button>
-        <button onClick={()=>{navigator.clipboard.writeText(t.topic+"\n"+t.hook);setCopied(true);setTimeout(()=>setCopied(false),1500);}}
-          style={{flex:1,padding:"6px 10px",borderRadius:7,border:"1px solid #d8d0e0",background:"#fff",color:copied?"#4a9a6a":"#5c4e7a",fontSize:11,cursor:"pointer"}}>
-          {copied?"✓":"📋"}
-        </button>
-      </div>
     </div>
   );
 }
@@ -742,6 +766,8 @@ export default function App() {
     try { return JSON.parse(localStorage.getItem("lia_brands") || "[]"); } catch { return []; }
   });
   const [showBrandPicker, setShowBrandPicker] = useState(false);
+  const [showExpertPanel, setShowExpertPanel] = useState(false);
+  const [showStoryBankPanel, setShowStoryBankPanel] = useState(false);
 
   // Step 1 — context
   const [expert, setExpert] = useState(() => localStorage.getItem("lia_expert") || "");
@@ -1040,30 +1066,47 @@ ${toneOfVoice ? `Голос бренда / пример поста: ${toneOfVoic
     localStorage.setItem("lia_brands", JSON.stringify(updated));
   }
 
-  function startCase() { setMode("case"); setStep(1); setResult(null); }
+  function switchMode(newMode) {
+    setMode(newMode);
+    setResult(null);
+    setError("");
+    if (newMode === "post") { setStep(1); }
+    else if (newMode === "case") { setStep(1); }
+    else if (newMode === "carousel") { setStep(1); setCarouselResult(null); }
+    else if (newMode === "plan") {
+      if (planResult && planResult.length > 0) setStep(5);
+      else setStep(1);
+    }
+    else if (newMode === "sordell") {
+      setStep(1);
+      if (sordellResult && sordellResult.length > 0) setSordellStep(13);
+      else { setSordellStep(0); setSordellAnswers([]); setSordellCurrentAnswer(""); }
+    }
+  }
+
+  function startCase() { switchMode("case"); }
   function startPlan() {
     setMode("plan");
     setResult(null);
     if (planResult && planResult.length > 0) {
-      setStep(5); // show existing plan directly
+      setStep(5);
     } else {
-      setStep(1); // start fresh
+      setStep(1);
     }
   }
-  function startNewPlan() { setMode("plan"); setStep(1); setPlanResult(null); setResult(null); }
-  function startCarousel() { setMode("carousel"); setStep(1); setCarouselResult(null); setResult(null); }
+  function startNewPlan() { setMode("plan"); setStep(1); setPlanResult(null); setResult(null); setError(""); }
+  function startCarousel() { switchMode("carousel"); }
   function startCarousel() { setMode("carousel"); setStep(2); setCarouselResult(null); setResult(null); }
   function startSordell() {
+    setStep(2); // always reset step to avoid conflicts
     if (sordellResult) {
-      // Already have results - show them directly
       setMode("sordell"); setSordellStep(13);
     } else {
-      // Start fresh interview
-      setMode("sordell"); setStep(1); setSordellStep(0); setSordellAnswers([]); setSordellCurrentAnswer(""); setPlanResult(null);
+      setMode("sordell"); setSordellStep(0); setSordellAnswers([]); setSordellCurrentAnswer("");
     }
   }
   function startSordellFresh() { setMode("sordell"); setStep(1); setSordellStep(0); setSordellAnswers([]); setSordellCurrentAnswer(""); setSordellResult(null); localStorage.removeItem("lia_sordell_result"); setPlanResult(null); }
-  function startPost() { setMode("post"); setStep(1); setResult(null); }
+  function startPost() { switchMode("post"); }
 
   function toggle(id) {
     setPlatforms(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
@@ -1373,40 +1416,6 @@ ${existing}
     setSordellLoadingMore(false);
   }
 
-  async function expandTopic(topic) {
-    setExpandingTopic(topic);
-    const prompt = `Ты — контент-стратег. Разверни одну тему в 8 конкретных идей для постов.
-
-Эксперт: ${expert||"-"}. Ниша: ${niche||"-"}.
-Тема для развёртки: "${topic}"
-
-Создай 8 идей по матрице Пиллар × Сорделл:
-- Причины × Личное + Неожиданное
-- Ошибки × Профессиональное + Неожиданное
-- Примеры × Личное + Известное
-- Решения × Профессиональное + Известное
-- Причины × Профессиональное + Неожиданное
-- Ошибки × Личное + Неожиданное
-- Примеры × Профессиональное + Неожиданное
-- Решения × Личное + Неожиданное
-
-Для каждой: конкретный заголовок поста (не абстрактный), хук до 10 слов.
-
-ТОЛЬКО валидный JSON:
-{"posts":[{"angle":"Причины","sordell":"Личное + Неожиданное","title":"конкретный заголовок поста","hook":"хук до 10 слов"}]}`;
-
-    try {
-      const resp = await fetch("/api/claude", {
-        method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:2000, messages:[{role:"user",content:prompt}] }),
-      });
-      const data = await resp.json();
-      const text = data.content.map(b=>b.text||"").join("");
-      const parsed = JSON.parse(text.replace(/```json|```/g,"").trim());
-      setExpandedTopics(prev=>({...prev, [topic]: parsed.posts||[]}));
-    } catch(e) { console.error(e); }
-    setExpandingTopic(null);
-  }
 
   async function generateCarousel() {
     if (!topic.trim()) { return; }
@@ -1733,78 +1742,85 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
 
   // — MAIN —
   return (
-    <div style={{minHeight:"100vh",background:S.bg,color:S.text,fontFamily:"sans-serif",padding:"20px 20px 80px"}}>
-      <div style={{maxWidth:660,margin:"0 auto",padding:isMobile?"0 2px":"0 8px"}}>
+    <div style={{minHeight:"100vh",background:S.bg,color:S.text,fontFamily:"sans-serif"}}>
+      <div style={{maxWidth:isMobile?660:1100,margin:"0 auto",padding:isMobile?"0 8px 80px":"0 24px 80px"}}>
 
         {/* Header */}
         <div style={{background:"#362d52",marginBottom:0}}>
-          {/* Top bar: logo + tagline + auth */}
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 20px 0",gap:12}}>
 
-            {/* Left: App name in 2 lines */}
+          {/* Top bar: logo + tagline + auth */}
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 20px 8px",gap:12}}>
             <div style={{flexShrink:0}}>
               <div style={{fontSize:9,letterSpacing:".2em",textTransform:"uppercase",color:"rgba(225,223,44,.8)",fontWeight:600,lineHeight:1.4}}>Content</div>
               <div style={{fontSize:9,letterSpacing:".2em",textTransform:"uppercase",color:"rgba(225,223,44,.8)",fontWeight:600,lineHeight:1.4}}>Intelligence</div>
             </div>
-
-            {/* Center: tagline */}
             <div style={{flex:1,textAlign:"center"}}>
-              <div style={{fontFamily:"Georgia,serif",fontSize:isMobile?"15px":"18px",color:"#f4f1ec",lineHeight:1.3,fontStyle:"italic",opacity:.9}}>
+              <div style={{fontFamily:"Georgia,serif",fontSize:isMobile?"14px":"17px",color:"#f4f1ec",lineHeight:1.3,fontStyle:"italic",opacity:.9}}>
                 Тема → стратегия → посты
               </div>
             </div>
-
-            {/* Right: Auth */}
-            <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
+            <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
               {user ? (
                 <>
-                  <button onClick={()=>setShowHistory(!showHistory)} style={{padding:"6px 12px",borderRadius:8,border:"1px solid rgba(244,241,236,.2)",background:"transparent",color:"#f4f1ec",fontSize:11,cursor:"pointer",whiteSpace:"nowrap"}}>
-                    📋 {!isMobile && `История (${history.length})`}{isMobile && history.length}
+                  <button onClick={()=>setShowHistory(!showHistory)} style={{padding:"5px 10px",borderRadius:7,border:"1px solid rgba(244,241,236,.2)",background:"transparent",color:"#f4f1ec",fontSize:10,cursor:"pointer",whiteSpace:"nowrap"}}>
+                    📋{!isMobile&&` История (${history.length})`}
                   </button>
-                  <button onClick={signOut} title={`Выйти (${user.email})`} style={{padding:"6px 12px",borderRadius:8,border:"1px solid rgba(244,241,236,.2)",background:"transparent",color:"rgba(244,241,236,.7)",fontSize:11,cursor:"pointer",whiteSpace:"nowrap"}}>
-                    {isMobile ? "↩" : `↩ ${user.email?.split("@")[0]}`}
+                  <button onClick={signOut} style={{padding:"5px 10px",borderRadius:7,border:"1px solid rgba(244,241,236,.2)",background:"transparent",color:"rgba(244,241,236,.65)",fontSize:10,cursor:"pointer",whiteSpace:"nowrap"}}>
+                    {isMobile?"↩":`↩ ${user.email?.split("@")[0]}`}
                   </button>
                 </>
               ) : (
-                <button onClick={()=>setShowAuth(true)} style={{padding:"7px 14px",borderRadius:8,border:"none",background:"#e1df2c",color:"#362d52",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>
+                <button onClick={()=>setShowAuth(true)} style={{padding:"6px 12px",borderRadius:7,border:"none",background:"#e1df2c",color:"#362d52",fontSize:11,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>
                   Войти
                 </button>
               )}
             </div>
           </div>
 
-          {/* Row 1: Смысловые блоки · Найти темы · Контент-план */}
-          <div style={{display:"flex",gap:6,padding:"12px 20px 0",justifyContent:"center",flexWrap:"wrap"}}>
+          {/* Row 1 — База знаний эксперта */}
+          <div style={{display:"flex",gap:5,padding:"0 16px 8px",justifyContent:"center",flexWrap:"wrap",borderBottom:"1px solid rgba(244,241,236,.1)"}}>
+            <button onClick={startPost}
+              style={{padding:"6px 12px",borderRadius:7,border:`1px solid ${mode==="post"&&step===1?"#e1df2c":"rgba(244,241,236,.2)"}`,background:mode==="post"&&step===1?"rgba(225,223,44,.12)":"transparent",color:mode==="post"&&step===1?"#e1df2c":"rgba(244,241,236,.75)",fontSize:11,cursor:"pointer",fontWeight:mode==="post"&&step===1?700:400}}>
+              👤 Контекст
+            </button>
             <button onClick={()=>setShowPillarSetup(!showPillarSetup)}
-              style={{padding:"8px 14px",borderRadius:9,border:`1px solid ${showPillarSetup?"#e1df2c":"rgba(244,241,236,.25)"}`,background:showPillarSetup?"rgba(225,223,44,.15)":"transparent",color:showPillarSetup?"#e1df2c":"rgba(244,241,236,.8)",fontSize:12,cursor:"pointer",fontWeight:showPillarSetup?700:400}}>
-              📌 {pillars.length ? `Блоки (${pillars.length})` : "Блоки"}
+              style={{padding:"6px 12px",borderRadius:7,border:`1px solid ${showPillarSetup?"#e1df2c":"rgba(244,241,236,.2)"}`,background:showPillarSetup?"rgba(225,223,44,.12)":"transparent",color:showPillarSetup?"#e1df2c":"rgba(244,241,236,.75)",fontSize:11,cursor:"pointer",fontWeight:showPillarSetup?700:400}}>
+              📌 Блоки{pillars.length?` (${pillars.length})`:""}
             </button>
             <button onClick={startSordell}
-              style={{padding:"8px 14px",borderRadius:9,border:`1px solid ${mode==="sordell"?"#e1df2c":"rgba(244,241,236,.25)"}`,background:mode==="sordell"?"rgba(225,223,44,.15)":"transparent",color:mode==="sordell"?"#e1df2c":"rgba(244,241,236,.8)",fontSize:12,cursor:"pointer",fontWeight:mode==="sordell"?700:400}}>
-              🎯 Найти темы{sordellResult?` (${sordellResult.length})`:""}
+              style={{padding:"6px 12px",borderRadius:7,border:`1px solid ${mode==="sordell"?"#e1df2c":"rgba(244,241,236,.2)"}`,background:mode==="sordell"?"rgba(225,223,44,.12)":"transparent",color:mode==="sordell"?"#e1df2c":"rgba(244,241,236,.75)",fontSize:11,cursor:"pointer",fontWeight:mode==="sordell"?700:400}}>
+              🎯 Темы{sordellResult?` (${sordellResult.length})`:""}
+            </button>
+            <button onClick={()=>{setMode("sordell");setSordellStep(sordellResult?13:0);setStep(2);}}
+              style={{padding:"6px 12px",borderRadius:7,border:"1px solid rgba(244,241,236,.2)",background:"transparent",color:"rgba(244,241,236,.75)",fontSize:11,cursor:"pointer"}}>
+              📝 Банк опыта
             </button>
             <button onClick={startPlan}
-              style={{padding:"8px 14px",borderRadius:9,border:`1px solid ${mode==="plan"?"#e1df2c":"rgba(244,241,236,.25)"}`,background:mode==="plan"?"rgba(225,223,44,.15)":"transparent",color:mode==="plan"?"#e1df2c":"rgba(244,241,236,.8)",fontSize:12,cursor:"pointer",fontWeight:mode==="plan"?700:400}}>
+              style={{padding:"6px 12px",borderRadius:7,border:`1px solid ${mode==="plan"?"#e1df2c":"rgba(244,241,236,.2)"}`,background:mode==="plan"?"rgba(225,223,44,.12)":"transparent",color:mode==="plan"?"#e1df2c":"rgba(244,241,236,.75)",fontSize:11,cursor:"pointer",fontWeight:mode==="plan"?700:400}}>
               📅 Контент-план
             </button>
           </div>
 
-          {/* Row 2: Создать пост · Создать кейс */}
-          <div style={{display:"flex",gap:8,padding:"10px 20px 16px",justifyContent:"center"}}>
+          {/* Row 2 — Создание контента */}
+          <div style={{display:"flex",gap:6,padding:"8px 16px 14px",justifyContent:"center",flexWrap:"wrap"}}>
             <button onClick={startPost}
-              style={{padding:"10px 24px",borderRadius:10,border:"none",background:mode==="post"?"#f4f1ec":"#9a88b8",color:mode==="post"?"#362d52":"#f4f1ec",fontSize:13,fontWeight:700,cursor:"pointer",flex:isMobile?1:0}}>
+              style={{padding:"9px 18px",borderRadius:9,border:"none",background:mode==="post"&&step!==1?"#f4f1ec":"rgba(255,255,255,.12)",color:mode==="post"&&step!==1?"#362d52":"#f4f1ec",fontSize:12,fontWeight:700,cursor:"pointer"}}>
               ✦ Создать пост
             </button>
-            <button onClick={startCase}
-              style={{padding:"10px 24px",borderRadius:10,border:"none",background:mode==="case"?"#f4f1ec":"#9a88b8",color:mode==="case"?"#362d52":"#f4f1ec",fontSize:13,fontWeight:700,cursor:"pointer",flex:isMobile?1:0}}>
-              ⭐ Создать кейс
+            <button onClick={()=>{switchMode("case");}}
+              style={{padding:"9px 18px",borderRadius:9,border:"none",background:mode==="case"?"#f4f1ec":"rgba(255,255,255,.12)",color:mode==="case"?"#362d52":"#f4f1ec",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+              ⭐ Кейс
             </button>
             <button onClick={startCarousel}
-              style={{padding:"10px 24px",borderRadius:10,border:"none",background:mode==="carousel"?"#f4f1ec":"#9a88b8",color:mode==="carousel"?"#362d52":"#f4f1ec",fontSize:13,fontWeight:700,cursor:"pointer",flex:isMobile?1:0}}>
-              🎨 Создать карусель
+              style={{padding:"9px 18px",borderRadius:9,border:"none",background:mode==="carousel"?"#f4f1ec":"rgba(255,255,255,.12)",color:mode==="carousel"?"#362d52":"#f4f1ec",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+              🎨 Карусель
             </button>
           </div>
         </div>
+
+        {/* Main layout wrapper - two columns on desktop */}
+        <div style={{display:isMobile?"block":"flex",gap:24,alignItems:"flex-start"}}>
+        <div style={{flex:1,minWidth:0}}>
 
         {/* Pillar setup panel */}
         {showPillarSetup && (
@@ -2217,7 +2233,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                   </button>
                 </div>
               </Card>
-            ) : (
+            ) : sordellStep===13 ? null : (
               <Card>
                 <div style={{fontFamily:"'Cormorant Garamond', serif",fontSize:19,color:"#362d52",fontWeight:600,marginBottom:8}}>
                   🎯 Все вопросы пройдены
@@ -2252,7 +2268,18 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                 <div style={{display:"flex",flexDirection:"column",gap:12}}>
                   {sordellResult.map((t,i)=>(
                     <SordellCard key={i} t={t}
-                      onCreatePost={()=>{setTopic(t.topic);setResult(null);setMode("post");setStep(2);}}
+                      onCreatePost={()=>{
+                        setTopic(t.topic);
+                        setSordellQuad(t.quadrant?.includes("Личное") ?
+                          (t.quadrant?.includes("Неожиданное") ? "personal_unexpected" : "personal_known") :
+                          (t.quadrant?.includes("Неожиданное") ? "professional_unexpected" : "professional_known"));
+                        setResult(null);
+                        setMode("post");
+                        setRubric(t.quadrant?.includes("Личное") ? "personal" : "expert");
+                        setLength("standard");
+                        setHookType("broken_prediction");
+                        setPendingAutoGenerate(true);
+                      }}
                       onExpand={()=>{
                         if (expandedTopics[t.topic]) {
                           setExpandedTopics(prev=>{const n={...prev};delete n[t.topic];return n;});
@@ -2964,6 +2991,8 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
           </div>
         )}
 
+        </div>{/* end left column */}
+        </div>{/* end two-column wrapper */}
       </div>
     </div>
   );
