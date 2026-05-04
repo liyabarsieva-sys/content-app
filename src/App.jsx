@@ -598,28 +598,38 @@ function SordellCard({ t, onCreatePost, onExpand, expanded, expanding }) {
   const [copied, setCopied] = React.useState(false);
   const ANGLE_COLORS = { "Причины":"#5a8a6a","Ошибки":"#c46a4a","Примеры":"#7a6a9a","Решения":"#362d52" };
   return (
-    <div style={{borderRadius:10,border:t.top?"2px solid #362d52":"1px solid #e8e0f0",overflow:"hidden",marginBottom:0}}>
-      <div style={{padding:"12px 14px",background:t.top?"#f4f1ec":"#fafafa"}}>
-        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
-          {t.top && <span style={{fontSize:16}}>⭐</span>}
-          <span style={{fontSize:10,background:t.quadrant?.includes("Личное")?"#e1df2c":"rgba(54,45,82,.08)",color:"#362d52",padding:"1px 8px",borderRadius:6,fontWeight:700}}>{t.quadrant}</span>
+    <div style={{borderRadius:10,border:t.top?"2px solid #362d52":"1px solid #e8e0f0",overflow:"hidden"}}>
+      <div style={{padding:"14px 16px",background:t.top?"#f4f1ec":"#fafafa",display:"flex",gap:14,alignItems:"flex-start"}}>
+
+        {/* Left: content */}
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
+            {t.top && <span style={{fontSize:15}}>⭐</span>}
+            <span style={{fontSize:10,background:t.quadrant?.includes("Личное")?"#e1df2c":"rgba(54,45,82,.08)",color:"#362d52",padding:"2px 9px",borderRadius:6,fontWeight:700}}>{t.quadrant}</span>
+          </div>
+          <div style={{fontSize:14,fontWeight:700,color:"#362d52",marginBottom:5,lineHeight:1.4}}>{t.topic}</div>
+          <div style={{fontSize:12,color:"#5c4e7a",fontStyle:"italic",lineHeight:1.5,marginBottom:t.top&&t.reason?6:0}}>💡 {t.hook}</div>
+          {t.top && t.reason && (
+            <div style={{fontSize:11,color:"#7a6a9a",background:"rgba(54,45,82,.05)",padding:"6px 10px",borderRadius:7,lineHeight:1.5,marginTop:6}}>🔥 {t.reason}</div>
+          )}
         </div>
-        <div style={{fontSize:14,fontWeight:600,color:"#362d52",marginBottom:4,lineHeight:1.4}}>{t.topic}</div>
-        <div style={{fontSize:12,color:"#5c4e7a",fontStyle:"italic",marginBottom:8,lineHeight:1.5}}>💡 {t.hook}</div>
-        {t.top && t.reason && (
-          <div style={{fontSize:11,color:"#7a6a9a",background:"rgba(54,45,82,.05)",padding:"6px 10px",borderRadius:7,marginBottom:8,lineHeight:1.5}}>🔥 {t.reason}</div>
-        )}
-        <div style={{display:"flex",gap:5}}>
-          <button onClick={onCreatePost} style={{flex:2,padding:"6px 8px",borderRadius:7,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:10,fontWeight:700,cursor:"pointer"}}>
+
+        {/* Right: buttons stacked */}
+        <div style={{display:"flex",flexDirection:"column",gap:6,flexShrink:0,width:120}}>
+          <button onClick={onCreatePost}
+            style={{padding:"9px 12px",borderRadius:8,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:12,fontWeight:700,cursor:"pointer",textAlign:"center"}}>
             ✦ Создать пост
           </button>
           <button onClick={onExpand} disabled={expanding}
-            style={{flex:2,padding:"6px 8px",borderRadius:7,border:"1px solid #362d52",background:"transparent",color:"#362d52",fontSize:10,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>
-            {expanding?<><div style={{width:9,height:9,border:"1.5px solid #d8d0e0",borderTopColor:"#362d52",borderRadius:"50%",animation:"sp .8s linear infinite"}}/>Загружаю…</>:expanded?"▲ Свернуть":"⊞ Развернуть"}
+            style={{padding:"9px 12px",borderRadius:8,border:"1px solid #362d52",background:"transparent",color:"#362d52",fontSize:12,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
+            {expanding
+              ? <><div style={{width:10,height:10,border:"1.5px solid #d8d0e0",borderTopColor:"#362d52",borderRadius:"50%",animation:"sp .8s linear infinite"}}/>…</>
+              : expanded ? "▲ Свернуть" : "⊞ Развернуть"
+            }
           </button>
           <button onClick={()=>{navigator.clipboard.writeText(t.topic+"\n"+t.hook);setCopied(true);setTimeout(()=>setCopied(false),1500);}}
-            style={{flex:1,padding:"6px 8px",borderRadius:7,border:"1px solid #d8d0e0",background:"#fff",color:copied?"#4a9a6a":"#5c4e7a",fontSize:11,cursor:"pointer"}}>
-            {copied?"✓":"📋"}
+            style={{padding:"9px 12px",borderRadius:8,border:"1px solid #d8d0e0",background:"#fff",color:copied?"#4a9a6a":"#5c4e7a",fontSize:12,fontWeight:600,cursor:"pointer",textAlign:"center"}}>
+            {copied?"✓ Скоп.":"📋 Копировать"}
           </button>
         </div>
       </div>
@@ -1476,6 +1486,82 @@ ${tmpl.prompt}
     setCarouselLoading(false);
   }
 
+  async function generateWithOverrides({ topicOverride, sordellQuadOverride, rubricOverride }) {
+    setLoading(true); setError(""); setResult(null);
+    setMode("post"); setStep(5);
+
+    const useTopic = topicOverride || topic;
+    const useSordellQuad = sordellQuadOverride || sordellQuad;
+    const useRubric = rubricOverride || rubric || "personal";
+    const useSordell = SORDELL_MATRIX.find(q=>q.id===useSordellQuad);
+    const useStage = AWARENESS_STAGES.find(s=>s.id===stage) || AWARENESS_STAGES[0];
+    const useCta = CTA_OPTIONS.find(c=>c.id===cta) || {label:"по контексту"};
+    const usePlatforms = platforms.length ? platforms : ["telegram"];
+    const names = PLATFORMS.filter(p=>usePlatforms.includes(p.id)).map(p=>p.label).join(", ");
+    const tovSection = toneOfVoice.trim() ? `\nГолос бренда (используй КАК ОБРАЗЕЦ СТИЛЯ, не копируй текст дословно):\n"${toneOfVoice}"\n` : "";
+    const useLength = LENGTH_OPTIONS.find(l=>l.id===length) || LENGTH_OPTIONS[1];
+
+    const prompt = `Ты опытный SMM-стратег и контент-маркетолог.
+
+Эксперт/бренд: ${expert||"-"}
+Ниша: ${niche||"-"}
+Аудитория: ${audience||"-"}
+Боли аудитории: ${audiencePains.length>0?audiencePains.map((p,i)=>`${i+1}. ${p}`).join("; "):"не указаны"}
+Тональность: ${tone}
+${tovSection}
+Тема: ${useTopic}
+
+СТРАТЕГИЯ ПОСТА:
+- Угол подачи (матрица Сорделл): ${useSordell?.label||"Личное + Неожиданное"}
+- Рубрика: ${useRubric==="personal"?"Личный — история, опыт, закулисье":"Экспертный — знания, факты, разборы"}
+- Стадия аудитории: ${useStage.label} → цель: ${useStage.goal}
+- Формат: ${useLength.label}
+
+${useSordell?.prompt||""}
+
+${rubric==="personal"?"Покажи трансформацию: персонаж начинает с одним убеждением и заканчивает другим.":""}
+
+ПРАВИЛА КАЧЕСТВА ТЕКСТА (обязательно):
+— Активный залог. Сильные глаголы. Никакого канцелярита.
+— Конкретное > абстрактного. Сенсорные детали.
+— Варьируй длину предложений. Короткое предложение бьёт сильно.
+— Свежий язык — никаких клише ниши.
+
+Создай контент:
+1. ЗАГОЛОВОК: до 10 слов, цепляющий
+2. ХУК: 1-2 предложения которые останавливают скролл
+3. ПОСТЫ для платформ: ${names}
+
+Длина: ${useLength.label} — ${useLength.desc}
+
+Включи только: ${usePlatforms.join(",")}
+
+ТОЛЬКО валидный JSON:
+{"headline":"заголовок","hook":"хук","${usePlatforms[0]}":"текст"}`;
+
+    try {
+      const resp = await fetch("/api/claude", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+          model:"claude-sonnet-4-5-20251022",
+          max_tokens:3500,
+          messages:[{role:"user",content:prompt}],
+        }),
+      });
+      const data = await resp.json();
+      if (data.error) throw new Error(data.error.message);
+      const text = data.content.map(b=>b.text||"").join("");
+      let parsed;
+      try { parsed = JSON.parse(text.replace(/```json|```/g,"").trim()); }
+      catch { setError("Ошибка разбора. Попробуй снова."); setLoading(false); return; }
+      setResult(parsed);
+      setTopic(useTopic);
+      setActiveTab(usePlatforms[0]);
+      saveGeneration("post", useTopic, parsed, { sordellQuad: useSordellQuad, rubric: useRubric });
+    } catch(e) { setError("Ошибка: " + e.message); }
+    setLoading(false);
+  }
+
   async function generatePlanChunk(chunkLabel, chunkPosts, sordellCtx, archetypeCtx, prevCtx, blocksText) {
     const dist = {
       unaware:  Math.max(0, Math.round(chunkPosts * 0.40)),
@@ -1740,17 +1826,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
     setLoading(false);
   }
 
-  // Auto-generate from plan
-  const [pendingAutoGenerate, setPendingAutoGenerate] = useState(false);
-  useEffect(() => {
-    if (pendingAutoGenerate && topic && mode === "post") {
-      setPendingAutoGenerate(false);
-      setLoading(true);
-      setError("");
-      setResult(null);
-      generate();
-    }
-  }, [pendingAutoGenerate, topic, mode]);
+  // Auto-generate from plan (handled via generateFromCard)
 
   const isMobile = useIsMobile();
   const activePlatform = PLATFORMS.find(p=>p.id===activeTab);
@@ -1778,14 +1854,24 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
             </div>
             <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
               {user ? (
-                <>
-                  <button onClick={()=>setShowHistory(!showHistory)} style={{padding:"5px 10px",borderRadius:7,border:"1px solid rgba(244,241,236,.2)",background:"transparent",color:"#f4f1ec",fontSize:10,cursor:"pointer",whiteSpace:"nowrap"}}>
-                    📋{!isMobile&&` История (${history.length})`}
-                  </button>
-                  <button onClick={signOut} style={{padding:"5px 10px",borderRadius:7,border:"1px solid rgba(244,241,236,.2)",background:"transparent",color:"rgba(244,241,236,.65)",fontSize:10,cursor:"pointer",whiteSpace:"nowrap"}}>
-                    {isMobile?"↩":`↩ ${user.email?.split("@")[0]}`}
-                  </button>
-                </>
+                <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:4}}>
+                  <div style={{display:"flex",alignItems:"center",gap:6}}>
+                    <span style={{fontSize:10,color:"rgba(244,241,236,.6)"}}>{user.email?.split("@")[0]}</span>
+                    <button onClick={signOut} style={{padding:"3px 8px",borderRadius:6,border:"1px solid rgba(244,241,236,.2)",background:"transparent",color:"rgba(244,241,236,.6)",fontSize:10,cursor:"pointer"}}>↩</button>
+                  </div>
+                  <div style={{display:"flex",gap:5}}>
+                    <button onClick={()=>setShowHistory(!showHistory)}
+                      style={{padding:"4px 9px",borderRadius:6,border:"1px solid rgba(244,241,236,.2)",background:showHistory?"rgba(225,223,44,.15)":"transparent",color:showHistory?"#e1df2c":"rgba(244,241,236,.75)",fontSize:10,cursor:"pointer",whiteSpace:"nowrap"}}>
+                      📋 {history.length}
+                    </button>
+                    {brands.length>0 && (
+                      <button onClick={()=>setShowBrandPicker(true)}
+                        style={{padding:"4px 9px",borderRadius:6,border:"1px solid rgba(244,241,236,.2)",background:"transparent",color:"rgba(244,241,236,.75)",fontSize:10,cursor:"pointer",whiteSpace:"nowrap"}}>
+                        🏷 {brands.length}
+                      </button>
+                    )}
+                  </div>
+                </div>
               ) : (
                 <button onClick={()=>setShowAuth(true)} style={{padding:"6px 12px",borderRadius:7,border:"none",background:"#e1df2c",color:"#362d52",fontSize:11,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>
                   Войти
@@ -2317,7 +2403,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                         setPain(t.hook||"");
                         // Use only first 2 platforms to avoid parse error
                         if (platforms.length > 3) setPlatforms(platforms.slice(0,2));
-                        setPendingAutoGenerate(true);
+                        generateFromCard();
                       }}
                       onExpand={()=>{
                         if (expandedTopics[t.topic]) {
@@ -2654,7 +2740,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                       setMode("post");
                       setResult(null);
                       // Auto-generate immediately
-                      setPendingAutoGenerate(true);
+                      generateFromCard();
                     }}
                   />
                 ))}
