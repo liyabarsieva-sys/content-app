@@ -497,6 +497,31 @@ function HistoryModal({ item, onClose, onUsePost, onUsePlan }) {
           </div>
         )}
 
+        {/* SORDELL VIEW */}
+        {item.type==="sordell" && item.result && (
+          <div>
+            <p style={{fontSize:12,color:"#9a88b8",marginBottom:12}}>{(item.result.topics||[]).length} тем · {item.strategy?.niche||""}</p>
+            <div style={{display:"flex",flexDirection:"column",gap:8,maxHeight:"60vh",overflowY:"auto"}}>
+              {(item.result.topics||[]).map((t,i)=>(
+                <div key={i} style={{padding:"10px 14px",background:t.top?"#f4f1ec":"#fafafa",borderRadius:9,border:t.top?"2px solid #362d52":"1px solid #e8e0f0"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+                    {t.top && <span>⭐</span>}
+                    <span style={{fontSize:10,background:t.quadrant?.includes("Личное")?"#e1df2c":"rgba(54,45,82,.08)",color:"#362d52",padding:"1px 7px",borderRadius:5,fontWeight:700}}>{t.quadrant}</span>
+                  </div>
+                  <div style={{fontSize:13,fontWeight:600,color:"#362d52",marginBottom:3,lineHeight:1.4}}>{t.topic}</div>
+                  <div style={{fontSize:11,color:"#5c4e7a",fontStyle:"italic"}}>{t.hook}</div>
+                </div>
+              ))}
+            </div>
+            <button onClick={()=>{
+              const text = (item.result.topics||[]).map((t,i)=>`${i+1}. ${t.topic}\nХук: ${t.hook}\nКвадрант: ${t.quadrant}`).join("\n\n");
+              navigator.clipboard.writeText(text);
+            }} style={{width:"100%",marginTop:12,padding:"9px 14px",borderRadius:8,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+              📋 Скопировать все темы
+            </button>
+          </div>
+        )}
+
         {/* CAROUSEL VIEW */}
         {item.type==="carousel" && item.result && (
           <div>
@@ -927,7 +952,7 @@ ${toneOfVoice ? `Голос бренда / пример поста: ${toneOfVoic
       type,
       topic: topicText,
       result: resultData,
-      strategy: strategyData,
+      strategy: { ...strategyData, expert: expert || "", niche: niche || "" },
     }).select();
     if (data) setHistory(prev => [data[0], ...prev].slice(0, 30));
   }
@@ -1180,6 +1205,7 @@ ${qa}
       localStorage.setItem("lia_sordell_result", JSON.stringify(parsed.topics));
       localStorage.setItem("lia_sordell_answers", JSON.stringify(sordellAnswers));
       setSordellStep(13);
+      saveGeneration("sordell", `Темы Сорделл — ${expert||"эксперт"}`, { topics: parsed.topics }, { expert, niche });
     } catch(e) { setSordellError("Ошибка: " + e.message); }
     setSordellLoading(false);
   }
@@ -1923,9 +1949,10 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
                       <div style={{display:"flex",alignItems:"center",gap:8}}>
                         <span style={{fontSize:10,background:"#362d52",color:"#f4f1ec",padding:"1px 8px",borderRadius:6,fontWeight:600}}>
-                          {h.type==="post"?"✦ Пост":h.type==="plan"?"📅 План":h.type==="carousel"?"🎨 Карусель":"⭐ Кейс"}
+                          {h.type==="post"?"✦ Пост":h.type==="plan"?"📅 План":h.type==="carousel"?"🎨 Карусель":h.type==="sordell"?"🎯 Темы Сорделл":"⭐ Кейс"}
                         </span>
                         <span style={{fontSize:10,color:"#9a88b8"}}>{new Date(h.created_at).toLocaleDateString("ru")}</span>
+                        {h.strategy?.expert && <span style={{fontSize:10,background:"rgba(54,45,82,.08)",color:"#362d52",padding:"1px 7px",borderRadius:5,fontWeight:600}}>{h.strategy.expert}</span>}
                       </div>
                       <button onClick={()=>deleteGeneration(h.id)} style={{background:"transparent",border:"none",color:"#c4b8d8",cursor:"pointer",fontSize:14}}>×</button>
                     </div>
@@ -1938,6 +1965,9 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                     )}
                     {h.type==="carousel" && h.result && (
                       <div style={{fontSize:11,color:"#9a88b8",marginBottom:4}}>{h.result.slides?.length||0} слайдов · {h.topic}</div>
+                    )}
+                    {h.type==="sordell" && h.result && (
+                      <div style={{fontSize:11,color:"#9a88b8",marginBottom:4}}>{(h.result.topics||[]).length} тем по матрице Сорделл</div>
                     )}
                     <button onClick={()=>setSelectedHistory(h)}
                       style={{marginTop:4,padding:"5px 14px",borderRadius:7,border:"1px solid #362d52",background:"transparent",color:"#362d52",fontSize:11,fontWeight:600,cursor:"pointer"}}>
