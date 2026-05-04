@@ -759,6 +759,7 @@ export default function App() {
     try { return JSON.parse(localStorage.getItem("lia_pillars") || "[]"); } catch { return []; }
   });
   const [showPillarSetup, setShowPillarSetup] = useState(false);
+  const [showBankOpyt, setShowBankOpyt] = useState(false);
   const [pillarInput, setPillarInput] = useState("");
 
   // Brands
@@ -1084,7 +1085,14 @@ ${toneOfVoice ? `Голос бренда / пример поста: ${toneOfVoic
     }
   }
 
-  function startCase() { switchMode("case"); }
+  function startCase() {
+    setMode("case");
+    setResult(null);
+    setError("");
+    // If context already filled, skip to step 2
+    if (expert.trim() && platforms.length) setStep(2);
+    else setStep(1);
+  }
   function startPlan() {
     setMode("plan");
     setResult(null);
@@ -1106,7 +1114,16 @@ ${toneOfVoice ? `Голос бренда / пример поста: ${toneOfVoic
     }
   }
   function startSordellFresh() { setMode("sordell"); setStep(1); setSordellStep(0); setSordellAnswers([]); setSordellCurrentAnswer(""); setSordellResult(null); localStorage.removeItem("lia_sordell_result"); setPlanResult(null); }
-  function startPost() { switchMode("post"); }
+  function startPost() {
+    setShowBankOpyt(false);
+    setShowPillarSetup(false);
+    setMode("post");
+    setResult(null);
+    setError("");
+    // Go to step 2 (topic) if context already filled, else step 1
+    if (expert.trim() && platforms.length) setStep(2);
+    else setStep(1);
+  }
 
   function toggle(id) {
     setPlatforms(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
@@ -1447,7 +1464,7 @@ ${tmpl.prompt}
     try {
       const resp = await fetch("/api/claude", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ model:"claude-sonnet-4-5-20251022", max_tokens:3000, messages:[{role:"user",content:prompt}] }),
+        body:JSON.stringify({ model:"claude-sonnet-4-5-20251022", max_tokens:4000, messages:[{role:"user",content:prompt}] }),
       });
       const data = await resp.json();
       if (data.error) throw new Error(data.error.message);
@@ -1779,48 +1796,67 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
 
           {/* Row 1 — База знаний эксперта */}
           <div style={{display:"flex",gap:5,padding:"0 16px 8px",justifyContent:"center",flexWrap:"wrap",borderBottom:"1px solid rgba(244,241,236,.1)"}}>
-            <button onClick={startPost}
-              style={{padding:"6px 12px",borderRadius:7,border:`1px solid ${mode==="post"&&step===1?"#e1df2c":"rgba(244,241,236,.2)"}`,background:mode==="post"&&step===1?"rgba(225,223,44,.12)":"transparent",color:mode==="post"&&step===1?"#e1df2c":"rgba(244,241,236,.75)",fontSize:11,cursor:"pointer",fontWeight:mode==="post"&&step===1?700:400}}>
-              👤 Контекст
-            </button>
-            <button onClick={()=>setShowPillarSetup(!showPillarSetup)}
-              style={{padding:"6px 12px",borderRadius:7,border:`1px solid ${showPillarSetup?"#e1df2c":"rgba(244,241,236,.2)"}`,background:showPillarSetup?"rgba(225,223,44,.12)":"transparent",color:showPillarSetup?"#e1df2c":"rgba(244,241,236,.75)",fontSize:11,cursor:"pointer",fontWeight:showPillarSetup?700:400}}>
-              📌 Блоки{pillars.length?` (${pillars.length})`:""}
-            </button>
-            <button onClick={startSordell}
-              style={{padding:"6px 12px",borderRadius:7,border:`1px solid ${mode==="sordell"?"#e1df2c":"rgba(244,241,236,.2)"}`,background:mode==="sordell"?"rgba(225,223,44,.12)":"transparent",color:mode==="sordell"?"#e1df2c":"rgba(244,241,236,.75)",fontSize:11,cursor:"pointer",fontWeight:mode==="sordell"?700:400}}>
-              🎯 Темы{sordellResult?` (${sordellResult.length})`:""}
-            </button>
-            <button onClick={()=>{setMode("sordell");setSordellStep(sordellResult?13:0);setStep(2);}}
-              style={{padding:"6px 12px",borderRadius:7,border:"1px solid rgba(244,241,236,.2)",background:"transparent",color:"rgba(244,241,236,.75)",fontSize:11,cursor:"pointer"}}>
-              📝 Банк опыта
-            </button>
-            <button onClick={startPlan}
-              style={{padding:"6px 12px",borderRadius:7,border:`1px solid ${mode==="plan"?"#e1df2c":"rgba(244,241,236,.2)"}`,background:mode==="plan"?"rgba(225,223,44,.12)":"transparent",color:mode==="plan"?"#e1df2c":"rgba(244,241,236,.75)",fontSize:11,cursor:"pointer",fontWeight:mode==="plan"?700:400}}>
-              📅 Контент-план
-            </button>
+            {[
+              {label:`👤 Контекст`, active:step===1&&!showPillarSetup, onClick:()=>{setShowPillarSetup(false);setShowBankOpyt(false);switchMode("post");}},
+              {label:`📌 Блоки${pillars.length?" ("+pillars.length+")":""}`, active:showPillarSetup, onClick:()=>{setShowPillarSetup(p=>!p);setShowBankOpyt(false);}},
+              {label:`🎯 Темы${sordellResult?" ("+sordellResult.length+")":""}`, active:mode==="sordell"&&!showBankOpyt, onClick:()=>{setShowBankOpyt(false);startSordell();}},
+              {label:"📝 Банк опыта", active:showBankOpyt, onClick:()=>{setShowBankOpyt(p=>!p);setShowPillarSetup(false);}},
+              {label:"📅 Контент-план", active:mode==="plan", onClick:()=>{setShowBankOpyt(false);setShowPillarSetup(false);startPlan();}},
+            ].map((btn,i)=>(
+              <button key={i} onClick={btn.onClick}
+                style={{padding:"8px 14px",borderRadius:8,border:`1px solid ${btn.active?"#e1df2c":"rgba(244,241,236,.2)"}`,background:btn.active?"rgba(225,223,44,.15)":"transparent",color:btn.active?"#e1df2c":"rgba(244,241,236,.8)",fontSize:13,fontWeight:btn.active?700:500,cursor:"pointer",whiteSpace:"nowrap"}}>
+                {btn.label}
+              </button>
+            ))}
           </div>
 
           {/* Row 2 — Создание контента */}
-          <div style={{display:"flex",gap:6,padding:"8px 16px 14px",justifyContent:"center",flexWrap:"wrap"}}>
-            <button onClick={startPost}
-              style={{padding:"9px 18px",borderRadius:9,border:"none",background:mode==="post"&&step!==1?"#f4f1ec":"rgba(255,255,255,.12)",color:mode==="post"&&step!==1?"#362d52":"#f4f1ec",fontSize:12,fontWeight:700,cursor:"pointer"}}>
-              ✦ Создать пост
-            </button>
-            <button onClick={()=>{switchMode("case");}}
-              style={{padding:"9px 18px",borderRadius:9,border:"none",background:mode==="case"?"#f4f1ec":"rgba(255,255,255,.12)",color:mode==="case"?"#362d52":"#f4f1ec",fontSize:12,fontWeight:700,cursor:"pointer"}}>
-              ⭐ Кейс
-            </button>
-            <button onClick={startCarousel}
-              style={{padding:"9px 18px",borderRadius:9,border:"none",background:mode==="carousel"?"#f4f1ec":"rgba(255,255,255,.12)",color:mode==="carousel"?"#362d52":"#f4f1ec",fontSize:12,fontWeight:700,cursor:"pointer"}}>
-              🎨 Карусель
-            </button>
+          <div style={{display:"flex",gap:8,padding:"8px 16px 14px",justifyContent:"center",flexWrap:"wrap"}}>
+            {[
+              {label:"✦ Создать пост", mode:"post", active:mode==="post"&&step>1&&!result, onClick:startPost},
+              {label:"⭐ Кейс", mode:"case", onClick:()=>switchMode("case")},
+              {label:"🎨 Карусель", mode:"carousel", onClick:startCarousel},
+            ].map((btn,i)=>(
+              <button key={i} onClick={btn.onClick}
+                style={{padding:"10px 20px",borderRadius:10,border:"none",background:(btn.active??mode===btn.mode)?"#f4f1ec":"rgba(255,255,255,.15)",color:(btn.active??mode===btn.mode)?"#362d52":"#f4f1ec",fontSize:13,fontWeight:700,cursor:"pointer"}}>
+                {btn.label}
+              </button>
+            ))}
           </div>
         </div>
 
         {/* Main layout wrapper - two columns on desktop */}
         <div style={{display:isMobile?"block":"flex",gap:24,alignItems:"flex-start"}}>
         <div style={{flex:1,minWidth:0}}>
+
+        {/* Bank Opyt panel */}
+        {showBankOpyt && (
+          <Card>
+            <div style={{fontFamily:"Georgia,serif",fontSize:16,color:S.text,marginBottom:4}}>📝 Банк личного опыта</div>
+            <div style={{fontSize:11,color:"#5c4e7a",marginBottom:12,lineHeight:1.5}}>
+              Добавляйте новые истории, наблюдения и инсайты — они используются при генерации личных тем.
+            </div>
+            {personalStories.length > 0 && (
+              <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:12}}>
+                {personalStories.map((s,i)=>(
+                  <div key={i} style={{display:"flex",alignItems:"flex-start",gap:8,padding:"8px 10px",background:"#f4f1ec",borderRadius:8,border:"1px solid #e8e0f0"}}>
+                    <div style={{fontSize:12,color:"#362d52",flex:1,lineHeight:1.5}}>{s}</div>
+                    <button onClick={()=>setPersonalStories(prev=>prev.filter((_,idx)=>idx!==i))}
+                      style={{background:"transparent",border:"none",color:"#c4b8d8",cursor:"pointer",fontSize:16,flexShrink:0,padding:0,lineHeight:1}}>×</button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {personalStories.length===0 && <p style={{fontSize:12,color:"#9a88b8",fontStyle:"italic",marginBottom:12}}>Пока пусто — добавьте первую историю</p>}
+            <div style={{display:"flex",gap:8}}>
+              <textarea value={newStoryInput} onChange={e=>setNewStoryInput(e.target.value)}
+                placeholder="Например: недавно заметила что клиенты боятся не ошибиться, а выглядеть глупо..."
+                rows={2} style={{...inp,flex:1,fontSize:12}} />
+              <button onClick={()=>{ if(!newStoryInput.trim()) return; setPersonalStories(prev=>[newStoryInput.trim(),...prev]); setNewStoryInput(""); }}
+                style={{padding:"10px 14px",borderRadius:9,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:13,fontWeight:700,cursor:"pointer",flexShrink:0}}>+</button>
+            </div>
+          </Card>
+        )}
 
         {/* Pillar setup panel */}
         {showPillarSetup && (
@@ -2278,6 +2314,9 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                         setRubric(t.quadrant?.includes("Личное") ? "personal" : "expert");
                         setLength("standard");
                         setHookType("broken_prediction");
+                        setPain(t.hook||"");
+                        // Use only first 2 platforms to avoid parse error
+                        if (platforms.length > 3) setPlatforms(platforms.slice(0,2));
                         setPendingAutoGenerate(true);
                       }}
                       onExpand={()=>{
@@ -2361,16 +2400,16 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
               {/* Template */}
               <div style={{marginBottom:18}}>
                 <Label text="Шаблон карусели" />
-                <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
                   {CAROUSEL_TEMPLATES.map(t=>(
                     <button key={t.id} onClick={()=>setCarouselTemplate(carouselTemplate===t.id?"":t.id)}
-                      style={{padding:"10px 14px",borderRadius:9,border:`1px solid ${carouselTemplate===t.id?"#362d52":"#d8d0e0"}`,background:carouselTemplate===t.id?"#362d52":"#f0eef8",color:carouselTemplate===t.id?"#f4f1ec":"#362d52",fontSize:13,cursor:"pointer",textAlign:"left",transition:"all .2s"}}>
-                      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:3}}>
-                        <span style={{fontSize:16}}>{t.icon}</span>
-                        <span style={{fontWeight:700}}>{t.label}</span>
+                      style={{padding:"10px 12px",borderRadius:9,border:`1px solid ${carouselTemplate===t.id?"#362d52":"#d8d0e0"}`,background:carouselTemplate===t.id?"#362d52":"#f0eef8",color:carouselTemplate===t.id?"#f4f1ec":"#362d52",fontSize:12,cursor:"pointer",textAlign:"left",transition:"all .2s"}}>
+                      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3}}>
+                        <span style={{fontSize:15}}>{t.icon}</span>
+                        <span style={{fontWeight:700,fontSize:11}}>{t.label}</span>
                       </div>
-                      <div style={{fontSize:11,color:carouselTemplate===t.id?"rgba(244,241,236,.8)":"#5c4e7a",marginBottom:carouselTemplate===t.id?4:0}}>{t.desc}</div>
-                      {carouselTemplate===t.id && <div style={{fontSize:10,color:"rgba(244,241,236,.65)",fontStyle:"italic",lineHeight:1.5}}>💡 {t.why}</div>}
+                      <div style={{fontSize:10,color:carouselTemplate===t.id?"rgba(244,241,236,.8)":"#5c4e7a",lineHeight:1.4}}>{t.desc}</div>
+                      {carouselTemplate===t.id && <div style={{fontSize:10,color:"rgba(244,241,236,.65)",fontStyle:"italic",lineHeight:1.4,marginTop:4}}>💡 {t.why}</div>}
                     </button>
                   ))}
                 </div>
@@ -2779,7 +2818,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
             <div style={{display:"flex",gap:8}}>
               <button onClick={()=>setStep(3)} style={{flex:1,padding:12,borderRadius:10,border:`1px solid ${S.border}`,background:"transparent",color:"#5c4e7a",fontSize:13,cursor:"pointer",fontFamily:"sans-serif"}}>← Назад</button>
               <button onClick={generate} style={{flex:3,padding:15,borderRadius:12,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"sans-serif"}}>
-                ✦ Создать посты
+                ✦ Создать пост
               </button>
             </div>
           </div>
@@ -2887,7 +2926,7 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
               <>
                 {isCase ? (
                   <button onClick={generate} disabled={!caseBefore.trim()} style={{width:"100%",padding:15,borderRadius:12,border:"none",background:!caseBefore.trim()?"#d8d0e0":"#362d52",color:!caseBefore.trim()?"#9a88b8":"#f4f1ec",fontSize:15,fontWeight:700,cursor:caseBefore.trim()?"pointer":"not-allowed",fontFamily:"sans-serif",marginBottom:10}}>
-                    ⭐ Создать кейс-посты
+                    ⭐ Создать кейс
                   </button>
                 ) : (
                   <button onClick={()=>{if(!topic.trim()){setError("Укажи тему поста");return;}setStep(3);}} style={{width:"100%",padding:15,borderRadius:12,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"sans-serif",marginBottom:10}}>
