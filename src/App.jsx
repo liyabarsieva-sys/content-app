@@ -712,6 +712,12 @@ export default function App() {
   const [showPillarSetup, setShowPillarSetup] = useState(false);
   const [pillarInput, setPillarInput] = useState("");
 
+  // Brands
+  const [brands, setBrands] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("lia_brands") || "[]"); } catch { return []; }
+  });
+  const [showBrandPicker, setShowBrandPicker] = useState(false);
+
   // Step 1 — context
   const [expert, setExpert] = useState(() => localStorage.getItem("lia_expert") || "");
   const [niche, setNiche] = useState(() => localStorage.getItem("lia_niche") || "");
@@ -788,6 +794,7 @@ export default function App() {
 
   // Save context
   useEffect(() => { localStorage.setItem("lia_expert", expert); }, [expert]);
+  useEffect(() => { localStorage.setItem("lia_brands", JSON.stringify(brands)); }, [brands]);
   useEffect(() => { localStorage.setItem("lia_tone", tone); }, [tone]);
   useEffect(() => { localStorage.setItem("lia_tov", toneOfVoice); }, [toneOfVoice]);
   useEffect(() => { localStorage.setItem("lia_platforms", JSON.stringify(platforms)); }, [platforms]);
@@ -962,6 +969,33 @@ ${toneOfVoice ? `Голос бренда / пример поста: ${toneOfVoic
     setPillars(updated);
     localStorage.setItem("lia_pillars", JSON.stringify(updated));
     if (pillar === pillars[i]) setPillar("");
+  }
+
+  function saveBrand() {
+    if (!expert.trim()) return;
+    const brand = { id: Date.now(), expert, niche, audience, tone, toneOfVoice, platforms, pillars, audiencePains };
+    const updated = [brand, ...brands.filter(b => b.expert !== expert)].slice(0, 10);
+    setBrands(updated);
+    localStorage.setItem("lia_brands", JSON.stringify(updated));
+  }
+
+  function loadBrand(brand) {
+    setExpert(brand.expert || "");
+    setNiche(brand.niche || "");
+    setAudience(brand.audience || "");
+    setTone(brand.tone || TONES[1]);
+    setToneOfVoice(brand.toneOfVoice || "");
+    setPlatforms(brand.platforms || ["telegram"]);
+    setPillars(brand.pillars || []);
+    setAudiencePains(brand.audiencePains || []);
+    setPlanResult(null); // clear old plan
+    setShowBrandPicker(false);
+  }
+
+  function deleteBrand(id) {
+    const updated = brands.filter(b => b.id !== id);
+    setBrands(updated);
+    localStorage.setItem("lia_brands", JSON.stringify(updated));
   }
 
   function startCase() { setMode("case"); setStep(1); setResult(null); }
@@ -1337,7 +1371,7 @@ ${sordellCtx ? "Для личных тем используй ТОЛЬКО ре�
     setLoading(true); setError(""); setResult(null);
 
     const names = PLATFORMS.filter(p => platforms.includes(p.id)).map(p => p.label).join(", ");
-    const tovSection = toneOfVoice.trim() ? `\nГолос бренда (строго следуй этому стилю и голосу):\n"${toneOfVoice}"\n` : "";
+    const tovSection = toneOfVoice.trim() ? `\nГолос бренда (используй КАК ОБРАЗЕЦ СТИЛЯ, не копируй текст дословно):\n"${toneOfVoice}"\n` : "";
 
     const caseSection = isCase ? `
 Это кейс / история успеха клиента. Адаптируй под формат "было → стало → результат".
@@ -1488,6 +1522,18 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
     }
     setLoading(false);
   }
+
+  // Auto-generate from plan
+  const [pendingAutoGenerate, setPendingAutoGenerate] = useState(false);
+  useEffect(() => {
+    if (pendingAutoGenerate && topic && mode === "post") {
+      setPendingAutoGenerate(false);
+      setLoading(true);
+      setError("");
+      setResult(null);
+      generate();
+    }
+  }, [pendingAutoGenerate, topic, mode]);
 
   const isMobile = useIsMobile();
   const activePlatform = PLATFORMS.find(p=>p.id===activeTab);
@@ -1739,6 +1785,36 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
           </Card>
         )}
 
+        {/* BRAND PICKER MODAL */}
+        {showBrandPicker && (
+          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.5)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={e=>e.target===e.currentTarget&&setShowBrandPicker(false)}>
+            <div style={{background:"#fff",borderRadius:16,padding:24,maxWidth:440,width:"100%",maxHeight:"80vh",overflowY:"auto"}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
+                <div style={{fontFamily:"'Cormorant Garamond', serif",fontSize:20,color:"#362d52",fontWeight:600}}>Сохранённые бренды</div>
+                <button onClick={()=>setShowBrandPicker(false)} style={{background:"transparent",border:"none",fontSize:22,cursor:"pointer",color:"#9a88b8"}}>×</button>
+              </div>
+              {brands.length === 0 ? (
+                <p style={{fontSize:13,color:"#9a88b8",textAlign:"center",padding:"20px 0"}}>Нет сохранённых брендов. Заполни контекст и нажми «Сохранить бренд».</p>
+              ) : (
+                <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  {brands.map(b=>(
+                    <div key={b.id} style={{padding:"12px 14px",background:"#f4f1ec",borderRadius:10,border:"1px solid #e8e0f0"}}>
+                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
+                        <div style={{fontSize:14,fontWeight:700,color:"#362d52"}}>{b.expert}</div>
+                        <button onClick={()=>deleteBrand(b.id)} style={{background:"transparent",border:"none",color:"#c4b8d8",cursor:"pointer",fontSize:14}}>×</button>
+                      </div>
+                      <div style={{fontSize:11,color:"#5c4e7a",marginBottom:8}}>{b.niche} · {b.audience?.slice(0,50)}{b.audience?.length>50?"…":""}</div>
+                      <button onClick={()=>loadBrand(b)} style={{width:"100%",padding:"8px",borderRadius:8,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                        Загрузить →
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* STEP 1 — Context */}
         {step===1&&(
           <div>
@@ -1817,6 +1893,20 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                 <textarea style={inp} rows={3} placeholder="Пример твоего поста (необязательно)..." value={toneOfVoice} onChange={e=>setToneOfVoice(e.target.value)} />
               </div>
 
+
+              {/* Brand actions */}
+              <div style={{display:"flex",gap:8,marginBottom:14}}>
+                <button onClick={saveBrand} disabled={!expert.trim()}
+                  style={{flex:1,padding:"8px 12px",borderRadius:8,border:"1px solid #362d52",background:"transparent",color:expert.trim()?"#362d52":"#c4b8d8",fontSize:11,fontWeight:600,cursor:expert.trim()?"pointer":"not-allowed"}}>
+                  💾 Сохранить бренд
+                </button>
+                {brands.length > 0 && (
+                  <button onClick={()=>setShowBrandPicker(true)}
+                    style={{flex:1,padding:"8px 12px",borderRadius:8,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:11,fontWeight:600,cursor:"pointer"}}>
+                    📂 Мои бренды ({brands.length})
+                  </button>
+                )}
+              </div>
 
               <div style={{marginBottom:0}}>
                 <Label text="Платформы" />
@@ -2262,14 +2352,24 @@ CTA ОБЯЗАТЕЛЕН в каждом посте: напиши явный п�
                 {planResult.map((post,i)=>(
                   <PlanCard key={i} post={post}
                     onCreatePost={()=>{
+                      // Auto-fill all strategy from plan data
                       setTopic(post.topic);
                       setPillar(post.block||"");
-                      setStage(AWARENESS_STAGES.find(s=>s.label===post.stage||s.id===post.stage)?.id||"");
-                      setSordellQuad(SORDELL_MATRIX.find(q=>post.sordell?.includes(q.label)||post.sordell?.includes(q.id))?.id||"");
-                      setRubric("");
+                      const stageObj = AWARENESS_STAGES.find(s=>s.label===post.stage||s.id===post.stage);
+                      setStage(stageObj?.id||"unaware");
+                      const sordellObj = SORDELL_MATRIX.find(q=>post.sordell?.includes(q.label)||post.sordell?.includes(q.id));
+                      setSordellQuad(sordellObj?.id||"professional_unexpected");
+                      setRubric("expert");
+                      setPillarAngle("reasons");
+                      setLength("standard");
+                      setCta("sub");
+                      setHookType("unexpected_change");
+                      setPain("");
+                      setDetails("");
                       setMode("post");
-                      setStep(2);
                       setResult(null);
+                      // Auto-generate immediately
+                      setPendingAutoGenerate(true);
                     }}
                   />
                 ))}
