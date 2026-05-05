@@ -1,3 +1,4 @@
+export { S, inp, inpAuto } from './styles';
 export { PLATFORMS } from './platforms';
 export { TONES, LENGTH_OPTIONS, PILLAR_ANGLES } from './writing';
 export { AWARENESS_STAGES, RUBRICS, CTA_OPTIONS, RUBRIC_SORDELL_MAP } from './strategy';
