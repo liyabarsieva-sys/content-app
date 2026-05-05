@@ -1,3 +1,4 @@
+import { S } from '../constants/styles';
 import React, { useState } from "react";
 import { PLATFORMS, AWARENESS_STAGES } from '../constants';
 
