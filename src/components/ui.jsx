@@ -1,3 +1,4 @@
+import { S } from '../constants/styles';
 import React, { useState } from "react";
 
 function Label({ text, hint, share }) {
