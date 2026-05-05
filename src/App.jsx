@@ -561,7 +561,7 @@ function EditablePostView({ result }) {
   );
 }
 
-function HistoryModal({ item, onClose, onUsePost, onUsePlan }) {
+function HistoryModal({ item, onClose, onUsePost, onUsePlan, onAddToCalendar }) {
   const [copiedIdx, setCopiedIdx] = React.useState(null);
   if (!item) return null;
   const isPlan = item.type === "plan";
@@ -610,6 +610,10 @@ function HistoryModal({ item, onClose, onUsePost, onUsePlan }) {
                 </div>
               );
             })}
+            <button onClick={()=>onAddToCalendar(item.result?.headline||item.topic, null, item.id, "post")}
+              style={{width:"100%",marginTop:8,padding:"9px 14px",borderRadius:8,border:"1px solid #5c9a6a",background:"transparent",color:"#5c9a6a",fontSize:12,fontWeight:600,cursor:"pointer"}}>
+              📆 Добавить в календарь публикаций
+            </button>
             <EditablePostView result={item.result} onClose={onClose} />
           </div>
         )}
@@ -686,6 +690,12 @@ function HistoryModal({ item, onClose, onUsePost, onUsePlan }) {
               <button onClick={()=>{onUsePlan(item);onClose();}}
                 style={{flex:1,padding:"8px 14px",borderRadius:8,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:12,fontWeight:700,cursor:"pointer"}}>
                 📅 Открыть план
+              </button>
+              <button onClick={()=>{
+                (item.result?.posts||item.result||[]).forEach(p=>onAddToCalendar(p.topic, p.platform, item.id, "plan"));
+                onClose();
+              }} style={{flex:1,padding:"8px 14px",borderRadius:8,border:"1px solid #5c9a6a",background:"transparent",color:"#5c9a6a",fontSize:12,fontWeight:600,cursor:"pointer"}}>
+                📆 Все в календарь
               </button>
             </div>
             <div style={{display:"flex",flexDirection:"column",gap:8,maxHeight:"60vh",overflowY:"auto"}}>
@@ -2209,6 +2219,7 @@ ${'{"headline":"заголовок","hook":"хук",' + platforms.map(pid=>`"${p
             onClose={()=>setSelectedHistory(null)}
             onUsePost={(result, topic)=>{setResult(result);setTopic(topic||"");setStep(5);setMode("post");setShowHistory(false);}}
             onUsePlan={(item)=>{setPlanResult(item.result?.posts||item.result||[]);setMode("plan");setStep(5);setShowHistory(false);}}
+            onAddToCalendar={(topic, platform, genId, type)=>addToCalendar(topic, platform||platforms[0]||"telegram", genId, type)}
           />
         )}
 
