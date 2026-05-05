@@ -1300,6 +1300,7 @@ ${'{"headline":"заголовок","hook":"хук",' + platforms.map(pid=>`"${p
                 calendarPosts={calendarPosts}
                 removeFromCalendar={removeFromCalendar}
                 onMovePost={moveCalendarPost}
+                currentExpert={expert}
                 onViewGeneration={(genId)=>{
                   const item = history.find(h=>h.id===genId);
                   if (item) setSelectedHistory(item);
