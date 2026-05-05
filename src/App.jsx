@@ -413,8 +413,8 @@ ${toneOfVoice ? `Голос бренда / пример поста: ${toneOfVoic
     localStorage.setItem("lia_brands", JSON.stringify(updated));
   }
 
-  function addToCalendar(topic, platform, generationId, type) {
-    setCalendarModal({ topic, platform: platform||platforms[0]||"telegram", generationId, type });
+  function addToCalendar(topic, platform, generationId, type, meta={}) {
+    setCalendarModal({ topic, platform: platform||platforms[0]||"telegram", generationId, type, ...meta });
     setCalendarDate("");
     setCalendarPlatform(platform||platforms[0]||"telegram");
   }
@@ -429,6 +429,9 @@ ${toneOfVoice ? `Голос бренда / пример поста: ${toneOfVoic
       generationId: calendarModal.generationId || null,
       type: calendarModal.type || "topic",
       expert: expert || "",
+      hook: calendarModal.hook || "",
+      quadrant: calendarModal.quadrant || "",
+      reason: calendarModal.reason || "",
       createdAt: new Date().toISOString(),
     };
     setCalendarPosts(prev => [...prev, entry].sort((a,b) => a.date.localeCompare(b.date)));
@@ -1812,7 +1815,7 @@ ${'{"headline":"заголовок","hook":"хук",' + platforms.map(pid=>`"${p
                 <div style={{display:"flex",flexDirection:"column",gap:12}}>
                   {sordellResult.map((t,i)=>(
                     <SordellCard key={i} t={t}
-                      onAddToCalendar={()=>addToCalendar(t.topic, platforms[0]||"telegram", null, "sordell")}
+                      onAddToCalendar={()=>addToCalendar(t.topic, platforms[0]||"telegram", null, "sordell", {hook:t.hook, quadrant:t.quadrant, reason:t.reason})}
                       onCreatePost={()=>{
                         setTopic(t.topic);
                         setSordellQuad(t.quadrant?.includes("Личное") ?
@@ -2144,7 +2147,7 @@ ${'{"headline":"заголовок","hook":"хук",' + platforms.map(pid=>`"${p
               <div style={{display:"flex",flexDirection:"column",gap:10}}>
                 {planResult.map((post,i)=>(
                   <PlanCard key={i} post={post}
-                    onAddToCalendar={()=>addToCalendar(post.topic, post.platform, null, "plan")}
+                    onAddToCalendar={()=>addToCalendar(post.topic, post.platform, null, "plan", {quadrant:post.sordell, hook:post.function})}
                     onCreatePost={()=>{
                       // Auto-fill all strategy from plan data
                       setTopic(post.topic);
