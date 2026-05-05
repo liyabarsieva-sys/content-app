@@ -1224,26 +1224,22 @@ ${'{"headline":"заголовок","hook":"хук",' + platforms.map(pid=>`"${p
             </div>
             <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
               {user ? (
-                <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:4}}>
+                <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:5}}>
                   <div style={{display:"flex",alignItems:"center",gap:6}}>
-                    <span style={{fontSize:10,color:"rgba(244,241,236,.6)"}}>{user.email?.split("@")[0]}</span>
-                    <button onClick={signOut} style={{padding:"3px 8px",borderRadius:6,border:"1px solid rgba(244,241,236,.2)",background:"transparent",color:"rgba(244,241,236,.6)",fontSize:10,cursor:"pointer"}}>↩</button>
+                    <span style={{fontSize:10,color:"rgba(244,241,236,.5)"}}>{user.email?.split("@")[0]}</span>
+                    <button onClick={signOut} title="Выйти" style={{padding:"2px 7px",borderRadius:5,border:"1px solid rgba(244,241,236,.15)",background:"transparent",color:"rgba(244,241,236,.5)",fontSize:10,cursor:"pointer"}}>↩</button>
                   </div>
-                  <div style={{display:"flex",gap:5}}>
-                    <button onClick={()=>setShowHistory(!showHistory)}
-                      style={{padding:"4px 9px",borderRadius:6,border:"1px solid rgba(244,241,236,.2)",background:showHistory?"rgba(225,223,44,.15)":"transparent",color:showHistory?"#e1df2c":"rgba(244,241,236,.75)",fontSize:10,cursor:"pointer",whiteSpace:"nowrap"}}>
-                      📋 {history.length}
-                    </button>
-                    {brands.length>0 && (
-                      <button onClick={()=>setShowBrandPicker(true)}
-                        style={{padding:"4px 9px",borderRadius:6,border:"1px solid rgba(244,241,236,.2)",background:"transparent",color:"rgba(244,241,236,.75)",fontSize:10,cursor:"pointer",whiteSpace:"nowrap"}}>
-                        🏷 {brands.length}
-                      </button>
-                    )}
-                  </div>
+                  <button onClick={()=>setShowHistory(!showHistory)}
+                    style={{padding:"7px 14px",borderRadius:8,border:`1px solid ${showHistory?"#e1df2c":"rgba(244,241,236,.25)"}`,background:showHistory?"rgba(225,223,44,.15)":"rgba(255,255,255,.08)",color:showHistory?"#e1df2c":"#f4f1ec",fontSize:12,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap",width:"100%",textAlign:"center"}}>
+                    📋 История {history.length>0&&`(${history.length})`}
+                  </button>
+                  <button onClick={()=>setShowBrandPicker(true)}
+                    style={{padding:"7px 14px",borderRadius:8,border:"1px solid rgba(244,241,236,.25)",background:"rgba(255,255,255,.08)",color:"#f4f1ec",fontSize:12,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap",width:"100%",textAlign:"center"}}>
+                    🏷 Мои бренды {brands.length>0&&`(${brands.length})`}
+                  </button>
                 </div>
               ) : (
-                <button onClick={()=>setShowAuth(true)} style={{padding:"6px 12px",borderRadius:7,border:"none",background:"#e1df2c",color:"#362d52",fontSize:11,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>
+                <button onClick={()=>setShowAuth(true)} style={{padding:"8px 16px",borderRadius:8,border:"none",background:"#e1df2c",color:"#362d52",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>
                   Войти
                 </button>
               )}
