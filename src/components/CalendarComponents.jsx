@@ -40,9 +40,15 @@ function CalendarDateModal({ modal, date, setDate, platform, setPlatform, onSave
   );
 }
 
-function CalendarView({ calendarPosts, removeFromCalendar, onViewGeneration, onMovePost }) {
+function CalendarView({ calendarPosts, removeFromCalendar, onViewGeneration, onMovePost, currentExpert }) {
   const now = new Date();
   const [monthOffset, setMonthOffset] = React.useState(0);
+  const [showAll, setShowAll] = React.useState(false);
+
+  // Filter by current expert unless showAll
+  const filteredPosts = (showAll || !currentExpert)
+    ? calendarPosts
+    : calendarPosts.filter(p => !p.expert || p.expert === currentExpert);
   const [dragId, setDragId] = React.useState(null);
   const [dragOverDate, setDragOverDate] = React.useState(null);
 
@@ -60,7 +66,7 @@ function CalendarView({ calendarPosts, removeFromCalendar, onViewGeneration, onM
 
   function getPostsForDate(day) {
     const dateStr = `${year}-${String(month+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
-    return calendarPosts.filter(p => p.date === dateStr);
+    return filteredPosts.filter(p => p.date === dateStr);
   }
 
   function handleDrop(day) {
@@ -98,6 +104,19 @@ function CalendarView({ calendarPosts, removeFromCalendar, onViewGeneration, onM
               Удалить из календаря
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Brand filter */}
+      {currentExpert && (
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12,padding:"8px 12px",background:"#f4f1ec",borderRadius:9,border:"1px solid #e8e0f0"}}>
+          <span style={{fontSize:12,color:"#362d52",flex:1}}>
+            {showAll ? "Все бренды" : `👤 ${currentExpert}`}
+          </span>
+          <button onClick={()=>setShowAll(p=>!p)}
+            style={{padding:"4px 10px",borderRadius:6,border:"1px solid #d8d0e0",background:"transparent",color:"#5c4e7a",fontSize:11,cursor:"pointer"}}>
+            {showAll ? "Только текущий" : "Все бренды"}
+          </button>
         </div>
       )}
 
