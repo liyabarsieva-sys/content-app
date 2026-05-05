@@ -395,6 +395,123 @@ function SlidecopybtnInline({ text }) {
   );
 }
 
+function CalendarDateModal({ modal, date, setDate, platform, setPlatform, onSave, onClose }) {
+  const today = new Date().toISOString().split("T")[0];
+  const platLabels = {telegram:"✈️ Telegram",vk:"🔵 ВК",facebook:"📘 Facebook",threads:"◎ Threads",instagram:"📸 Instagram",zen:"🟡 Дзен",linkedin:"💼 LinkedIn",yt_shorts:"▶️ Shorts",yt_long:"🎬 YouTube"};
+  if (!modal) return null;
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.5)",zIndex:4000,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div style={{background:"#fff",borderRadius:16,padding:24,maxWidth:380,width:"100%"}}>
+        <div style={{fontFamily:"'Cormorant Garamond', serif",fontSize:18,color:"#362d52",fontWeight:600,marginBottom:4}}>📆 Добавить в календарь</div>
+        <div style={{fontSize:12,color:"#9a88b8",marginBottom:16,lineHeight:1.5}}>{modal.topic}</div>
+
+        <div style={{marginBottom:14}}>
+          <div style={{fontSize:11,color:"#5c4e7a",fontWeight:600,textTransform:"uppercase",letterSpacing:".06em",marginBottom:6}}>Дата публикации</div>
+          <input type="date" value={date} min={today} onChange={e=>setDate(e.target.value)}
+            style={{width:"100%",padding:"10px 14px",borderRadius:8,border:"1px solid #d8d0e0",fontSize:14,color:"#362d52",outline:"none",boxSizing:"border-box"}} />
+        </div>
+
+        <div style={{marginBottom:20}}>
+          <div style={{fontSize:11,color:"#5c4e7a",fontWeight:600,textTransform:"uppercase",letterSpacing:".06em",marginBottom:6}}>Платформа</div>
+          <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+            {Object.entries(platLabels).map(([id,label])=>(
+              <button key={id} onClick={()=>setPlatform(id)}
+                style={{padding:"5px 10px",borderRadius:7,border:`1px solid ${platform===id?"#362d52":"#d8d0e0"}`,background:platform===id?"#362d52":"#f0eef8",color:platform===id?"#f4f1ec":"#362d52",fontSize:11,cursor:"pointer"}}>
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div style={{display:"flex",gap:8}}>
+          <button onClick={onClose} style={{flex:1,padding:11,borderRadius:9,border:"1px solid #d8d0e0",background:"transparent",color:"#5c4e7a",fontSize:13,cursor:"pointer"}}>Отмена</button>
+          <button onClick={onSave} disabled={!date}
+            style={{flex:2,padding:11,borderRadius:9,border:"none",background:date?"#362d52":"#d8d0e0",color:"#f4f1ec",fontSize:13,fontWeight:700,cursor:date?"pointer":"not-allowed"}}>
+            ✓ Запланировать
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CalendarView({ calendarPosts, removeFromCalendar, onViewGeneration }) {
+  const now = new Date();
+  const months = [];
+  for (let m = 0; m < 3; m++) {
+    const d = new Date(now.getFullYear(), now.getMonth() + m, 1);
+    months.push({ year: d.getFullYear(), month: d.getMonth() });
+  }
+
+  const platIcons = {telegram:"✈️",vk:"🔵",facebook:"📘",threads:"◎",instagram:"📸",zen:"🟡",linkedin:"💼",yt_shorts:"▶️",yt_long:"🎬"};
+  const monthNames = ["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"];
+  const dayNames = ["Пн","Вт","Ср","Чт","Пт","Сб","Вс"];
+
+  function getPostsForDate(year, month, day) {
+    const dateStr = `${year}-${String(month+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+    return calendarPosts.filter(p => p.date === dateStr);
+  }
+
+  return (
+    <div>
+      {months.map(({year, month}) => {
+        const firstDay = new Date(year, month, 1).getDay();
+        const startOffset = firstDay === 0 ? 6 : firstDay - 1; // Monday first
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
+
+        return (
+          <div key={`${year}-${month}`} style={{marginBottom:24}}>
+            <div style={{fontFamily:"'Cormorant Garamond', serif",fontSize:18,fontWeight:600,color:"#362d52",marginBottom:12}}>
+              {monthNames[month]} {year}
+            </div>
+
+            {/* Day names */}
+            <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2,marginBottom:2}}>
+              {dayNames.map(d=>(
+                <div key={d} style={{textAlign:"center",fontSize:10,color:"#9a88b8",fontWeight:600,padding:"4px 0"}}>{d}</div>
+              ))}
+            </div>
+
+            {/* Days grid */}
+            <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2}}>
+              {Array.from({length: startOffset}).map((_,i)=>(
+                <div key={"empty-"+i} style={{minHeight:70}} />
+              ))}
+              {Array.from({length: daysInMonth}).map((_,i)=>{
+                const day = i + 1;
+                const dateStr = `${year}-${String(month+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+                const posts = getPostsForDate(year, month, day);
+                const isToday = dateStr === todayStr;
+                const isPast = dateStr < todayStr;
+
+                return (
+                  <div key={day} style={{minHeight:70,padding:"4px 5px",borderRadius:7,border:`1px solid ${isToday?"#362d52":"#e8e0f0"}`,background:isToday?"#f4f1ec":isPast?"#fafafa":"#fff",position:"relative"}}>
+                    <div style={{fontSize:11,fontWeight:isToday?700:400,color:isToday?"#362d52":isPast?"#c4b8d8":"#362d52",marginBottom:3}}>{day}</div>
+                    <div style={{display:"flex",flexDirection:"column",gap:2}}>
+                      {posts.map(post=>(
+                        <div key={post.id} style={{position:"relative",group:"true"}}>
+                          <div
+                            onClick={()=>post.generationId&&onViewGeneration(post.generationId)}
+                            style={{fontSize:9,lineHeight:1.3,color:"#fff",background:"#362d52",borderRadius:4,padding:"2px 4px",cursor:post.generationId?"pointer":"default",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                            {platIcons[post.platform]||""} {post.topic}
+                          </div>
+                          <button onClick={(e)=>{e.stopPropagation();removeFromCalendar(post.id);}}
+                            style={{position:"absolute",top:-3,right:-3,width:13,height:13,borderRadius:"50%",border:"none",background:"#e05c5c",color:"#fff",fontSize:8,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,lineHeight:1}}>×</button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function CopyAllCarouselBtn({ result, topic }) {
   const [copied, setCopied] = React.useState(false);
   return (
@@ -594,7 +711,7 @@ function HistoryModal({ item, onClose, onUsePost, onUsePlan }) {
   );
 }
 
-function SordellCard({ t, onCreatePost, onExpand, expanded, expanding }) {
+function SordellCard({ t, onCreatePost, onExpand, expanded, expanding, onAddToCalendar }) {
   const [copied, setCopied] = React.useState(false);
   const ANGLE_COLORS = { "Причины":"#5a8a6a","Ошибки":"#c46a4a","Примеры":"#7a6a9a","Решения":"#362d52" };
   return (
@@ -626,6 +743,10 @@ function SordellCard({ t, onCreatePost, onExpand, expanded, expanding }) {
               ? <><div style={{width:10,height:10,border:"1.5px solid #d8d0e0",borderTopColor:"#362d52",borderRadius:"50%",animation:"sp .8s linear infinite"}}/>…</>
               : expanded ? "▲ Свернуть" : "⊞ Развернуть"
             }
+          </button>
+          <button onClick={onAddToCalendar}
+            style={{padding:"9px 12px",borderRadius:8,border:"1px solid #5c9a6a",background:"transparent",color:"#5c9a6a",fontSize:12,fontWeight:600,cursor:"pointer",textAlign:"center"}}>
+            📆 В календарь
           </button>
           <button onClick={()=>{navigator.clipboard.writeText(t.topic+"\n"+t.hook);setCopied(true);setTimeout(()=>setCopied(false),1500);}}
             style={{padding:"9px 12px",borderRadius:8,border:"1px solid #d8d0e0",background:"#fff",color:copied?"#4a9a6a":"#5c4e7a",fontSize:12,fontWeight:600,cursor:"pointer",textAlign:"center"}}>
@@ -730,7 +851,7 @@ function DownloadCSVBtn({ planResult, period }) {
   );
 }
 
-function PlanCard({ post, onCreatePost }) {
+function PlanCard({ post, onCreatePost, onAddToCalendar }) {
   const [copied, setCopied] = React.useState(false);
   const platInfo = PLATFORMS.find(p=>p.id===post.platform);
   return (
@@ -752,9 +873,12 @@ function PlanCard({ post, onCreatePost }) {
         <button onClick={onCreatePost} style={{flex:2,padding:"7px 10px",borderRadius:8,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:11,fontWeight:700,cursor:"pointer"}}>
           ✦ Создать пост
         </button>
+        <button onClick={onAddToCalendar} style={{flex:1,padding:"7px 10px",borderRadius:8,border:"1px solid #5c9a6a",background:"transparent",color:"#5c9a6a",fontSize:11,fontWeight:600,cursor:"pointer"}}>
+          📆
+        </button>
         <button onClick={()=>{navigator.clipboard.writeText(post.topic);setCopied(true);setTimeout(()=>setCopied(false),1500);}}
           style={{flex:1,padding:"7px 10px",borderRadius:8,border:"1px solid #d8d0e0",background:"#fff",color:copied?"#4a9a6a":"#5c4e7a",fontSize:11,cursor:"pointer"}}>
-          {copied?"✓ Скопировано":"📋 Скопировать"}
+          {copied?"✓":"📋"}
         </button>
       </div>
     </div>
@@ -770,6 +894,13 @@ export default function App() {
   });
   const [showPillarSetup, setShowPillarSetup] = useState(false);
   const [showBankOpyt, setShowBankOpyt] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [calendarPosts, setCalendarPosts] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("lia_calendar") || "[]"); } catch { return []; }
+  });
+  const [calendarModal, setCalendarModal] = useState(null); // {topic, platform, generationId, type}
+  const [calendarDate, setCalendarDate] = useState("");
+  const [calendarPlatform, setCalendarPlatform] = useState("");
   const [pillarInput, setPillarInput] = useState("");
 
   // Brands
@@ -866,6 +997,7 @@ export default function App() {
   useEffect(() => { localStorage.setItem("lia_plan_period", planPeriod); }, [planPeriod]);
   useEffect(() => { localStorage.setItem("lia_personal_stories", JSON.stringify(personalStories)); }, [personalStories]);
   useEffect(() => { localStorage.setItem("lia_brand_q1", brandQ1); }, [brandQ1]);
+  useEffect(() => { localStorage.setItem("lia_calendar", JSON.stringify(calendarPosts)); }, [calendarPosts]);
   useEffect(() => { localStorage.setItem("lia_audience_pains", JSON.stringify(audiencePains)); }, [audiencePains]);
   useEffect(() => { localStorage.setItem("lia_personal_stories", JSON.stringify(personalStories)); }, [personalStories]);
   useEffect(() => { localStorage.setItem("lia_brand_q2", brandQ2); }, [brandQ2]);
@@ -1075,6 +1207,32 @@ ${toneOfVoice ? `Голос бренда / пример поста: ${toneOfVoic
     const updated = brands.filter(b => b.id !== id);
     setBrands(updated);
     localStorage.setItem("lia_brands", JSON.stringify(updated));
+  }
+
+  function addToCalendar(topic, platform, generationId, type) {
+    setCalendarModal({ topic, platform: platform||platforms[0]||"telegram", generationId, type });
+    setCalendarDate("");
+    setCalendarPlatform(platform||platforms[0]||"telegram");
+  }
+
+  function saveToCalendar() {
+    if (!calendarDate || !calendarModal) return;
+    const entry = {
+      id: Date.now(),
+      date: calendarDate,
+      topic: calendarModal.topic,
+      platform: calendarPlatform || calendarModal.platform,
+      generationId: calendarModal.generationId || null,
+      type: calendarModal.type || "topic",
+      expert: expert || "",
+      createdAt: new Date().toISOString(),
+    };
+    setCalendarPosts(prev => [...prev, entry].sort((a,b) => a.date.localeCompare(b.date)));
+    setCalendarModal(null);
+  }
+
+  function removeFromCalendar(id) {
+    setCalendarPosts(prev => prev.filter(p => p.id !== id));
   }
 
   function switchMode(newMode) {
@@ -1889,6 +2047,7 @@ ${'{"headline":"заголовок","hook":"хук",' + platforms.map(pid=>`"${p
               {label:`🎯 Темы${sordellResult?" ("+sordellResult.length+")":""}`, active:mode==="sordell"&&!showBankOpyt, onClick:()=>{setShowBankOpyt(false);startSordell();}},
               {label:"📝 Банк опыта", active:showBankOpyt, onClick:()=>{setShowBankOpyt(p=>!p);setShowPillarSetup(false);}},
               {label:"📅 Контент-план", active:mode==="plan", onClick:()=>{setShowBankOpyt(false);setShowPillarSetup(false);startPlan();}},
+              {label:`📆 Календарь${calendarPosts.length?" ("+calendarPosts.length+")":""}`, active:showCalendar, onClick:()=>{setShowCalendar(p=>!p);setShowBankOpyt(false);setShowPillarSetup(false);}},
             ].map((btn,i)=>(
               <button key={i} onClick={btn.onClick}
                 style={{padding:"8px 14px",borderRadius:8,border:`1px solid ${btn.active?"#e1df2c":"rgba(244,241,236,.2)"}`,background:btn.active?"rgba(225,223,44,.15)":"transparent",color:btn.active?"#e1df2c":"rgba(244,241,236,.8)",fontSize:13,fontWeight:btn.active?700:500,cursor:"pointer",whiteSpace:"nowrap"}}>
@@ -1915,6 +2074,28 @@ ${'{"headline":"заголовок","hook":"хук",' + platforms.map(pid=>`"${p
         {/* Main layout wrapper - two columns on desktop */}
         <div style={{display:isMobile?"block":"flex",gap:24,alignItems:"flex-start"}}>
         <div style={{flex:1,minWidth:0}}>
+
+        {/* CALENDAR PANEL */}
+        {showCalendar && (
+          <Card>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
+              <div style={{fontFamily:"'Cormorant Garamond', serif",fontSize:20,color:"#362d52",fontWeight:600}}>📆 Календарь публикаций</div>
+              <button onClick={()=>setShowCalendar(false)} style={{background:"transparent",border:"none",fontSize:22,cursor:"pointer",color:"#9a88b8"}}>×</button>
+            </div>
+            {calendarPosts.length === 0 ? (
+              <p style={{fontSize:13,color:"#9a88b8",textAlign:"center",padding:"20px 0"}}>Нет запланированных публикаций.<br/>Нажми «+ В календарь» на любой теме или посте.</p>
+            ) : (
+              <CalendarView
+                calendarPosts={calendarPosts}
+                removeFromCalendar={removeFromCalendar}
+                onViewGeneration={(genId)=>{
+                  const item = history.find(h=>h.id===genId);
+                  if (item) setSelectedHistory(item);
+                }}
+              />
+            )}
+          </Card>
+        )}
 
         {/* Bank Opyt panel */}
         {showBankOpyt && (
@@ -2137,6 +2318,17 @@ ${'{"headline":"заголовок","hook":"хук",' + platforms.map(pid=>`"${p
             )}
           </div>
         )}
+
+        {/* CALENDAR DATE MODAL */}
+        <CalendarDateModal
+          modal={calendarModal}
+          date={calendarDate}
+          setDate={setCalendarDate}
+          platform={calendarPlatform}
+          setPlatform={setCalendarPlatform}
+          onSave={saveToCalendar}
+          onClose={()=>setCalendarModal(null)}
+        />
 
         {/* BRAND PICKER MODAL */}
         {showBrandPicker && (
@@ -2410,6 +2602,7 @@ ${'{"headline":"заголовок","hook":"хук",' + platforms.map(pid=>`"${p
                 <div style={{display:"flex",flexDirection:"column",gap:12}}>
                   {sordellResult.map((t,i)=>(
                     <SordellCard key={i} t={t}
+                      onAddToCalendar={()=>addToCalendar(t.topic, platforms[0]||"telegram", null, "sordell")}
                       onCreatePost={()=>{
                         setTopic(t.topic);
                         setSordellQuad(t.quadrant?.includes("Личное") ?
@@ -2741,6 +2934,7 @@ ${'{"headline":"заголовок","hook":"хук",' + platforms.map(pid=>`"${p
               <div style={{display:"flex",flexDirection:"column",gap:10}}>
                 {planResult.map((post,i)=>(
                   <PlanCard key={i} post={post}
+                    onAddToCalendar={()=>addToCalendar(post.topic, post.platform, null, "plan")}
                     onCreatePost={()=>{
                       // Auto-fill all strategy from plan data
                       setTopic(post.topic);
@@ -3120,6 +3314,14 @@ ${'{"headline":"заголовок","hook":"хук",' + platforms.map(pid=>`"${p
                   Войти →
                 </button>
               </div>
+            )}
+
+            {/* Add to calendar from post result */}
+            {result?.headline && (
+              <button onClick={()=>addToCalendar(result.headline, activeTab, history[0]?.id||null, "post")}
+                style={{width:"100%",padding:10,borderRadius:9,border:"1px solid #5c9a6a",background:"transparent",color:"#5c9a6a",fontSize:12,fontWeight:600,cursor:"pointer",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                📆 Добавить в календарь публикаций
+              </button>
             )}
 
             {/* Back to plan button if plan exists */}
