@@ -435,79 +435,127 @@ function CalendarDateModal({ modal, date, setDate, platform, setPlatform, onSave
   );
 }
 
-function CalendarView({ calendarPosts, removeFromCalendar, onViewGeneration }) {
+function CalendarView({ calendarPosts, removeFromCalendar, onViewGeneration, onMovePost }) {
   const now = new Date();
-  const months = [];
-  for (let m = 0; m < 3; m++) {
-    const d = new Date(now.getFullYear(), now.getMonth() + m, 1);
-    months.push({ year: d.getFullYear(), month: d.getMonth() });
-  }
+  const [monthOffset, setMonthOffset] = React.useState(0);
+  const [dragId, setDragId] = React.useState(null);
+  const [dragOverDate, setDragOverDate] = React.useState(null);
+
+  const year = new Date(now.getFullYear(), now.getMonth() + monthOffset, 1).getFullYear();
+  const month = new Date(now.getFullYear(), now.getMonth() + monthOffset, 1).getMonth();
 
   const platIcons = {telegram:"✈️",vk:"🔵",facebook:"📘",threads:"◎",instagram:"📸",zen:"🟡",linkedin:"💼",yt_shorts:"▶️",yt_long:"🎬"};
   const monthNames = ["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"];
   const dayNames = ["Пн","Вт","Ср","Чт","Пт","Сб","Вс"];
 
-  function getPostsForDate(year, month, day) {
+  const firstDay = new Date(year, month, 1).getDay();
+  const startOffset = firstDay === 0 ? 6 : firstDay - 1;
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
+
+  function getPostsForDate(day) {
     const dateStr = `${year}-${String(month+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
     return calendarPosts.filter(p => p.date === dateStr);
   }
 
+  function handleDrop(day) {
+    if (!dragId) return;
+    const dateStr = `${year}-${String(month+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+    onMovePost(dragId, dateStr);
+    setDragId(null);
+    setDragOverDate(null);
+  }
+
+  const CELL_W = "calc(14.28% - 2px)";
+
   return (
     <div>
-      {months.map(({year, month}) => {
-        const firstDay = new Date(year, month, 1).getDay();
-        const startOffset = firstDay === 0 ? 6 : firstDay - 1; // Monday first
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-        const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
+      {/* Month navigation */}
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
+        <button onClick={()=>setMonthOffset(o=>o-1)} disabled={monthOffset<=0}
+          style={{padding:"6px 14px",borderRadius:8,border:"1px solid #d8d0e0",background:"transparent",color:monthOffset<=0?"#d8d0e0":"#362d52",fontSize:13,cursor:monthOffset<=0?"not-allowed":"pointer"}}>
+          ← Назад
+        </button>
+        <div style={{fontFamily:"'Cormorant Garamond', serif",fontSize:20,fontWeight:600,color:"#362d52"}}>
+          {monthNames[month]} {year}
+        </div>
+        <button onClick={()=>setMonthOffset(o=>o+1)} disabled={monthOffset>=2}
+          style={{padding:"6px 14px",borderRadius:8,border:"1px solid #d8d0e0",background:"transparent",color:monthOffset>=2?"#d8d0e0":"#362d52",fontSize:13,cursor:monthOffset>=2?"not-allowed":"pointer"}}>
+          Вперёд →
+        </button>
+      </div>
 
-        return (
-          <div key={`${year}-${month}`} style={{marginBottom:24}}>
-            <div style={{fontFamily:"'Cormorant Garamond', serif",fontSize:18,fontWeight:600,color:"#362d52",marginBottom:12}}>
-              {monthNames[month]} {year}
-            </div>
+      {/* Day names */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2,marginBottom:2}}>
+        {dayNames.map(d=>(
+          <div key={d} style={{textAlign:"center",fontSize:10,color:"#9a88b8",fontWeight:600,padding:"4px 0"}}>{d}</div>
+        ))}
+      </div>
 
-            {/* Day names */}
-            <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2,marginBottom:2}}>
-              {dayNames.map(d=>(
-                <div key={d} style={{textAlign:"center",fontSize:10,color:"#9a88b8",fontWeight:600,padding:"4px 0"}}>{d}</div>
-              ))}
-            </div>
+      {/* Days grid */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2}}>
+        {Array.from({length: startOffset}).map((_,i)=>(
+          <div key={"e"+i} style={{height:80}} />
+        ))}
+        {Array.from({length: daysInMonth}).map((_,i)=>{
+          const day = i + 1;
+          const dateStr = `${year}-${String(month+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+          const posts = getPostsForDate(day);
+          const isToday = dateStr === todayStr;
+          const isPast = dateStr < todayStr;
+          const isDragOver = dragOverDate === dateStr;
 
-            {/* Days grid */}
-            <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2}}>
-              {Array.from({length: startOffset}).map((_,i)=>(
-                <div key={"empty-"+i} style={{minHeight:70}} />
-              ))}
-              {Array.from({length: daysInMonth}).map((_,i)=>{
-                const day = i + 1;
-                const dateStr = `${year}-${String(month+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
-                const posts = getPostsForDate(year, month, day);
-                const isToday = dateStr === todayStr;
-                const isPast = dateStr < todayStr;
-
-                return (
-                  <div key={day} style={{minHeight:70,padding:"4px 5px",borderRadius:7,border:`1px solid ${isToday?"#362d52":"#e8e0f0"}`,background:isToday?"#f4f1ec":isPast?"#fafafa":"#fff",position:"relative"}}>
-                    <div style={{fontSize:11,fontWeight:isToday?700:400,color:isToday?"#362d52":isPast?"#c4b8d8":"#362d52",marginBottom:3}}>{day}</div>
-                    <div style={{display:"flex",flexDirection:"column",gap:2}}>
-                      {posts.map(post=>(
-                        <div key={post.id} style={{position:"relative",group:"true"}}>
-                          <div
-                            onClick={()=>post.generationId&&onViewGeneration(post.generationId)}
-                            style={{fontSize:9,lineHeight:1.3,color:"#fff",background:"#362d52",borderRadius:4,padding:"2px 4px",cursor:post.generationId?"pointer":"default",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-                            {platIcons[post.platform]||""} {post.topic}
-                          </div>
-                          <button onClick={(e)=>{e.stopPropagation();removeFromCalendar(post.id);}}
-                            style={{position:"absolute",top:-3,right:-3,width:13,height:13,borderRadius:"50%",border:"none",background:"#e05c5c",color:"#fff",fontSize:8,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,lineHeight:1}}>×</button>
-                        </div>
-                      ))}
+          return (
+            <div key={day}
+              onDragOver={e=>{e.preventDefault();setDragOverDate(dateStr);}}
+              onDragLeave={()=>setDragOverDate(null)}
+              onDrop={()=>handleDrop(day)}
+              style={{
+                height:80, padding:"4px 4px", borderRadius:7,
+                border:`1px solid ${isDragOver?"#362d52":isToday?"#362d52":"#e8e0f0"}`,
+                background:isDragOver?"rgba(54,45,82,.08)":isToday?"#f4f1ec":isPast?"#fafafa":"#fff",
+                overflow:"hidden", position:"relative",
+              }}>
+              <div style={{fontSize:10,fontWeight:isToday?700:400,color:isToday?"#362d52":isPast?"#c4b8d8":"#9a88b8",marginBottom:2}}>{day}</div>
+              <div style={{display:"flex",flexDirection:"column",gap:1,overflow:"hidden"}}>
+                {posts.map(post=>(
+                  <div key={post.id}
+                    draggable
+                    onDragStart={()=>setDragId(post.id)}
+                    onDragEnd={()=>{setDragId(null);setDragOverDate(null);}}
+                    style={{position:"relative",cursor:"grab"}}>
+                    <div
+                      onClick={()=>post.generationId&&onViewGeneration(post.generationId)}
+                      title={post.topic}
+                      style={{
+                        fontSize:8,lineHeight:1.3,color:"#fff",
+                        background:dragId===post.id?"#9a88b8":"#362d52",
+                        borderRadius:3,padding:"2px 14px 2px 3px",
+                        overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
+                        cursor:post.generationId?"pointer":"grab",
+                        opacity:dragId===post.id?.5:1,
+                      }}>
+                      {platIcons[post.platform]||""} {post.topic}
                     </div>
+                    <button onClick={e=>{e.stopPropagation();removeFromCalendar(post.id);}}
+                      style={{position:"absolute",top:0,right:0,width:12,height:12,borderRadius:"50%",border:"none",background:"#e05c5c",color:"#fff",fontSize:7,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,lineHeight:1}}>
+                      ×
+                    </button>
                   </div>
-                );
-              })}
+                ))}
+              </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
+
+      {/* Month counter */}
+      <div style={{display:"flex",justifyContent:"center",gap:6,marginTop:14}}>
+        {[0,1,2].map(i=>(
+          <button key={i} onClick={()=>setMonthOffset(i)}
+            style={{width:8,height:8,borderRadius:"50%",border:"none",background:monthOffset===i?"#362d52":"#d8d0e0",cursor:"pointer",padding:0}} />
+        ))}
+      </div>
     </div>
   );
 }
@@ -1243,6 +1291,10 @@ ${toneOfVoice ? `Голос бренда / пример поста: ${toneOfVoic
 
   function removeFromCalendar(id) {
     setCalendarPosts(prev => prev.filter(p => p.id !== id));
+  }
+
+  function moveCalendarPost(id, newDate) {
+    setCalendarPosts(prev => prev.map(p => p.id === id ? {...p, date: newDate} : p).sort((a,b)=>a.date.localeCompare(b.date)));
   }
 
   function switchMode(newMode) {
@@ -2098,6 +2150,7 @@ ${'{"headline":"заголовок","hook":"хук",' + platforms.map(pid=>`"${p
               <CalendarView
                 calendarPosts={calendarPosts}
                 removeFromCalendar={removeFromCalendar}
+                onMovePost={moveCalendarPost}
                 onViewGeneration={(genId)=>{
                   const item = history.find(h=>h.id===genId);
                   if (item) setSelectedHistory(item);
