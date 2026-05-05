@@ -73,8 +73,34 @@ function CalendarView({ calendarPosts, removeFromCalendar, onViewGeneration, onM
 
   const CELL_W = "calc(14.28% - 2px)";
 
+  const [selectedPost, setSelectedPost] = React.useState(null);
+
   return (
     <div>
+      {/* Topic detail popup */}
+      {selectedPost && (
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.5)",zIndex:5000,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setSelectedPost(null)}>
+          <div style={{background:"#fff",borderRadius:14,padding:20,maxWidth:400,width:"100%"}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+              <div style={{fontSize:10,background:"#362d52",color:"#f4f1ec",padding:"2px 10px",borderRadius:6,fontWeight:700}}>
+                {platIcons[selectedPost.platform]||""} {selectedPost.platform}
+              </div>
+              <div style={{fontSize:11,color:"#9a88b8"}}>{selectedPost.date}</div>
+              <button onClick={()=>setSelectedPost(null)} style={{background:"transparent",border:"none",fontSize:20,cursor:"pointer",color:"#9a88b8",lineHeight:1}}>×</button>
+            </div>
+            <div style={{fontSize:15,fontWeight:700,color:"#362d52",lineHeight:1.4,marginBottom:10}}>{selectedPost.topic}</div>
+            {selectedPost.hook && <div style={{fontSize:12,color:"#5c4e7a",fontStyle:"italic",lineHeight:1.6,marginBottom:8,padding:"8px 10px",background:"#f4f1ec",borderRadius:8}}>💡 {selectedPost.hook}</div>}
+            {selectedPost.quadrant && <div style={{fontSize:11,background:"#e1df2c",color:"#362d52",padding:"3px 10px",borderRadius:6,display:"inline-block",fontWeight:700,marginBottom:8}}>{selectedPost.quadrant}</div>}
+            {selectedPost.reason && <div style={{fontSize:11,color:"#7a6a9a",lineHeight:1.5,marginBottom:10}}>🔥 {selectedPost.reason}</div>}
+            {selectedPost.expert && <div style={{fontSize:10,color:"#9a88b8"}}>👤 {selectedPost.expert}</div>}
+            <button onClick={()=>{removeFromCalendar(selectedPost.id);setSelectedPost(null);}}
+              style={{marginTop:12,width:"100%",padding:"8px",borderRadius:8,border:"1px solid #e05c5c",background:"transparent",color:"#e05c5c",fontSize:12,cursor:"pointer"}}>
+              Удалить из календаря
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Month navigation */}
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
         <button onClick={()=>setMonthOffset(o=>o-1)} disabled={monthOffset<=0}
@@ -130,20 +156,23 @@ function CalendarView({ calendarPosts, removeFromCalendar, onViewGeneration, onM
                     onDragEnd={()=>{setDragId(null);setDragOverDate(null);}}
                     style={{position:"relative",cursor:"grab"}}>
                     <div
-                      onClick={()=>post.generationId&&onViewGeneration(post.generationId)}
+                      onClick={()=>{
+                        if (post.generationId) onViewGeneration(post.generationId);
+                        else setSelectedPost(post);
+                      }}
                       title={post.topic}
                       style={{
                         fontSize:8,lineHeight:1.3,color:"#fff",
                         background:dragId===post.id?"#9a88b8":"#362d52",
                         borderRadius:3,padding:"2px 14px 2px 3px",
                         overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
-                        cursor:post.generationId?"pointer":"grab",
+                        cursor:"pointer",
                         opacity:dragId===post.id?.5:1,
                       }}>
                       {platIcons[post.platform]||""} {post.topic}
                     </div>
                     <button onClick={e=>{e.stopPropagation();removeFromCalendar(post.id);}}
-                      style={{position:"absolute",top:0,right:0,width:12,height:12,borderRadius:"50%",border:"none",background:"#e05c5c",color:"#fff",fontSize:7,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,lineHeight:1}}>
+                      style={{position:"absolute",top:0,right:0,width:11,height:11,borderRadius:"50%",border:"none",background:"#e05c5c",color:"#fff",fontSize:7,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,lineHeight:1,opacity:.8}}>
                       ×
                     </button>
                   </div>
