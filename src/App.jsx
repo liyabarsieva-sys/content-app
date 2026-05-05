@@ -1496,8 +1496,7 @@ ${tmpl.prompt}
     const tovSection = toneOfVoice.trim() ? `\nГолос бренда (используй КАК ОБРАЗЕЦ СТИЛЯ, не копируй текст дословно):\n"${toneOfVoice}"\n` : "";
     const useLength = LENGTH_OPTIONS.find(l=>l.id===length) || LENGTH_OPTIONS[1];
 
-    const platformKeys = usePlatforms.join(",");
-    const jsonExample = '{"headline":"заголовок","hook":"хук до 2 предложений",' + usePlatforms.map(pid=>`"${pid}":"полный текст поста для ${PLATFORMS.find(p=>p.id===pid)?.label||pid}"`).join(",") + '}';
+    const jsonFields = usePlatforms.map(pid => `"${pid}": "текст поста для ${PLATFORMS.find(p=>p.id===pid)?.label||pid}"`).join(", ");
 
     const prompt = `Ты опытный SMM-стратег и контент-маркетолог. Пиши на русском языке.
 
@@ -1532,7 +1531,7 @@ ${jsonExample}`;
         method:"POST", headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
           model:"claude-sonnet-4-5-20251022",
-          max_tokens:3500,
+          max_tokens:4000,
           messages:[{role:"user",content:prompt}],
         }),
       });
@@ -1540,8 +1539,24 @@ ${jsonExample}`;
       if (data.error) throw new Error(data.error.message);
       const text = data.content.map(b=>b.text||"").join("");
       let parsed;
-      try { parsed = JSON.parse(text.replace(/```json|```/g,"").trim()); }
-      catch { setError("Ошибка разбора. Попробуй снова."); setLoading(false); return; }
+      try {
+        const clean = text.replace(/```json|```/g,"").trim();
+        parsed = JSON.parse(clean);
+      } catch(jsonErr) {
+        // Try to extract JSON from response
+        const match = text.match(/\{[\s\S]*\}/);
+        if (match) {
+          try { parsed = JSON.parse(match[0]); }
+          catch { setError("Ошибка разбора ответа. Платформы: " + usePlatforms.join(",")); setLoading(false); return; }
+        } else {
+          setError("Модель не вернула JSON. Попробуй снова."); setLoading(false); return;
+        }
+      }
+      // Ensure we have at least one platform text
+      const hasText = usePlatforms.some(pid => parsed[pid]);
+      if (!hasText) {
+        setError("Текст не сгенерирован. Попробуй снова."); setLoading(false); return;
+      }
       setResult(parsed);
       setTopic(useTopic);
       setActiveTab(usePlatforms[0]);
@@ -2990,6 +3005,20 @@ ${'{"headline":"заголовок","hook":"хук",' + platforms.map(pid=>`"${p
                   </div>
                 </>
               )}
+
+              {/* Quick platform selector on topic step */}
+              <div style={{marginBottom:14}}>
+                <Label text="Платформы для этого поста" hint="Можешь изменить для конкретного поста" />
+                <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                  {PLATFORMS.map(p=>(
+                    <button key={p.id} onClick={()=>{
+                      setPlatforms(prev=>prev.includes(p.id)?prev.filter(x=>x!==p.id):[...prev,p.id]);
+                    }} style={{padding:"6px 12px",borderRadius:8,border:`1px solid ${platforms.includes(p.id)?"#362d52":"#d8d0e0"}`,background:platforms.includes(p.id)?"#362d52":"#fff",color:platforms.includes(p.id)?"#f4f1ec":"#362d52",fontSize:12,cursor:"pointer"}}>
+                      {p.icon} {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
               {/* Strategy summary */}
               <div style={{padding:"10px 14px",background:"#362d52",borderRadius:9,border:"none",fontSize:11,color:"#f4f1ec",lineHeight:1.7,textAlign:"center"}}>
