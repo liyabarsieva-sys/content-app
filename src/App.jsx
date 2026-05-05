@@ -2052,7 +2052,7 @@ ${'{"headline":"заголовок","hook":"хук",' + platforms.map(pid=>`"${p
           {/* Row 1 — База знаний эксперта */}
           <div style={{display:"flex",gap:5,padding:"0 16px 8px",justifyContent:"center",flexWrap:"wrap",borderBottom:"1px solid rgba(244,241,236,.1)"}}>
             {[
-              {label:`👤 Контекст`, active:step===1&&!showPillarSetup, onClick:()=>{setShowPillarSetup(false);setShowBankOpyt(false);switchMode("post");}},
+              {label:`👤 Контекст`, active:step===1&&!showPillarSetup&&!showBankOpyt&&!showCalendar, onClick:()=>{setShowPillarSetup(false);setShowBankOpyt(false);setShowCalendar(false);setMode("post");setResult(null);setStep(1);}},
               {label:`📌 Блоки${pillars.length?" ("+pillars.length+")":""}`, active:showPillarSetup, onClick:()=>{setShowPillarSetup(p=>!p);setShowBankOpyt(false);}},
               {label:`🎯 Темы${sordellResult?" ("+sordellResult.length+")":""}`, active:mode==="sordell"&&!showBankOpyt, onClick:()=>{setShowBankOpyt(false);startSordell();}},
               {label:"📝 Банк опыта", active:showBankOpyt, onClick:()=>{setShowBankOpyt(p=>!p);setShowPillarSetup(false);}},
