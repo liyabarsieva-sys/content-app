@@ -414,7 +414,7 @@ ${toneOfVoice ? `Голос бренда / пример поста: ${toneOfVoic
   }
 
   function addToCalendar(topic, platform, generationId, type, meta={}) {
-    setCalendarModal({ topic, platform: platform||platforms[0]||"telegram", generationId, type, ...meta });
+    setCalendarModal({ topic, platform: platform||platforms[0]||"telegram", generationId, type, expert, ...meta });
     setCalendarDate("");
     setCalendarPlatform(platform||platforms[0]||"telegram");
   }
@@ -428,7 +428,7 @@ ${toneOfVoice ? `Голос бренда / пример поста: ${toneOfVoic
       platform: calendarPlatform || calendarModal.platform,
       generationId: calendarModal.generationId || null,
       type: calendarModal.type || "topic",
-      expert: expert || "",
+      expert: calendarModal.expert || expert || "",
       hook: calendarModal.hook || "",
       quadrant: calendarModal.quadrant || "",
       reason: calendarModal.reason || "",
@@ -2532,7 +2532,7 @@ ${'{"headline":"заголовок","hook":"хук",' + platforms.map(pid=>`"${p
 
             {/* Add to calendar from post result */}
             {result?.headline && (
-              <button onClick={()=>addToCalendar(result.headline, activeTab, history[0]?.id||null, "post")}
+              <button onClick={()=>addToCalendar(result.headline, activeTab, history[0]?.id||null, "post", {hook:result.hook})}
                 style={{width:"100%",padding:10,borderRadius:9,border:"1px solid #5c9a6a",background:"transparent",color:"#5c9a6a",fontSize:12,fontWeight:600,cursor:"pointer",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
                 📆 Добавить в календарь публикаций
               </button>
