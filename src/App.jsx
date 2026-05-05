@@ -1214,8 +1214,8 @@ ${'{"headline":"заголовок","hook":"хук",' + platforms.map(pid=>`"${p
           {/* Top bar: logo + tagline + auth */}
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 20px 8px",gap:12}}>
             <div style={{flexShrink:0}}>
-              <div style={{fontSize:27,letterSpacing:".2em",textTransform:"uppercase",color:"rgba(225,223,44,.8)",fontWeight:600,lineHeight:1.2}}>Content</div>
-              <div style={{fontSize:27,letterSpacing:".2em",textTransform:"uppercase",color:"rgba(225,223,44,.8)",fontWeight:600,lineHeight:1.2}}>Intelligence</div>
+              <div style={{fontSize:16,letterSpacing:".2em",textTransform:"uppercase",color:"rgba(225,223,44,.8)",fontWeight:600,lineHeight:1.3}}>Content</div>
+              <div style={{fontSize:16,letterSpacing:".2em",textTransform:"uppercase",color:"rgba(225,223,44,.8)",fontWeight:600,lineHeight:1.3}}>Intelligence</div>
             </div>
             <div style={{flex:1,textAlign:"center"}}>
               <div style={{fontFamily:"Georgia,serif",fontSize:isMobile?"14px":"17px",color:"#f4f1ec",lineHeight:1.3,fontStyle:"italic",opacity:.9}}>
