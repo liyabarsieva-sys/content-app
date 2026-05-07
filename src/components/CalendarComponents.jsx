@@ -40,7 +40,7 @@ function CalendarDateModal({ modal, date, setDate, platform, setPlatform, onSave
   );
 }
 
-function CalendarView({ calendarPosts, removeFromCalendar, onViewGeneration, onMovePost, currentExpert }) {
+function CalendarView({ calendarPosts, removeFromCalendar, onViewGeneration, onMovePost, currentExpert, onGeneratePost }) {
   const now = new Date();
   const [monthOffset, setMonthOffset] = React.useState(0);
   const [showAll, setShowAll] = React.useState(false);
@@ -98,11 +98,19 @@ function CalendarView({ calendarPosts, removeFromCalendar, onViewGeneration, onM
             {selectedPost.hook && <div style={{fontSize:12,color:"#5c4e7a",fontStyle:"italic",lineHeight:1.6,marginBottom:8,padding:"8px 10px",background:"#f4f1ec",borderRadius:8}}>💡 {selectedPost.hook}</div>}
             {selectedPost.quadrant && <div style={{fontSize:11,background:"#e1df2c",color:"#362d52",padding:"3px 10px",borderRadius:6,display:"inline-block",fontWeight:700,marginBottom:8}}>{selectedPost.quadrant}</div>}
             {selectedPost.reason && <div style={{fontSize:11,color:"#7a6a9a",lineHeight:1.5,marginBottom:10}}>🔥 {selectedPost.reason}</div>}
-            {selectedPost.expert && <div style={{fontSize:10,color:"#9a88b8"}}>👤 {selectedPost.expert}</div>}
-            <button onClick={()=>{removeFromCalendar(selectedPost.id);setSelectedPost(null);}}
-              style={{marginTop:12,width:"100%",padding:"8px",borderRadius:8,border:"1px solid #e05c5c",background:"transparent",color:"#e05c5c",fontSize:12,cursor:"pointer"}}>
-              Удалить из календаря
-            </button>
+            {selectedPost.expert && <div style={{fontSize:10,color:"#9a88b8",marginBottom:10}}>👤 {selectedPost.expert}</div>}
+            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+              {onGeneratePost && (
+                <button onClick={()=>{onGeneratePost(selectedPost);setSelectedPost(null);}}
+                  style={{width:"100%",padding:"10px",borderRadius:8,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:13,fontWeight:700,cursor:"pointer"}}>
+                  ✦ Создать пост на эту тему
+                </button>
+              )}
+              <button onClick={()=>{removeFromCalendar(selectedPost.id);setSelectedPost(null);}}
+                style={{width:"100%",padding:"8px",borderRadius:8,border:"1px solid #e05c5c",background:"transparent",color:"#e05c5c",fontSize:12,cursor:"pointer"}}>
+                Удалить из календаря
+              </button>
+            </div>
           </div>
         </div>
       )}
