@@ -1971,6 +1971,16 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
                 </button>
                 {!niche && !audience && <div style={{fontSize:10,color:"#9a88b8",marginTop:4,textAlign:"center"}}>Заполните нишу и аудиторию выше</div>}
 
+                {audiencePains.length === 0 && (
+                  <div style={{display:"flex",gap:6,marginTop:8}}>
+                    <input placeholder="Введите боль аудитории..."
+                      onKeyDown={e=>{if(e.key==="Enter"&&e.target.value.trim()){setAudiencePains(prev=>[...prev,e.target.value.trim()]);e.target.value="";}}}
+                      style={{flex:1,padding:"9px 12px",borderRadius:8,border:"1px solid #d8d0e0",fontSize:12,color:"#362d52",outline:"none",background:"#f0eef8"}} />
+                    <button onClick={e=>{const i=e.target.previousSibling;if(i.value.trim()){setAudiencePains(prev=>[...prev,i.value.trim()]);i.value="";}}}
+                      style={{padding:"9px 14px",borderRadius:8,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:13,fontWeight:700,cursor:"pointer",flexShrink:0}}>+</button>
+                  </div>
+                )}
+
                 {/* Pain chips — collapsible */}
                 {audiencePains.length > 0 && (
                   <div style={{marginTop:6}}>
@@ -1989,12 +1999,13 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
                               style={{background:"transparent",border:"none",color:"#c4b8d8",cursor:"pointer",fontSize:15,padding:0,lineHeight:1,flexShrink:0}}>×</button>
                           </div>
                         ))}
-                        <button onClick={()=>{
-                          const custom = window.prompt("Добавить свою боль:");
-                          if (custom?.trim()) setAudiencePains(prev=>[...prev, custom.trim()]);
-                        }} style={{padding:"7px 12px",borderRadius:8,border:"1px dashed #d8d0e0",background:"transparent",color:"#5c4e7a",fontSize:11,cursor:"pointer",textAlign:"center"}}>
-                          + Добавить свою боль
-                        </button>
+                        <div style={{display:"flex",gap:6}}>
+                          <input placeholder="Добавить свою боль..."
+                            onKeyDown={e=>{if(e.key==="Enter"&&e.target.value.trim()){setAudiencePains(prev=>[...prev,e.target.value.trim()]);e.target.value="";}}}
+                            style={{flex:1,padding:"7px 10px",borderRadius:8,border:"1px solid #d8d0e0",fontSize:12,color:"#362d52",outline:"none",background:"#fff"}} />
+                          <button onClick={e=>{const i=e.target.previousSibling;if(i.value.trim()){setAudiencePains(prev=>[...prev,i.value.trim()]);i.value="";}}}
+                            style={{padding:"7px 12px",borderRadius:8,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:12,fontWeight:700,cursor:"pointer",flexShrink:0}}>+</button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -2015,14 +2026,17 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
                 </button>
                 {!niche && !audience && <div style={{fontSize:10,color:"#9a88b8",marginTop:4,textAlign:"center"}}>Заполните нишу и аудиторию выше</div>}
 
-                <button onClick={()=>{
-                  const custom = window.prompt("Введите барьер аудитории:");
-                  if (custom?.trim()) setAudienceBarriers(prev=>[...prev, custom.trim()]);
-                }} style={{width:"100%",padding:"8px 14px",borderRadius:9,border:"1px solid #d8d0e0",background:"#fff",color:"#362d52",fontSize:12,fontWeight:600,cursor:"pointer",marginTop:6}}>
-                  + Добавить барьер
-                </button>
+                {audienceBarriers.length === 0 && (
+                  <div style={{display:"flex",gap:6,marginTop:8}}>
+                    <input placeholder='Например: "я недостаточно плохо себя чувствую"'
+                      onKeyDown={e=>{if(e.key==="Enter"&&e.target.value.trim()){setAudienceBarriers(prev=>[...prev,e.target.value.trim()]);e.target.value="";}}}
+                      style={{flex:1,padding:"9px 12px",borderRadius:8,border:"1px solid #d8d0e0",fontSize:12,color:"#362d52",outline:"none",background:"#f0eef8"}} />
+                    <button onClick={e=>{const i=e.target.previousSibling;if(i.value.trim()){setAudienceBarriers(prev=>[...prev,i.value.trim()]);i.value="";}}}
+                      style={{padding:"9px 14px",borderRadius:8,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:13,fontWeight:700,cursor:"pointer",flexShrink:0}}>+</button>
+                  </div>
+                )}
 
-                {/* Pain chips — collapsible */}
+                {/* Barriers — collapsible */}
                 {audienceBarriers.length > 0 && (
                   <div style={{marginTop:6}}>
                     <button onClick={()=>setShowBarriers(p=>!p)}
