@@ -171,6 +171,8 @@ export default function App() {
   });
   const [suggestingPains, setSuggestingPains] = useState(false);
   const [showPains, setShowPains] = useState(false);
+  const [suggestingBarriers, setSuggestingBarriers] = useState(false);
+  const [showBarriers, setShowBarriers] = useState(false);
   const [brandQ1, setBrandQ1] = useState(() => localStorage.getItem("lia_brand_q1") || "");
   const [brandQ2, setBrandQ2] = useState(() => localStorage.getItem("lia_brand_q2") || "");
   const [planPeriod, setPlanPeriod] = useState(() => localStorage.getItem("lia_plan_period") || "week");
@@ -252,6 +254,23 @@ export default function App() {
 
   const [suggestingPillars, setSuggestingPillars] = useState(false);
   const [suggestedPillars, setSuggestedPillars] = useState([]);
+
+  async function suggestBarriers() {
+    setSuggestingBarriers(true);
+    const prompt = `Ты маркетолог-психолог. Определи 5 главных барьеров аудитории перед обращением за помощью к специалисту.
+Ниша: ${niche||"-"}. Аудитория: ${audience||"-"}.
+Барьер — это конкретная мысль или страх который мешает человеку обратиться. Формулируй словами клиента.
+Примеры: "я недостаточно плохо себя чувствую", "это для слабых", "слишком дорого", "я не знаю что будет", "я сам разберусь".
+ТОЛЬКО валидный JSON: {"barriers":["барьер 1","барьер 2","барьер 3","барьер 4","барьер 5"]}`;
+    try {
+      const resp = await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:600,messages:[{role:"user",content:prompt}]})});
+      const data = await resp.json();
+      const text = data.content.map(b=>b.text||"").join("");
+      const parsed = JSON.parse(text.replace(/```json|```/g,"").trim());
+      if (parsed.barriers?.length) setAudienceBarriers(parsed.barriers);
+    } catch(e) { console.error(e); }
+    setSuggestingBarriers(false);
+  }
 
   async function suggestPains() {
     if (!niche && !audience) return;
@@ -1984,22 +2003,54 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
 
               {/* Audience Barriers */}
               <div style={{marginBottom:14}}>
-                <Label text="Барьеры аудитории" hint="Что мешает вашей аудитории обратиться за помощью? Словами клиента, не терминами. Используются в постах стадий 2-3." />
-                <div style={{display:"flex",flexDirection:"column",gap:6}}>
-                  {audienceBarriers.map((b,i)=>(
-                    <div key={i} style={{display:"flex",alignItems:"flex-start",gap:8,padding:"8px 12px",background:"#f4f1ec",borderRadius:8,border:"1px solid #e8e0f0"}}>
-                      <span style={{fontSize:12,color:"#9a88b8",marginTop:1,flexShrink:0}}>{i+1}.</span>
-                      <span style={{fontSize:12,color:"#362d52",flex:1,lineHeight:1.5}}>{b}</span>
-                      <button onClick={()=>setAudienceBarriers(prev=>prev.filter((_,idx)=>idx!==i))} style={{background:"transparent",border:"none",color:"#c4b8d8",cursor:"pointer",fontSize:15,padding:0,lineHeight:1,flexShrink:0}}>×</button>
-                    </div>
-                  ))}
-                  <div style={{display:"flex",gap:8,marginTop:audienceBarriers.length?4:0}}>
-                    <input placeholder='Например: "я недостаточно плохо себя чувствую"' onKeyDown={e=>{if(e.key==="Enter"&&e.target.value.trim()){setAudienceBarriers(prev=>[...prev,e.target.value.trim()]);e.target.value="";}}}
+                <Label text="Барьеры аудитории" hint="Что мешает вашей аудитории обратиться за помощью? Словами клиента. Используются в постах стадий 2–3." />
+
+                <button onClick={suggestBarriers} disabled={suggestingBarriers||(!niche&&!audience)}
+                  style={{width:"100%",padding:"10px 14px",borderRadius:9,border:"1px dashed #362d52",background:"rgba(54,45,82,.04)",color:suggestingBarriers?"#9a88b8":"#362d52",fontSize:12,fontWeight:600,cursor:(!niche&&!audience)?"not-allowed":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:audienceBarriers.length?10:0}}>
+                  {suggestingBarriers
+                    ? <><div style={{width:13,height:13,border:"2px solid #d8d0e0",borderTopColor:"#362d52",borderRadius:"50%",animation:"sp .8s linear infinite"}} /> Определяю барьеры…</>
+                    : <>✨ {audienceBarriers.length?"Обновить барьеры":"Определить барьеры аудитории"}</>
+                  }
+                </button>
+                {!niche && !audience && <div style={{fontSize:10,color:"#9a88b8",marginTop:4,textAlign:"center"}}>Заполните нишу и аудиторию выше</div>}
+
+                {audienceBarriers.length > 0 && (
+                  <div style={{marginTop:6}}>
+                    <button onClick={()=>setShowBarriers(p=>!p)}
+                      style={{width:"100%",padding:"7px 12px",borderRadius:8,border:"1px solid #e8e0f0",background:"#f4f1ec",color:"#362d52",fontSize:11,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:showBarriers?8:0}}>
+                      <span>🚧 Барьеры определены ({audienceBarriers.length})</span>
+                      <span style={{fontSize:10,color:"#9a88b8"}}>{showBarriers?"Скрыть ▲":"Показать ▼"}</span>
+                    </button>
+                    {showBarriers && (
+                      <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                        {audienceBarriers.map((b,i)=>(
+                          <div key={i} style={{display:"flex",alignItems:"flex-start",gap:8,padding:"8px 12px",background:"#f4f1ec",borderRadius:8,border:"1px solid #e8e0f0"}}>
+                            <span style={{fontSize:12,color:"#9a88b8",marginTop:1,flexShrink:0}}>{i+1}.</span>
+                            <span style={{fontSize:12,color:"#362d52",flex:1,lineHeight:1.5}}>{b}</span>
+                            <button onClick={()=>setAudienceBarriers(prev=>prev.filter((_,idx)=>idx!==i))}
+                              style={{background:"transparent",border:"none",color:"#c4b8d8",cursor:"pointer",fontSize:15,padding:0,lineHeight:1,flexShrink:0}}>×</button>
+                          </div>
+                        ))}
+                        <button onClick={()=>{
+                          const custom = window.prompt("Добавить свой барьер:");
+                          if (custom?.trim()) setAudienceBarriers(prev=>[...prev, custom.trim()]);
+                        }} style={{padding:"7px 12px",borderRadius:8,border:"1px dashed #d8d0e0",background:"transparent",color:"#5c4e7a",fontSize:11,cursor:"pointer",textAlign:"center"}}>
+                          + Добавить свой барьер
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {audienceBarriers.length === 0 && (
+                  <div style={{display:"flex",gap:8,marginTop:6}}>
+                    <input placeholder='Например: "я недостаточно плохо себя чувствую"'
+                      onKeyDown={e=>{if(e.key==="Enter"&&e.target.value.trim()){setAudienceBarriers(prev=>[...prev,e.target.value.trim()]);e.target.value="";}}}
                       style={{...inp,flex:1,fontSize:12}} />
-                    <button onClick={e=>{const inp=e.target.previousSibling;if(inp.value.trim()){setAudienceBarriers(prev=>[...prev,inp.value.trim()]);inp.value="";}}}
+                    <button onClick={e=>{const i=e.target.previousSibling;if(i.value.trim()){setAudienceBarriers(prev=>[...prev,i.value.trim()]);i.value="";}}}
                       style={{padding:"8px 14px",borderRadius:8,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:13,fontWeight:700,cursor:"pointer",flexShrink:0}}>+</button>
                   </div>
-                </div>
+                )}
               </div>
 
               <div style={{marginBottom:14}}>
