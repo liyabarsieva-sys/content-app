@@ -1319,13 +1319,35 @@ ${'{"headline":"заголовок","hook":"хук",' + platforms.map(pid=>`"${p
           {/* Row 1 — База знаний эксперта */}
           <div style={{display:"flex",gap:5,padding:"0 16px 8px",justifyContent:"center",flexWrap:"wrap",borderBottom:"1px solid rgba(244,241,236,.1)"}}>
             {[
-              {label:`👤 Контекст`, active:step===1&&!showPillarSetup&&!showBankOpyt&&!showCalendar, onClick:()=>{setShowPillarSetup(false);setShowBankOpyt(false);setShowCalendar(false);setMode("post");setResult(null);setStep(1);}},
-              {label:`📌 Блоки${pillars.length?" ("+pillars.length+")":""}`, active:showPillarSetup, onClick:()=>{setShowPillarSetup(p=>!p);setShowBankOpyt(false);}},
-              {label:`🎯 Темы${sordellResult?" ("+sordellResult.length+")":""}`, active:mode==="sordell"&&!showBankOpyt, onClick:()=>{setShowBankOpyt(false);startSordell();}},
-              {label:"📝 Банк опыта", active:showBankOpyt, onClick:()=>{setShowBankOpyt(p=>!p);setShowPillarSetup(false);}},
-              {label:"📅 Контент-план", active:mode==="plan", onClick:()=>{setShowBankOpyt(false);setShowPillarSetup(false);startPlan();}},
-              {label:`📆 Календарь${calendarPosts.length?" ("+calendarPosts.length+")":""}`, active:showCalendar, onClick:()=>{setShowCalendar(p=>!p);setShowBankOpyt(false);setShowPillarSetup(false);setShowProducts(false);}},
-              {label:`🛍 Продукты${products.length?" ("+products.length+")":""}`, active:showProducts, onClick:()=>{setShowProducts(p=>!p);setShowCalendar(false);setShowBankOpyt(false);setShowPillarSetup(false);}},
+              {
+                label:`👤 Контекст`,
+                active:mode==="post"&&step===1&&!showPillarSetup&&!showBankOpyt&&!showCalendar&&!showProducts,
+                onClick:()=>{setShowPillarSetup(false);setShowBankOpyt(false);setShowCalendar(false);setShowProducts(false);setMode("post");setResult(null);setStep(1);}
+              },{
+                label:`📌 Блоки${pillars.length?" ("+pillars.length+")":""}`,
+                active:showPillarSetup,
+                onClick:()=>{const next=!showPillarSetup;setShowPillarSetup(next);setShowBankOpyt(false);setShowCalendar(false);setShowProducts(false);if(next){setMode("post");}}
+              },{
+                label:`🎯 Темы${sordellResult?" ("+sordellResult.length+")":""}`,
+                active:mode==="sordell"&&!showPillarSetup&&!showBankOpyt&&!showCalendar&&!showProducts,
+                onClick:()=>{setShowBankOpyt(false);setShowPillarSetup(false);setShowCalendar(false);setShowProducts(false);startSordell();}
+              },{
+                label:"📝 Банк опыта",
+                active:showBankOpyt,
+                onClick:()=>{const next=!showBankOpyt;setShowBankOpyt(next);setShowPillarSetup(false);setShowCalendar(false);setShowProducts(false);if(next){setMode("post");}}
+              },{
+                label:"📅 Контент-план",
+                active:mode==="plan"&&!showPillarSetup&&!showBankOpyt&&!showCalendar&&!showProducts,
+                onClick:()=>{setShowBankOpyt(false);setShowPillarSetup(false);setShowCalendar(false);setShowProducts(false);startPlan();}
+              },{
+                label:`📆 Календарь${calendarPosts.length?" ("+calendarPosts.length+")":""}`,
+                active:showCalendar,
+                onClick:()=>{const next=!showCalendar;setShowCalendar(next);setShowBankOpyt(false);setShowPillarSetup(false);setShowProducts(false);}
+              },{
+                label:`🛍 Продукты${products.length?" ("+products.length+")":""}`,
+                active:showProducts,
+                onClick:()=>{const next=!showProducts;setShowProducts(next);setShowCalendar(false);setShowBankOpyt(false);setShowPillarSetup(false);}
+              },
             ].map((btn,i)=>(
               <button key={i} onClick={btn.onClick}
                 style={{padding:"8px 14px",borderRadius:8,border:`1px solid ${btn.active?"#e1df2c":"rgba(244,241,236,.2)"}`,background:btn.active?"rgba(225,223,44,.15)":"transparent",color:btn.active?"#e1df2c":"rgba(244,241,236,.8)",fontSize:13,fontWeight:btn.active?700:500,cursor:"pointer",whiteSpace:"nowrap"}}>
