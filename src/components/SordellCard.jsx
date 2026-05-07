@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 
-function SordellCard({ t, onCreatePost, onExpand, expanded, expanding, onAddToCalendar }) {
+function SordellCard({ t, onCreatePost, onExpand, expanded, expanding, onAddToCalendar, onAddAngleToCalendar }) {
   const [copied, setCopied] = React.useState(false);
+  const [copiedAngle, setCopiedAngle] = React.useState(null);
   const ANGLE_COLORS = { "Причины":"#5a8a6a","Ошибки":"#c46a4a","Примеры":"#7a6a9a","Решения":"#362d52" };
   return (
     <div style={{borderRadius:10,border:t.top?"2px solid #362d52":"1px solid #e8e0f0",overflow:"hidden"}}>
@@ -53,8 +54,20 @@ function SordellCard({ t, onCreatePost, onExpand, expanded, expanding, onAddToCa
                   <span style={{fontSize:9,fontWeight:700,color:"#fff",background:ANGLE_COLORS[post.angle]||"#362d52",padding:"1px 6px",borderRadius:4}}>{post.angle}</span>
                   <span style={{fontSize:9,color:"#9a88b8"}}>{post.sordell}</span>
                 </div>
-                <div style={{fontSize:12,fontWeight:600,color:"#362d52",marginBottom:2,lineHeight:1.4}}>{post.title}</div>
-                <div style={{fontSize:11,color:"#5c4e7a",fontStyle:"italic"}}>{post.hook}</div>
+                <div style={{fontSize:12,fontWeight:600,color:"#362d52",marginBottom:3,lineHeight:1.4}}>{post.title}</div>
+                <div style={{fontSize:11,color:"#5c4e7a",fontStyle:"italic",marginBottom:6}}>{post.hook}</div>
+                <div style={{display:"flex",gap:5}}>
+                  <button onClick={()=>{
+                    navigator.clipboard.writeText(post.title+"\n"+post.hook);
+                    setCopiedAngle(i);setTimeout(()=>setCopiedAngle(null),1500);
+                  }} style={{padding:"3px 8px",borderRadius:5,border:"1px solid #d8d0e0",background:"#fff",color:copiedAngle===i?"#4a9a6a":"#5c4e7a",fontSize:10,cursor:"pointer"}}>
+                    {copiedAngle===i?"✓":"📋"}
+                  </button>
+                  <button onClick={()=>onAddAngleToCalendar&&onAddAngleToCalendar(post.title, post.hook, post.sordell)}
+                    style={{padding:"3px 8px",borderRadius:5,border:"1px solid #5c9a6a",background:"transparent",color:"#5c9a6a",fontSize:10,cursor:"pointer"}}>
+                    📆
+                  </button>
+                </div>
               </div>
             ))}
           </div>
