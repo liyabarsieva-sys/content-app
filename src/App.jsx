@@ -1499,6 +1499,25 @@ ${'{"headline":"заголовок","hook":"хук",' + platforms.map(pid=>`"${p
                   const item = history.find(h=>h.id===genId);
                   if (item) setSelectedHistory(item);
                 }}
+                onGeneratePost={(calPost)=>{
+                  // Pre-fill topic and quadrant from calendar entry
+                  setTopic(calPost.topic);
+                  if (calPost.quadrant) {
+                    const sqId = calPost.quadrant.includes("Личное") ?
+                      (calPost.quadrant.includes("Неожиданное") ? "personal_unexpected" : "personal_known") :
+                      (calPost.quadrant.includes("Неожиданное") ? "professional_unexpected" : "professional_known");
+                    setSordellQuad(sqId);
+                  }
+                  setPain(calPost.hook||"");
+                  setShowCalendar(false);
+                  generateWithOverrides({
+                    topicOverride: calPost.topic,
+                    sordellQuadOverride: calPost.quadrant?.includes("Личное") ?
+                      (calPost.quadrant?.includes("Неожиданное") ? "personal_unexpected" : "personal_known") :
+                      (calPost.quadrant?.includes("Неожиданное") ? "professional_unexpected" : "professional_known"),
+                    rubricOverride: calPost.quadrant?.includes("Личное") ? "personal" : "expert",
+                  });
+                }}
               />
             )}
           </Card>
