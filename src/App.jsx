@@ -107,6 +107,20 @@ export default function App() {
   const [calendarPlatform, setCalendarPlatform] = useState("");
   const [pillarInput, setPillarInput] = useState("");
 
+  // Products
+  const [products, setProducts] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("lia_products") || "[]"); } catch { return []; }
+  });
+  const [showProducts, setShowProducts] = useState(false);
+  const [showLaunchPlanModal, setShowLaunchPlanModal] = useState(false);
+  const [launchPlanProduct, setLaunchPlanProduct] = useState(null);
+  const [launchSaleStart, setLaunchSaleStart] = useState("");
+  const [launchSaleEnd, setLaunchSaleEnd] = useState("");
+  const [editingProduct, setEditingProduct] = useState(null); // null = list, {} = new/edit
+  const [launchMode, setLaunchMode] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedPhase, setSelectedPhase] = useState(null); // 1, 2, 3
+
   // Brands
   const [brands, setBrands] = useState(() => {
     try { return JSON.parse(localStorage.getItem("lia_brands") || "[]"); } catch { return []; }
@@ -199,6 +213,7 @@ export default function App() {
   // Save context
   useEffect(() => { localStorage.setItem("lia_expert", expert); }, [expert]);
   useEffect(() => { localStorage.setItem("lia_brands", JSON.stringify(brands)); }, [brands]);
+  useEffect(() => { localStorage.setItem("lia_products", JSON.stringify(products)); }, [products]);
   useEffect(() => { localStorage.setItem("lia_tone", tone); }, [tone]);
   useEffect(() => { localStorage.setItem("lia_tov", toneOfVoice); }, [toneOfVoice]);
   useEffect(() => { localStorage.setItem("lia_platforms", JSON.stringify(platforms)); }, [platforms]);
@@ -384,6 +399,7 @@ ${toneOfVoice ? `Голос бренда / пример поста: ${toneOfVoic
       id: Date.now(), expert, niche, audience, tone, toneOfVoice,
       platforms, pillars, audiencePains,
       sordellTopics: sordellResult || [],
+      products: products || [],
       audienceBarriers: audienceBarriers || [],
       sordellAnswers: sordellAnswers || [],
       savedAt: new Date().toLocaleDateString("ru"),
@@ -402,6 +418,10 @@ ${toneOfVoice ? `Голос бренда / пример поста: ${toneOfVoic
     setPlatforms(brand.platforms || ["telegram"]);
     setPillars(brand.pillars || []);
     setAudiencePains(brand.audiencePains || []);
+    if (brand.products?.length) {
+      setProducts(brand.products);
+      localStorage.setItem("lia_products", JSON.stringify(brand.products));
+    }
     if (brand.audienceBarriers?.length) {
       setAudienceBarriers(brand.audienceBarriers);
       localStorage.setItem("lia_audience_barriers", JSON.stringify(brand.audienceBarriers));
@@ -725,7 +745,9 @@ ${existing}
       const data = await resp.json();
       const text = data.content.map(b=>b.text||"").join("");
       const parsed = JSON.parse(text.replace(/```json|```/g,"").trim());
-      setExpandedTopics(prev=>({...prev, [topic]: parsed.posts||[]}));
+      const posts = parsed.posts||[];
+      setExpandedTopics(prev=>({...prev, [topic]: posts}));
+      saveGeneration("sordell_angles", `Углы: ${topic}`, { topic, angles: posts }, { expert, niche });
     } catch(e) { console.error(e); }
     setExpandingTopic(null);
   }
@@ -1060,6 +1082,26 @@ ${sordellCtx ? "Для личных тем используй ТОЛЬКО ре�
     const names = PLATFORMS.filter(p => platforms.includes(p.id)).map(p => p.label).join(", ");
     const tovSection = toneOfVoice.trim() ? `\nГолос бренда (используй КАК ОБРАЗЕЦ СТИЛЯ, не копируй текст дословно):\n"${toneOfVoice}"\n` : "";
 
+        // Launch mode instructions
+    const launchSection = (launchMode && selectedProduct && selectedPhase) ? `
+
+РЕЖИМ ЗАПУСКА ПРОДУКТА:
+Продукт: ${selectedProduct.name}
+Тип: ${selectedProduct.type}
+Формат: ${selectedProduct.format||""}
+Стоимость: ${selectedProduct.cost||""}
+Дата старта: ${selectedProduct.startDate||""}
+Мест: ${selectedProduct.spots||""}
+Барьер аудитории: ${selectedProduct.barrier||""}
+Ключевой результат: ${selectedProduct.result||""}
+${selectedProduct.aiDesc?"Для промпта: "+selectedProduct.aiDesc:""}
+
+ФАЗА ${selectedPhase}:
+${selectedPhase===1?"Тема поста: "+selectedProduct.pillar+". ЗАПРЕЩЕНО упоминать продукт, программу или услуги. Цель: читатель узнаёт себя в теме.":""}
+${selectedPhase===2?"Можно один раз мягко упомянуть что эксперт работает с этой темой. Формат: «скоро расскажу подробнее». Название продукта пока НЕ называть.":""}
+${selectedPhase===3?"Полное раскрытие: включи название "+selectedProduct.name+", формат "+selectedProduct.format+", стоимость "+selectedProduct.cost+", дату "+selectedProduct.startDate+". Сними барьер аудитории. Покажи ключевой результат.":""}
+` : "";
+
     const caseSection = isCase ? `
 Это кейс / история успеха клиента. Адаптируй под формат "было → стало → результат".
 Клиент/герой кейса: ${caseClient || "не указано"}
@@ -1096,6 +1138,7 @@ ${sordellCtx ? "Для личных тем используй ТОЛЬКО ре�
 Барьеры аудитории: ${audienceBarriers?.length > 0 ? audienceBarriers.join("; ") : "не указаны"}
 Тональность: ${tone}
 ${tovSection}
+${launchSection}
 Тема: ${isCase ? (pain || "история успеха клиента") : topic}
 Ключевые факты и УТП: ${details || "нет"}
 ${caseSection}
@@ -1281,7 +1324,8 @@ ${'{"headline":"заголовок","hook":"хук",' + platforms.map(pid=>`"${p
               {label:`🎯 Темы${sordellResult?" ("+sordellResult.length+")":""}`, active:mode==="sordell"&&!showBankOpyt, onClick:()=>{setShowBankOpyt(false);startSordell();}},
               {label:"📝 Банк опыта", active:showBankOpyt, onClick:()=>{setShowBankOpyt(p=>!p);setShowPillarSetup(false);}},
               {label:"📅 Контент-план", active:mode==="plan", onClick:()=>{setShowBankOpyt(false);setShowPillarSetup(false);startPlan();}},
-              {label:`📆 Календарь${calendarPosts.length?" ("+calendarPosts.length+")":""}`, active:showCalendar, onClick:()=>{setShowCalendar(p=>!p);setShowBankOpyt(false);setShowPillarSetup(false);}},
+              {label:`📆 Календарь${calendarPosts.length?" ("+calendarPosts.length+")":""}`, active:showCalendar, onClick:()=>{setShowCalendar(p=>!p);setShowBankOpyt(false);setShowPillarSetup(false);setShowProducts(false);}},
+              {label:`🛍 Продукты${products.length?" ("+products.length+")":""}`, active:showProducts, onClick:()=>{setShowProducts(p=>!p);setShowCalendar(false);setShowBankOpyt(false);setShowPillarSetup(false);}},
             ].map((btn,i)=>(
               <button key={i} onClick={btn.onClick}
                 style={{padding:"8px 14px",borderRadius:8,border:`1px solid ${btn.active?"#e1df2c":"rgba(244,241,236,.2)"}`,background:btn.active?"rgba(225,223,44,.15)":"transparent",color:btn.active?"#e1df2c":"rgba(244,241,236,.8)",fontSize:13,fontWeight:btn.active?700:500,cursor:"pointer",whiteSpace:"nowrap"}}>
@@ -1308,6 +1352,133 @@ ${'{"headline":"заголовок","hook":"хук",' + platforms.map(pid=>`"${p
         {/* Main layout wrapper - two columns on desktop */}
         <div style={{display:isMobile?"block":"flex",gap:24,alignItems:"flex-start"}}>
         <div style={{flex:1,minWidth:0}}>
+
+        {/* PRODUCTS PANEL */}
+        {showProducts && (
+          <Card>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
+              <div style={{fontFamily:"'Cormorant Garamond', serif",fontSize:20,color:"#362d52",fontWeight:600}}>🛍 Продукты</div>
+              <div style={{display:"flex",gap:8}}>
+                <button onClick={()=>setEditingProduct({name:"",type:"main",pillar:"",cost:"",format:"",startDate:"",spots:"",aiDesc:"",barrier:"",result:"",phases:{1:{days:7},2:{days:5},3:{days:5}}})}
+                  style={{padding:"7px 14px",borderRadius:8,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                  + Новый продукт
+                </button>
+                <button onClick={()=>setShowProducts(false)} style={{background:"transparent",border:"none",fontSize:22,cursor:"pointer",color:"#9a88b8"}}>×</button>
+              </div>
+            </div>
+
+            {editingProduct ? (
+              <div>
+                <div style={{fontFamily:"'Cormorant Garamond', serif",fontSize:17,color:"#362d52",fontWeight:600,marginBottom:14}}>
+                  {editingProduct.id ? "Редактировать продукт" : "Новый продукт"}
+                </div>
+                {[
+                  {key:"name", label:"Название продукта", ph:"Интенсив «10 дней с потерей»"},
+                  {key:"format", label:"Формат", ph:"Групповой интенсив · 10 дней"},
+                  {key:"cost", label:"Стоимость", ph:"7 100 ₽"},
+                  {key:"spots", label:"Количество мест", ph:"12"},
+                  {key:"startDate", label:"Дата старта", type:"date"},
+                  {key:"barrier", label:"Главный барьер аудитории", ph:"«Я не готова», «Слишком больно»"},
+                  {key:"result", label:"Ключевой результат клиента", ph:"«Перестала возвращаться к воспоминаниям»"},
+                  {key:"aiDesc", label:"Описание для AI", ph:"Что важно донести аудитории о продукте — для промпта"},
+                ].map(f=>(
+                  <div key={f.key} style={{marginBottom:10}}>
+                    <div style={{fontSize:11,color:"#5c4e7a",fontWeight:600,marginBottom:4,textTransform:"uppercase",letterSpacing:".05em"}}>{f.label}</div>
+                    <input type={f.type||"text"} placeholder={f.ph||""} value={editingProduct[f.key]||""}
+                      onChange={e=>setEditingProduct(p=>({...p,[f.key]:e.target.value}))}
+                      style={{width:"100%",padding:"9px 12px",borderRadius:8,border:"1px solid #d8d0e0",fontSize:13,color:"#362d52",outline:"none",boxSizing:"border-box"}} />
+                  </div>
+                ))}
+
+                <div style={{marginBottom:12}}>
+                  <div style={{fontSize:11,color:"#5c4e7a",fontWeight:600,marginBottom:6,textTransform:"uppercase",letterSpacing:".05em"}}>Тип продукта</div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+                    {[
+                      {id:"free",label:"🔓 Бесплатный вход",desc:"Гайд, эфир, разбор · 0 ₽"},
+                      {id:"tripwire",label:"💛 Мягкий вход",desc:"Практикум, мини-курс · 500–3 000 ₽"},
+                      {id:"main",label:"🎯 Основной продукт",desc:"Курс, группа · 3–30 000 ₽"},
+                      {id:"flagship",label:"👑 Флагман",desc:"Индивидуально · от 30 000 ₽"},
+                    ].map(t=>(
+                      <button key={t.id} onClick={()=>setEditingProduct(p=>({...p,type:t.id}))}
+                        style={{padding:"8px 10px",borderRadius:8,border:`1px solid ${editingProduct.type===t.id?"#362d52":"#d8d0e0"}`,background:editingProduct.type===t.id?"#362d52":"#f0eef8",color:editingProduct.type===t.id?"#f4f1ec":"#362d52",fontSize:11,cursor:"pointer",textAlign:"left"}}>
+                        <div style={{fontWeight:700,marginBottom:2}}>{t.label}</div>
+                        <div style={{fontSize:10,opacity:.8}}>{t.desc}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{marginBottom:14}}>
+                  <div style={{fontSize:11,color:"#5c4e7a",fontWeight:600,marginBottom:6,textTransform:"uppercase",letterSpacing:".05em"}}>Фазы запуска (дней)</div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+                    {[{n:1,label:"Прогрев темы",desc:"Стадии 0–1"},{n:2,label:"Прогрев продукта",desc:"Стадии 2–3"},{n:3,label:"Продажи",desc:"Стадии 3–4"}].map(ph=>(
+                      <div key={ph.n} style={{padding:"8px 10px",background:"#f4f1ec",borderRadius:8,border:"1px solid #e8e0f0"}}>
+                        <div style={{fontSize:10,fontWeight:700,color:"#362d52",marginBottom:4}}>Фаза {ph.n}: {ph.label}</div>
+                        <div style={{fontSize:10,color:"#9a88b8",marginBottom:6}}>{ph.desc}</div>
+                        <input type="number" min="1" max="30" value={editingProduct.phases?.[ph.n]?.days||7}
+                          onChange={e=>setEditingProduct(p=>({...p,phases:{...p.phases,[ph.n]:{days:parseInt(e.target.value)||7}}}))}
+                          style={{width:"100%",padding:"5px 8px",borderRadius:6,border:"1px solid #d8d0e0",fontSize:13,color:"#362d52",outline:"none",textAlign:"center"}} />
+                        <div style={{fontSize:9,color:"#9a88b8",textAlign:"center",marginTop:3}}>дней</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{display:"flex",gap:8}}>
+                  <button onClick={()=>setEditingProduct(null)} style={{flex:1,padding:11,borderRadius:9,border:"1px solid #d8d0e0",background:"transparent",color:"#5c4e7a",fontSize:13,cursor:"pointer"}}>Отмена</button>
+                  <button onClick={()=>{
+                    if (!editingProduct.name?.trim()) return;
+                    const product = editingProduct.id
+                      ? editingProduct
+                      : {...editingProduct, id:Date.now(), createdAt:new Date().toISOString()};
+                    setProducts(prev => editingProduct.id
+                      ? prev.map(p=>p.id===product.id?product:p)
+                      : [product,...prev]);
+                    saveGeneration("product", product.name, product, {expert, niche});
+                    setEditingProduct(null);
+                  }} style={{flex:2,padding:11,borderRadius:9,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:13,fontWeight:700,cursor:"pointer"}}>
+                    💾 Сохранить продукт
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                {products.length === 0 ? (
+                  <p style={{fontSize:13,color:"#9a88b8",textAlign:"center",padding:"20px 0"}}>Нет продуктов. Нажми «+ Новый продукт» чтобы добавить.</p>
+                ) : (
+                  <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                    {products.map(p=>{
+                      const typeLabels = {free:"🔓 Бесплатный",tripwire:"💛 Мягкий вход",main:"🎯 Основной",flagship:"👑 Флагман"};
+                      return (
+                        <div key={p.id} style={{padding:"12px 14px",background:"#f4f1ec",borderRadius:10,border:"1px solid #e8e0f0"}}>
+                          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
+                            <div style={{fontSize:14,fontWeight:700,color:"#362d52"}}>{p.name}</div>
+                            <div style={{display:"flex",gap:6}}>
+                              <button onClick={()=>setEditingProduct({...p})} style={{padding:"3px 8px",borderRadius:6,border:"1px solid #d8d0e0",background:"transparent",color:"#5c4e7a",fontSize:11,cursor:"pointer"}}>✏️</button>
+                              <button onClick={()=>setProducts(prev=>prev.filter(pr=>pr.id!==p.id))} style={{padding:"3px 8px",borderRadius:6,border:"none",background:"transparent",color:"#c4b8d8",fontSize:14,cursor:"pointer"}}>×</button>
+                            </div>
+                          </div>
+                          <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:6}}>
+                            <span style={{fontSize:10,background:"#362d52",color:"#f4f1ec",padding:"1px 8px",borderRadius:5}}>{typeLabels[p.type]||p.type}</span>
+                            {p.cost && <span style={{fontSize:10,background:"rgba(54,45,82,.08)",color:"#5c4e7a",padding:"1px 8px",borderRadius:5}}>{p.cost}</span>}
+                            {p.startDate && <span style={{fontSize:10,background:"rgba(54,45,82,.08)",color:"#5c4e7a",padding:"1px 8px",borderRadius:5}}>📅 {p.startDate}</span>}
+                          </div>
+                          {p.result && <div style={{fontSize:11,color:"#5c4e7a",fontStyle:"italic"}}>✨ {p.result}</div>}
+                          <div style={{display:"flex",gap:6,marginTop:8}}>
+                            <button onClick={()=>{setLaunchMode(true);setSelectedProduct(p);setSelectedPhase(1);setShowProducts(false);switchMode("post");}}
+                              style={{flex:1,padding:"6px 10px",borderRadius:7,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:11,fontWeight:700,cursor:"pointer"}}>
+                              🚀 Создать пост запуска
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </Card>
+        )}
 
         {/* CALENDAR PANEL */}
         {showCalendar && (
@@ -1506,7 +1677,7 @@ ${'{"headline":"заголовок","hook":"хук",' + platforms.map(pid=>`"${p
                     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
                       <div style={{display:"flex",alignItems:"center",gap:8}}>
                         <span style={{fontSize:10,background:"#362d52",color:"#f4f1ec",padding:"1px 8px",borderRadius:6,fontWeight:600}}>
-                          {h.type==="post"?"✦ Пост":h.type==="plan"?"📅 План":h.type==="carousel"?"🎨 Карусель":h.type==="sordell"?"🎯 Темы Сорделл":"⭐ Кейс"}
+                          {h.type==="post"?"✦ Пост":h.type==="plan"?"📅 План":h.type==="carousel"?"🎨 Карусель":h.type==="sordell"?"🎯 Темы Сорделл":h.type==="sordell_angles"?"⊞ Углы подачи":h.type==="product"?"🛍 Продукт":"⭐ Кейс"}
                         </span>
                         <span style={{fontSize:10,color:"#9a88b8"}}>{new Date(h.created_at).toLocaleDateString("ru")}</span>
                         {h.strategy?.expert && <span style={{fontSize:10,background:"rgba(54,45,82,.08)",color:"#362d52",padding:"1px 7px",borderRadius:5,fontWeight:600}}>{h.strategy.expert}</span>}
@@ -1553,6 +1724,108 @@ ${'{"headline":"заголовок","hook":"хук",' + platforms.map(pid=>`"${p
                 <div style={{fontSize:13,color:"#f4f1ec",lineHeight:1.5}}>{topic}</div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* LAUNCH PLAN MODAL */}
+        {showLaunchPlanModal && (
+          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.5)",zIndex:4000,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={e=>e.target===e.currentTarget&&setShowLaunchPlanModal(false)}>
+            <div style={{background:"#fff",borderRadius:16,padding:24,maxWidth:420,width:"100%"}}>
+              <div style={{fontFamily:"'Cormorant Garamond', serif",fontSize:20,color:"#362d52",fontWeight:600,marginBottom:4}}>🚀 Контент-план запуска</div>
+              <p style={{fontSize:12,color:"#9a88b8",marginBottom:16}}>Приложение автоматически рассчитает фазы прогрева и продаж</p>
+
+              <div style={{marginBottom:12}}>
+                <div style={{fontSize:11,color:"#5c4e7a",fontWeight:600,marginBottom:5,textTransform:"uppercase",letterSpacing:".05em"}}>Продукт</div>
+                <div style={{display:"flex",flexDirection:"column",gap:5}}>
+                  {products.map(p=>(
+                    <button key={p.id} onClick={()=>setLaunchPlanProduct(p)}
+                      style={{padding:"8px 12px",borderRadius:8,border:`1px solid ${launchPlanProduct?.id===p.id?"#362d52":"#d8d0e0"}`,background:launchPlanProduct?.id===p.id?"#362d52":"#f0eef8",color:launchPlanProduct?.id===p.id?"#f4f1ec":"#362d52",fontSize:12,cursor:"pointer",textAlign:"left",fontWeight:launchPlanProduct?.id===p.id?700:400}}>
+                      {p.name} <span style={{fontSize:10,opacity:.7}}>· {p.cost||""}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {launchPlanProduct && (
+                <div style={{marginBottom:12,padding:"10px 12px",background:"#f4f1ec",borderRadius:9,fontSize:11,color:"#5c4e7a"}}>
+                  Фазы: <b>Прогрев {launchPlanProduct.phases?.[1]?.days||7} дн.</b> → <b>Продукт {launchPlanProduct.phases?.[2]?.days||5} дн.</b> → <b>Продажи {launchPlanProduct.phases?.[3]?.days||5} дн.</b>
+                  {" "}· Итого: <b>{(launchPlanProduct.phases?.[1]?.days||7)+(launchPlanProduct.phases?.[2]?.days||5)+(launchPlanProduct.phases?.[3]?.days||5)} дней</b>
+                </div>
+              )}
+
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}}>
+                <div>
+                  <div style={{fontSize:11,color:"#5c4e7a",fontWeight:600,marginBottom:4,textTransform:"uppercase",letterSpacing:".05em"}}>Дата открытия продаж</div>
+                  <input type="date" value={launchSaleStart} onChange={e=>setLaunchSaleStart(e.target.value)}
+                    style={{width:"100%",padding:"9px 10px",borderRadius:8,border:"1px solid #d8d0e0",fontSize:13,color:"#362d52",outline:"none",boxSizing:"border-box"}} />
+                </div>
+                <div>
+                  <div style={{fontSize:11,color:"#5c4e7a",fontWeight:600,marginBottom:4,textTransform:"uppercase",letterSpacing:".05em"}}>Дата закрытия</div>
+                  <input type="date" value={launchSaleEnd} onChange={e=>setLaunchSaleEnd(e.target.value)}
+                    style={{width:"100%",padding:"9px 10px",borderRadius:8,border:"1px solid #d8d0e0",fontSize:13,color:"#362d52",outline:"none",boxSizing:"border-box"}} />
+                </div>
+              </div>
+
+              <div style={{display:"flex",gap:8}}>
+                <button onClick={()=>setShowLaunchPlanModal(false)} style={{flex:1,padding:11,borderRadius:9,border:"1px solid #d8d0e0",background:"transparent",color:"#5c4e7a",fontSize:13,cursor:"pointer"}}>Отмена</button>
+                <button onClick={async ()=>{
+                  if (!launchPlanProduct||!launchSaleStart) return;
+                  setShowLaunchPlanModal(false);
+                  setMode("plan"); setStep(5); setPlanPeriod("month"); setPlanLoading(true); setPlanResult([]);
+                  const p = launchPlanProduct;
+                  const ph1 = p.phases?.[1]?.days||7;
+                  const ph2 = p.phases?.[2]?.days||5;
+                  const ph3 = p.phases?.[3]?.days||5;
+                  const totalDays = ph1+ph2+ph3;
+                  const startDate = new Date(launchSaleStart);
+                  startDate.setDate(startDate.getDate()-ph1-ph2);
+                  const prompt = `Ты контент-стратег. Составь контент-план запуска продукта.
+
+ПРОДУКТ: ${p.name}
+Тип: ${p.type}, Формат: ${p.format||""}, Стоимость: ${p.cost||""}
+Дата открытия продаж: ${launchSaleStart}, Закрытие: ${launchSaleEnd||"не указано"}
+Барьер аудитории: ${p.barrier||"не указан"}
+Результат клиента: ${p.result||"не указан"}
+${p.aiDesc?"Для промпта: "+p.aiDesc:""}
+
+ЭКСПЕРТ: ${expert||"-"}, Ниша: ${niche||"-"}
+Аудитория: ${audience||"-"}
+Смысловые блоки: ${pillars.map(b=>b.label||b).join(", ")||"не указаны"}
+Тон: ${tone}
+
+ПЛАН НА ${totalDays} ДНЕЙ:
+ФАЗА 1 (дни 1-${ph1}): Прогрев темы. Стадии 0-1. ЗАПРЕЩЕНО упоминать продукт. Аудитория узнаёт себя в теме.
+ФАЗА 2 (дни ${ph1+1}-${ph1+ph2}): Прогрев продукта. Стадии 2-3. Мягкое упоминание без названия. «Скоро расскажу подробнее».
+ФАЗА 3 (дни ${ph1+ph2+1}-${totalDays}): Продажи. Стадии 3-4. Полное раскрытие: ${p.name}, ${p.cost}, ${p.startDate||launchSaleStart}.
+
+ПРАВИЛА:
+- В фазе 1 ноль слов о продукте. Только тема.
+- В фазе 3 max 1 продающий пост в Threads за весь запуск.
+- 1 раз в неделю «вне запуска» — личный пост-выдох без привязки к продукту.
+- Личный пост: CTA только вопрос или точка, без упоминания услуг.
+- Для каждого поста: день, платформа, стадия, квадрант Сорделл, тема, фаза.
+
+ТОЛЬКО валидный JSON:
+{"posts":[{"day":"День 1","platform":"threads","block":"блок","topic":"тема","stage":"Не осознаёт проблему","sordell":"Личное + Неожиданное","function":"узнавание","phase":1}]}`;
+
+                  try {
+                    const resp = await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:6000,messages:[{role:"user",content:prompt}]})});
+                    const data = await resp.json();
+                    const text = data.content.map(b=>b.text||"").join("");
+                    const match = text.match(/\{[\s\S]*\}/);
+                    if (match) {
+                      const parsed = JSON.parse(match[0]);
+                      setPlanResult(parsed.posts||[]);
+                      saveGeneration("plan", `🚀 Запуск: ${p.name}`, {posts:parsed.posts||[]}, {expert, niche, launchProduct:p.name});
+                    }
+                  } catch(e) { console.error(e); }
+                  setPlanLoading(false);
+                }} disabled={!launchPlanProduct||!launchSaleStart}
+                  style={{flex:2,padding:11,borderRadius:9,border:"none",background:launchPlanProduct&&launchSaleStart?"#362d52":"#d8d0e0",color:"#f4f1ec",fontSize:13,fontWeight:700,cursor:launchPlanProduct&&launchSaleStart?"pointer":"not-allowed"}}>
+                  🚀 Создать план запуска
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -1860,6 +2133,7 @@ ${'{"headline":"заголовок","hook":"хук",' + platforms.map(pid=>`"${p
                   {sordellResult.map((t,i)=>(
                     <SordellCard key={i} t={t}
                       onAddToCalendar={()=>addToCalendar(t.topic, platforms[0]||"telegram", null, "sordell", {hook:t.hook, quadrant:t.quadrant, reason:t.reason})}
+                      onAddAngleToCalendar={(title, hook, sordell)=>addToCalendar(title, platforms[0]||"telegram", null, "sordell_angle", {hook, quadrant:sordell})}
                       onCreatePost={()=>{
                         setTopic(t.topic);
                         setSordellQuad(t.quadrant?.includes("Личное") ?
@@ -2483,6 +2757,56 @@ ${'{"headline":"заголовок","hook":"хук",' + platforms.map(pid=>`"${p
                     <Label text="Тема поста" />
                     <textarea style={inpAuto} rows={2} placeholder="Например: чистка ноутбука от пыли" value={topic} onChange={e=>{setTopic(e.target.value);e.target.style.height="auto";e.target.style.height=e.target.scrollHeight+"px";}} />
                   </div>
+                  {/* Launch mode block */}
+                  {products.length > 0 && (
+                    <div style={{marginBottom:14,padding:"12px 14px",background:launchMode?"#362d52":"#f4f1ec",borderRadius:10,border:`1px solid ${launchMode?"#362d52":"#e8e0f0"}`}}>
+                      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:launchMode?12:0}}>
+                        <input type="checkbox" checked={launchMode} onChange={e=>{setLaunchMode(e.target.checked);if(!e.target.checked){setSelectedProduct(null);setSelectedPhase(null);}}}
+                          style={{width:16,height:16,cursor:"pointer"}} />
+                        <span style={{fontSize:13,fontWeight:600,color:launchMode?"#f4f1ec":"#362d52"}}>🚀 Пост входит в запуск продукта</span>
+                      </div>
+                      {launchMode && (
+                        <div>
+                          <div style={{marginBottom:10}}>
+                            <div style={{fontSize:11,color:"rgba(244,241,236,.7)",marginBottom:5}}>Продукт:</div>
+                            <div style={{display:"flex",flexDirection:"column",gap:5}}>
+                              {products.map(p=>(
+                                <button key={p.id} onClick={()=>setSelectedProduct(p)}
+                                  style={{padding:"7px 12px",borderRadius:7,border:`1px solid ${selectedProduct?.id===p.id?"#e1df2c":"rgba(244,241,236,.25)"}`,background:selectedProduct?.id===p.id?"rgba(225,223,44,.15)":"transparent",color:"#f4f1ec",fontSize:12,cursor:"pointer",textAlign:"left",fontWeight:selectedProduct?.id===p.id?700:400}}>
+                                  {p.name}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          {selectedProduct && (
+                            <div>
+                              <div style={{fontSize:11,color:"rgba(244,241,236,.7)",marginBottom:5}}>Фаза запуска:</div>
+                              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
+                                {[
+                                  {n:1,label:"Прогрев темы",desc:"Стадии 0–1, без продукта"},
+                                  {n:2,label:"Прогрев продукта",desc:"Стадии 2–3, мягкое упоминание"},
+                                  {n:3,label:"Продажи",desc:"Стадии 3–4, полное раскрытие"},
+                                ].map(ph=>(
+                                  <button key={ph.n} onClick={()=>{
+                                    setSelectedPhase(ph.n);
+                                    // Auto-set stage and quadrant based on phase
+                                    if(ph.n===1){setStage("unaware");setSordellQuad("personal_unexpected");}
+                                    else if(ph.n===2){setStage("seeking");setSordellQuad("professional_unexpected");}
+                                    else if(ph.n===3){setStage("choosing");setSordellQuad("professional_unexpected");setRubric("selling");}
+                                  }}
+                                    style={{padding:"8px 8px",borderRadius:7,border:`1px solid ${selectedPhase===ph.n?"#e1df2c":"rgba(244,241,236,.25)"}`,background:selectedPhase===ph.n?"rgba(225,223,44,.15)":"transparent",color:"#f4f1ec",fontSize:11,cursor:"pointer",textAlign:"left"}}>
+                                    <div style={{fontWeight:700,marginBottom:2}}>Фаза {ph.n}</div>
+                                    <div style={{fontSize:9,opacity:.8}}>{ph.label}</div>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div style={{marginBottom:14}}>
                     <Label text="Боль аудитории" hint={currentPainHint} />
                     <textarea style={inpAuto} rows={1} placeholder="Например: боится что ноутбук сломается и потеряет все данные" value={pain} onChange={e=>{setPain(e.target.value);e.target.style.height="auto";e.target.style.height=e.target.scrollHeight+"px";}} />
