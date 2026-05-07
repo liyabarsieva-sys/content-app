@@ -2015,6 +2015,13 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
                 </button>
                 {!niche && !audience && <div style={{fontSize:10,color:"#9a88b8",marginTop:4,textAlign:"center"}}>Заполните нишу и аудиторию выше</div>}
 
+                <button onClick={()=>{
+                  const custom = window.prompt("Введите барьер аудитории:");
+                  if (custom?.trim()) setAudienceBarriers(prev=>[...prev, custom.trim()]);
+                }} style={{width:"100%",padding:"8px 14px",borderRadius:9,border:"1px solid #d8d0e0",background:"#fff",color:"#362d52",fontSize:12,fontWeight:600,cursor:"pointer",marginTop:6}}>
+                  + Добавить барьер
+                </button>
+
                 {/* Pain chips — collapsible */}
                 {audienceBarriers.length > 0 && (
                   <div style={{marginTop:6}}>
@@ -2033,12 +2040,17 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
                               style={{background:"transparent",border:"none",color:"#c4b8d8",cursor:"pointer",fontSize:15,padding:0,lineHeight:1,flexShrink:0}}>×</button>
                           </div>
                         ))}
-                        <button onClick={()=>{
-                          const custom = window.prompt("Добавить свой барьер:");
-                          if (custom?.trim()) setAudienceBarriers(prev=>[...prev, custom.trim()]);
-                        }} style={{padding:"7px 12px",borderRadius:8,border:"1px dashed #d8d0e0",background:"transparent",color:"#5c4e7a",fontSize:11,cursor:"pointer",textAlign:"center"}}>
-                          + Добавить свой барьер
-                        </button>
+                        <div style={{display:"flex",gap:8}}>
+                          <input id="barrier-add-input" placeholder="Добавить барьер..." onKeyDown={e=>{
+                            if(e.key==="Enter"&&e.target.value.trim()){setAudienceBarriers(prev=>[...prev,e.target.value.trim()]);e.target.value="";}
+                          }} style={{flex:1,padding:"7px 12px",borderRadius:8,border:"1px solid #d8d0e0",background:"#fff",fontSize:12,color:"#362d52",outline:"none"}} />
+                          <button onClick={()=>{
+                            const el=document.getElementById("barrier-add-input");
+                            if(el?.value.trim()){setAudienceBarriers(prev=>[...prev,el.value.trim()]);el.value="";}
+                          }} style={{padding:"7px 14px",borderRadius:8,border:"none",background:"#f4f1ec",color:"#362d52",fontSize:12,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap",border:"1px solid #d8d0e0"}}>
+                            + Добавить
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>
