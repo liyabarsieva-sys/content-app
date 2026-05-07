@@ -92,6 +92,69 @@ function HistoryModal({ item, onClose, onUsePost, onUsePlan, onAddToCalendar }) 
           </div>
         )}
 
+        {/* SORDELL ANGLES VIEW */}
+        {item.type==="sordell_angles" && item.result && (
+          <div>
+            <div style={{fontSize:13,color:"#5c4e7a",marginBottom:12,fontStyle:"italic"}}>Углы подачи для: {item.result.topic}</div>
+            <div style={{display:"flex",flexDirection:"column",gap:8,maxHeight:"60vh",overflowY:"auto"}}>
+              {(item.result.angles||[]).map((post,i)=>{
+                const COLORS={"Причины":"#5a8a6a","Ошибки":"#c46a4a","Примеры":"#7a6a9a","Решения":"#362d52"};
+                return (
+                  <div key={i} style={{padding:"10px 12px",background:"#fafafa",borderRadius:9,border:"1px solid #e8e0f0"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:5}}>
+                      <span style={{fontSize:10,fontWeight:700,color:"#fff",background:COLORS[post.angle]||"#362d52",padding:"2px 7px",borderRadius:4}}>{post.angle}</span>
+                      <span style={{fontSize:10,color:"#9a88b8"}}>{post.sordell}</span>
+                    </div>
+                    <div style={{fontSize:13,fontWeight:600,color:"#362d52",marginBottom:3}}>{post.title}</div>
+                    <div style={{fontSize:11,color:"#5c4e7a",fontStyle:"italic"}}>{post.hook}</div>
+                  </div>
+                );
+              })}
+            </div>
+            <button onClick={()=>{
+              const lines=(item.result.angles||[]).map(p=>`[${p.angle} x ${p.sordell}] ${p.title} | ${p.hook}`).join("\n\n");
+              const text=lines;
+              navigator.clipboard.writeText(text);
+            }} style={{width:"100%",marginTop:10,padding:"9px",borderRadius:8,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+              📋 Скопировать все углы
+            </button>
+          </div>
+        )}
+
+        {/* PRODUCT VIEW */}
+        {item.type==="product" && item.result && (
+          <div>
+            {[
+              {label:"Тип",value:{free:"🔓 Бесплатный вход",tripwire:"💛 Мягкий вход",main:"🎯 Основной",flagship:"👑 Флагман"}[item.result.type]||item.result.type},
+              {label:"Формат",value:item.result.format},
+              {label:"Стоимость",value:item.result.cost},
+              {label:"Дата старта",value:item.result.startDate},
+              {label:"Мест",value:item.result.spots},
+              {label:"Барьер аудитории",value:item.result.barrier},
+              {label:"Результат клиента",value:item.result.result},
+              {label:"Описание для AI",value:item.result.aiDesc},
+            ].filter(f=>f.value).map((f,i)=>(
+              <div key={i} style={{marginBottom:10}}>
+                <div style={{fontSize:10,color:"#9a88b8",textTransform:"uppercase",letterSpacing:".06em",marginBottom:2}}>{f.label}</div>
+                <div style={{fontSize:13,color:"#362d52",lineHeight:1.5}}>{f.value}</div>
+              </div>
+            ))}
+            {item.result.phases && (
+              <div style={{marginTop:12}}>
+                <div style={{fontSize:10,color:"#9a88b8",textTransform:"uppercase",letterSpacing:".06em",marginBottom:8}}>Фазы запуска</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
+                  {[1,2,3].map(n=>(
+                    <div key={n} style={{padding:"8px",background:"#f4f1ec",borderRadius:8,textAlign:"center"}}>
+                      <div style={{fontSize:11,fontWeight:700,color:"#362d52"}}>Фаза {n}</div>
+                      <div style={{fontSize:13,fontWeight:700,color:"#362d52"}}>{item.result.phases[n]?.days||"—"} дн.</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* SORDELL VIEW */}
         {item.type==="sordell" && item.result && (
           <div>
