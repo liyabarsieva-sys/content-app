@@ -2005,6 +2005,7 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
               <div style={{marginBottom:14}}>
                 <Label text="Барьеры аудитории" hint="Что мешает вашей аудитории обратиться за помощью? Словами клиента. Используются в постах стадий 2–3." />
 
+                {/* Suggest button */}
                 <button onClick={suggestBarriers} disabled={suggestingBarriers||(!niche&&!audience)}
                   style={{width:"100%",padding:"10px 14px",borderRadius:9,border:"1px dashed #362d52",background:"rgba(54,45,82,.04)",color:suggestingBarriers?"#9a88b8":"#362d52",fontSize:12,fontWeight:600,cursor:(!niche&&!audience)?"not-allowed":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:audienceBarriers.length?10:0}}>
                   {suggestingBarriers
@@ -2014,6 +2015,7 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
                 </button>
                 {!niche && !audience && <div style={{fontSize:10,color:"#9a88b8",marginTop:4,textAlign:"center"}}>Заполните нишу и аудиторию выше</div>}
 
+                {/* Pain chips — collapsible */}
                 {audienceBarriers.length > 0 && (
                   <div style={{marginTop:6}}>
                     <button onClick={()=>setShowBarriers(p=>!p)}
@@ -2023,10 +2025,10 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
                     </button>
                     {showBarriers && (
                       <div style={{display:"flex",flexDirection:"column",gap:6}}>
-                        {audienceBarriers.map((b,i)=>(
+                        {audienceBarriers.map((pain,i)=>(
                           <div key={i} style={{display:"flex",alignItems:"flex-start",gap:8,padding:"8px 12px",background:"#f4f1ec",borderRadius:8,border:"1px solid #e8e0f0"}}>
                             <span style={{fontSize:12,color:"#9a88b8",marginTop:1,flexShrink:0}}>{i+1}.</span>
-                            <span style={{fontSize:12,color:"#362d52",flex:1,lineHeight:1.5}}>{b}</span>
+                            <span style={{fontSize:12,color:"#362d52",flex:1,lineHeight:1.5}}>{pain}</span>
                             <button onClick={()=>setAudienceBarriers(prev=>prev.filter((_,idx)=>idx!==i))}
                               style={{background:"transparent",border:"none",color:"#c4b8d8",cursor:"pointer",fontSize:15,padding:0,lineHeight:1,flexShrink:0}}>×</button>
                           </div>
@@ -2041,17 +2043,9 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
                     )}
                   </div>
                 )}
-
-                {audienceBarriers.length === 0 && (
-                  <div style={{display:"flex",gap:8,marginTop:6}}>
-                    <input placeholder='Например: "я недостаточно плохо себя чувствую"'
-                      onKeyDown={e=>{if(e.key==="Enter"&&e.target.value.trim()){setAudienceBarriers(prev=>[...prev,e.target.value.trim()]);e.target.value="";}}}
-                      style={{...inp,flex:1,fontSize:12}} />
-                    <button onClick={e=>{const i=e.target.previousSibling;if(i.value.trim()){setAudienceBarriers(prev=>[...prev,i.value.trim()]);i.value="";}}}
-                      style={{padding:"8px 14px",borderRadius:8,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:13,fontWeight:700,cursor:"pointer",flexShrink:0}}>+</button>
-                  </div>
-                )}
               </div>
+
+
 
               <div style={{marginBottom:14}}>
                 <Label text="Тональность" />
