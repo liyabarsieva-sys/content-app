@@ -173,6 +173,8 @@ export default function App() {
   const [showPains, setShowPains] = useState(false);
   const [suggestingBarriers, setSuggestingBarriers] = useState(false);
   const [showBarriers, setShowBarriers] = useState(false);
+  const [newPainInput, setNewPainInput] = useState("");
+  const [newBarrierInput, setNewBarrierInput] = useState("");
   const [brandQ1, setBrandQ1] = useState(() => localStorage.getItem("lia_brand_q1") || "");
   const [brandQ2, setBrandQ2] = useState(() => localStorage.getItem("lia_brand_q2") || "");
   const [planPeriod, setPlanPeriod] = useState(() => localStorage.getItem("lia_plan_period") || "week");
@@ -507,7 +509,7 @@ ${toneOfVoice ? `Голос бренда / пример поста: ${toneOfVoic
     else if (newMode === "carousel") { setStep(hasContext ? 2 : 1); setCarouselResult(null); }
     else if (newMode === "plan") {
       if (planResult && planResult.length > 0) setStep(5);
-      else setStep(hasContext ? 2 : 1);
+      else setStep(2);
     }
     else if (newMode === "sordell") {
       if (sordellResult && sordellResult.length > 0) { setStep(2); setSordellStep(13); }
@@ -532,7 +534,7 @@ ${toneOfVoice ? `Голос бренда / пример поста: ${toneOfVoic
       setStep(1);
     }
   }
-  function startNewPlan() { setMode("plan"); setStep(1); setPlanResult(null); setResult(null); setError(""); }
+  function startNewPlan() { setMode("plan"); setStep(2); setPlanResult(null); setResult(null); setError(""); }
   function startCarousel() { switchMode("carousel"); }
   function startCarousel() { setMode("carousel"); setStep(2); setCarouselResult(null); setResult(null); }
   function startSordell() {
@@ -1973,10 +1975,10 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
 
                 {audiencePains.length === 0 && (
                   <div style={{display:"flex",gap:6,marginTop:8}}>
-                    <input placeholder="Введите боль аудитории..."
-                      onKeyDown={e=>{if(e.key==="Enter"&&e.target.value.trim()){setAudiencePains(prev=>[...prev,e.target.value.trim()]);e.target.value="";}}}
+                    <input placeholder="Введите боль аудитории..." value={newPainInput} onChange={e=>setNewPainInput(e.target.value)}
+                      onKeyDown={e=>{if(e.key==="Enter"&&newPainInput.trim()){setAudiencePains(prev=>[...prev,newPainInput.trim()]);setNewPainInput("");}}}
                       style={{flex:1,padding:"9px 12px",borderRadius:8,border:"1px solid #d8d0e0",fontSize:12,color:"#362d52",outline:"none",background:"#f0eef8"}} />
-                    <button onClick={e=>{const i=e.target.previousSibling;if(i.value.trim()){setAudiencePains(prev=>[...prev,i.value.trim()]);i.value="";}}}
+                    <button onClick={()=>{if(newPainInput.trim()){setAudiencePains(prev=>[...prev,newPainInput.trim()]);setNewPainInput("");}}}
                       style={{padding:"9px 14px",borderRadius:8,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:13,fontWeight:700,cursor:"pointer",flexShrink:0}}>+</button>
                   </div>
                 )}
@@ -2000,10 +2002,10 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
                           </div>
                         ))}
                         <div style={{display:"flex",gap:6}}>
-                          <input placeholder="Добавить свою боль..."
-                            onKeyDown={e=>{if(e.key==="Enter"&&e.target.value.trim()){setAudiencePains(prev=>[...prev,e.target.value.trim()]);e.target.value="";}}}
+                          <input placeholder="Добавить свою боль..." value={newPainInput} onChange={e=>setNewPainInput(e.target.value)}
+                            onKeyDown={e=>{if(e.key==="Enter"&&newPainInput.trim()){setAudiencePains(prev=>[...prev,newPainInput.trim()]);setNewPainInput("");}}}
                             style={{flex:1,padding:"7px 10px",borderRadius:8,border:"1px solid #d8d0e0",fontSize:12,color:"#362d52",outline:"none",background:"#fff"}} />
-                          <button onClick={e=>{const i=e.target.previousSibling;if(i.value.trim()){setAudiencePains(prev=>[...prev,i.value.trim()]);i.value="";}}}
+                          <button onClick={()=>{if(newPainInput.trim()){setAudiencePains(prev=>[...prev,newPainInput.trim()]);setNewPainInput("");}}}
                             style={{padding:"7px 12px",borderRadius:8,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:12,fontWeight:700,cursor:"pointer",flexShrink:0}}>+</button>
                         </div>
                       </div>
@@ -2028,10 +2030,10 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
 
                 {audienceBarriers.length === 0 && (
                   <div style={{display:"flex",gap:6,marginTop:8}}>
-                    <input placeholder='Например: "я недостаточно плохо себя чувствую"'
-                      onKeyDown={e=>{if(e.key==="Enter"&&e.target.value.trim()){setAudienceBarriers(prev=>[...prev,e.target.value.trim()]);e.target.value="";}}}
+                    <input placeholder='Например: "я недостаточно плохо себя чувствую"' value={newBarrierInput} onChange={e=>setNewBarrierInput(e.target.value)}
+                      onKeyDown={e=>{if(e.key==="Enter"&&newBarrierInput.trim()){setAudienceBarriers(prev=>[...prev,newBarrierInput.trim()]);setNewBarrierInput("");}}}
                       style={{flex:1,padding:"9px 12px",borderRadius:8,border:"1px solid #d8d0e0",fontSize:12,color:"#362d52",outline:"none",background:"#f0eef8"}} />
-                    <button onClick={e=>{const i=e.target.previousSibling;if(i.value.trim()){setAudienceBarriers(prev=>[...prev,i.value.trim()]);i.value="";}}}
+                    <button onClick={()=>{if(newBarrierInput.trim()){setAudienceBarriers(prev=>[...prev,newBarrierInput.trim()]);setNewBarrierInput("");}}}
                       style={{padding:"9px 14px",borderRadius:8,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:13,fontWeight:700,cursor:"pointer",flexShrink:0}}>+</button>
                   </div>
                 )}
