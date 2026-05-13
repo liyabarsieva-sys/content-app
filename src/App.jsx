@@ -2617,375 +2617,277 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
           <div>
             <Card>
               <div style={{fontFamily:"'Cormorant Garamond', serif",fontSize:19,color:"#362d52",fontWeight:600,marginBottom:18,display:"flex",alignItems:"center",gap:9}}>
-                <StepNum n="3" /> О чём писать
+                <StepNum n="3" /> Стратегия
               </div>
 
               {/* Pillar */}
-              <div style={{marginBottom:18}}>
-                <Label text="Смысловой блок" hint={pillars.length ? "Выбери смысловой блок" : "Добавь блоки через кнопку «Настроить блоки» вверху"} />
-                <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
-                  {pillars.length>0 ? pillars.map((p,i)=>(
-                    <button key={i} onClick={()=>setPillar(p)} style={{padding:"8px 14px",borderRadius:9,border:`1px solid ${pillar===p?"#362d52":"#d8d0e0"}`,background:pillar===p?"#362d52":"#f0eef8",color:pillar===p?"#f4f1ec":"#362d52",fontSize:13,cursor:"pointer",fontFamily:"sans-serif"}}>{p}</button>
-                  )) : (
-                    <button onClick={()=>setShowPillarSetup(true)} style={{padding:"8px 14px",borderRadius:9,border:"1px dashed #d8d0e0",background:"transparent",color:"#5c4e7a",fontSize:13,cursor:"pointer",fontFamily:"sans-serif"}}>+ Добавить блоки</button>
-                  )}
-                </div>
-              </div>
-
-              {/* Angle */}
-              <div style={{marginBottom:18}}>
-                <Label text="Угол смыслового блока" />
-                <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:8}}>
-                  {PILLAR_ANGLES.map(a=>(
-                    <button key={a.id} onClick={()=>setPillarAngle(a.id)} style={{padding:"10px 14px",borderRadius:9,border:`1px solid ${pillarAngle===a.id?"#362d52":"#d8d0e0"}`,background:pillarAngle===a.id?"#362d52":"#fff",color:pillarAngle===a.id?"#f4f1ec":"#362d52",fontSize:13,cursor:"pointer",fontFamily:"sans-serif",textAlign:"left"}}>
-                      <div style={{fontWeight:600,marginBottom:2}}>{a.label}</div>
-                      <div style={{fontSize:11,color:pillarAngle===a.id?"#f4f1ec":"#5c4e7a"}}>{a.desc}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Stage */}
-              <div style={{marginBottom:18}}>
-                <Label text="Стадия аудитории" hint="На каком уровне осознания находится читатель?" />
-                <div style={{display:"flex",flexDirection:"column",gap:7}}>
-                  {AWARENESS_STAGES.map(s=>(
-                    <button key={s.id} onClick={()=>setStage(s.id)} style={{padding:"10px 14px",borderRadius:9,border:`1px solid ${stage===s.id?s.color:S.borderL}`,background:stage===s.id?"#362d52":"#fff",color:stage===s.id?"#f4f1ec":"#362d52",fontSize:13,cursor:"pointer",fontFamily:"sans-serif",textAlign:"left",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                      <div>
-                        <span style={{fontWeight:600}}>{s.label}</span>
-                        <span style={{fontSize:11,color:stage===s.id?"#f4f1ec":"#9a88b8",marginLeft:8}}>→ {s.goal}</span>
-                      </div>
-                      <span style={{fontSize:10,color:"#362d52",background:"#e1df2c",padding:"2px 8px",borderRadius:10,flexShrink:0,fontWeight:700}}>{s.share}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-            </Card>
-
-            <div style={{display:"flex",gap:8}}>
-              <button onClick={()=>setStep(2)} style={{flex:1,padding:12,borderRadius:10,border:`1px solid ${S.border}`,background:"transparent",color:"#5c4e7a",fontSize:13,cursor:"pointer",fontFamily:"sans-serif"}}>← Назад</button>
-              <button onClick={()=>setStep(4)} style={{flex:3,padding:15,borderRadius:12,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"sans-serif"}}>
-                Далее → Как подать
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* STEP 4 — Как подать */}
-        {step===4&&mode!=="plan"&&mode!=="sordell"&&mode!=="carousel"&&(
-          <div>
-            <Card>
-              <div style={{fontFamily:"'Cormorant Garamond', serif",fontSize:19,color:"#362d52",fontWeight:600,marginBottom:18,display:"flex",alignItems:"center",gap:9}}>
-                <StepNum n="4" /> Как подать
-              </div>
-
-              {/* Матрица Сорделл */}
-              <div style={{marginBottom:18}}>
-                <Label text="Угол подачи — матрица Сорделл" />
-                <div style={{fontSize:11,color:"#5c4e7a",marginBottom:10,lineHeight:1.6,fontStyle:"italic"}}>Как зайти в тему — с какой стороны</div>
-                {rubric && !["engaging","pain"].includes(rubric) && (
-                  <div style={{padding:"8px 12px",background:"rgba(54,45,82,.06)",borderRadius:8,marginBottom:8,fontSize:11,color:"#5c4e7a"}}>
-                    💡 Доступные углы отфильтрованы по рубрике <strong>«{selectedRubric?.label}»</strong>
+              {!isCase && pillars.length > 0 && (
+                <div style={{marginBottom:14}}>
+                  <Label text="Смысловой блок" />
+                  <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                    {pillars.map((p,i)=>{const lbl=p.label||p;return(
+                      <button key={i} onClick={()=>setPillar(lbl)} style={{padding:"6px 12px",borderRadius:8,border:`1px solid ${pillar===lbl?"#362d52":"#d8d0e0"}`,background:pillar===lbl?"#362d52":"#f0eef8",color:pillar===lbl?"#f4f1ec":"#362d52",fontSize:12,cursor:"pointer"}}>{lbl}</button>
+                    );})}
                   </div>
-                )}
-                <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                  {SORDELL_MATRIX.map(q=>{
-                    const allowed = rubric ? (RUBRIC_SORDELL_MAP[rubric] || []) : SORDELL_MATRIX.map(x=>x.id);
-                    const isAllowed = !rubric || allowed.includes(q.id);
-                    return (
-                      <button key={q.id} onClick={()=>isAllowed&&setSordellQuad(q.id)}
-                        style={{padding:"12px 14px",borderRadius:9,border:`1px solid ${sordellQuad===q.id?"#362d52":isAllowed?"#d8d0e0":"#ece8f0"}`,background:sordellQuad===q.id?"#362d52":isAllowed?"#f0eef8":"#f8f6fc",color:sordellQuad===q.id?"#f4f1ec":isAllowed?"#362d52":"#c4b8d8",fontSize:13,cursor:isAllowed?"pointer":"not-allowed",fontFamily:"'Nunito Sans', sans-serif",textAlign:"left",transition:"all .2s",opacity:isAllowed?1:.55}}>
-                        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:3}}>
-                          <span style={{fontWeight:700}}>{q.icon} {q.label}</span>
-                          {isAllowed
-                            ? <span style={{fontSize:10,color:"#362d52",background:"#e1df2c",padding:"1px 8px",borderRadius:8,fontWeight:700,flexShrink:0}}>{q.share}</span>
-                            : <span style={{fontSize:10,color:"#c4b8d8",padding:"1px 8px"}}>недоступно</span>
-                          }
-                        </div>
-                        <div style={{fontSize:11,color:sordellQuad===q.id?"#f4f1ec":isAllowed?"#5c4e7a":"#c4b8d8"}}>{q.desc}</div>
-                        {sordellQuad===q.id && <div style={{fontSize:10,color:"rgba(244,241,236,.8)",marginTop:6,fontStyle:"italic",lineHeight:1.5}}>{q.hint}</div>}
-                      </button>
-                    );
-                  })}
                 </div>
-              </div>
+              )}
 
-              {/* Hook Type */}
-              <div style={{marginBottom:18}}>
-                <Label text="Тип хука" hint="Как зацепить мозг читателя с первой строки (по Will Storr)" />
-                <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:8}}>
-                  {HOOK_TYPES.map(h=>(
-                    <button key={h.id} onClick={()=>setHookType(hookType===h.id?"":h.id)}
-                      style={{padding:"10px 14px",borderRadius:9,border:`1px solid ${hookType===h.id?"#362d52":"#d8d0e0"}`,background:hookType===h.id?"#362d52":"#f0eef8",color:hookType===h.id?"#f4f1ec":"#362d52",fontSize:13,cursor:"pointer",fontFamily:"sans-serif",textAlign:"left",transition:"all .2s"}}>
-                      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3}}>
-                        <span style={{fontSize:15}}>{h.icon}</span>
-                        <span style={{fontWeight:600,fontSize:12}}>{h.label}</span>
-                      </div>
-                      <div style={{fontSize:11,color:hookType===h.id?"rgba(244,241,236,.8)":"#5c4e7a",lineHeight:1.4}}>{h.desc}</div>
-                      {hookType===h.id && <div style={{fontSize:10,color:"rgba(244,241,236,.7)",marginTop:6,fontStyle:"italic",lineHeight:1.5,borderTop:"1px solid rgba(244,241,236,.2)",paddingTop:6}}>{h.hint}</div>}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Length */}
-              <div style={{marginBottom:18}}>
-                <Label text="Длина поста" />
-                <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:8}}>
-                  {LENGTH_OPTIONS.map(l=>(
-                    <button key={l.id} onClick={()=>setLength(l.id)} style={{padding:"10px 14px",borderRadius:9,border:`1px solid ${length===l.id?"#362d52":"#d8d0e0"}`,background:length===l.id?"#362d52":"#fff",color:length===l.id?"#f4f1ec":"#362d52",fontSize:13,cursor:"pointer",fontFamily:"sans-serif",textAlign:"left"}}>
-                      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
-                        <span style={{color:length===l.id?"#e1df2c":"#9a88b8",fontWeight:700,fontSize:11}}>{l.icon}</span>
-                        <span style={{fontWeight:600}}>{l.label}</span>
-                      </div>
-                      <div style={{fontSize:11,color:length===l.id?"#f4f1ec":"#5c4e7a",marginBottom:2}}>{l.desc}</div>
-                      {length===l.id && <div style={{fontSize:10,color:"#f4f1ec",marginTop:3,fontStyle:"italic",opacity:.9}}>{l.note}</div>}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* CTA */}
-              <div style={{marginBottom:0}}>
-                <Label text="CTA — призыв к действию" />
-                <div style={{display:"flex",flexWrap:"wrap",gap:7}}>
-                  {CTA_OPTIONS.map(c=>(
-                    <button key={c.id} onClick={()=>setCta(c.id)} style={{padding:"7px 13px",borderRadius:9,border:`1px solid ${cta===c.id?"#362d52":"#d8d0e0"}`,background:cta===c.id?"#362d52":"#fff",color:cta===c.id?"#f4f1ec":"#362d52",fontSize:12,cursor:"pointer",fontFamily:"sans-serif",display:"flex",alignItems:"center",gap:5}}>
-                      {c.icon} {c.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </Card>
-
-            <div style={{display:"flex",gap:8}}>
-              <button onClick={()=>setStep(3)} style={{flex:1,padding:12,borderRadius:10,border:`1px solid ${S.border}`,background:"transparent",color:"#5c4e7a",fontSize:13,cursor:"pointer",fontFamily:"sans-serif"}}>← Назад</button>
-              <button onClick={generate} style={{flex:3,padding:15,borderRadius:12,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"sans-serif"}}>
-                ✦ Создать пост
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* STEP 2 — Topic */}
-        {step===2&&mode!=="plan"&&mode!=="sordell"&&mode!=="carousel"&&(
-          <div>
-            <Card>
-              <div style={{fontFamily:"'Cormorant Garamond', serif",fontSize:19,color:"#362d52",fontWeight:600,marginBottom:18,display:"flex",alignItems:"center",gap:9}}>
-                <StepNum n={isCase?"2":"3"} /> {isCase ? "Данные кейса" : "Тема поста"}
-              </div>
-
-              {/* Sordell Quadrant - required first choice */}
+              {/* Pillar angle */}
               {!isCase && (
-                <div style={{marginBottom:18}}>
-                  <Label text="Угол подачи — матрица Сорделл" hint="Обязательный выбор — определяет тон и структуру поста" />
-                  <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                    {SORDELL_MATRIX.map(q=>(
-                      <button key={q.id} onClick={()=>setSordellQuad(sordellQuad===q.id?"":q.id)}
-                        style={{padding:"12px 14px",borderRadius:9,border:`1px solid ${sordellQuad===q.id?"#362d52":"#d8d0e0"}`,background:sordellQuad===q.id?"#362d52":"#f0eef8",color:sordellQuad===q.id?"#f4f1ec":"#362d52",fontSize:13,cursor:"pointer",textAlign:"left",transition:"all .2s"}}>
-                        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:3}}>
-                          <span style={{fontWeight:700}}>{q.icon} {q.label} {(q.id==="personal_unexpected"||q.id==="professional_unexpected")?"⭐":""}</span>
-                          <span style={{fontSize:10,color:sordellQuad===q.id?"rgba(244,241,236,.7)":"#9a88b8"}}>{q.share}</span>
-                        </div>
-                        <div style={{fontSize:11,color:sordellQuad===q.id?"rgba(244,241,236,.8)":"#5c4e7a"}}>{q.desc}</div>
-                        {sordellQuad===q.id && <div style={{fontSize:10,color:"rgba(244,241,236,.75)",marginTop:6,fontStyle:"italic",lineHeight:1.5,borderTop:"1px solid rgba(244,241,236,.2)",paddingTop:6}}>{q.hint}</div>}
+                <div style={{marginBottom:14}}>
+                  <Label text="Угол смыслового блока" />
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+                    {PILLAR_ANGLES.map(a=>(
+                      <button key={a.id} onClick={()=>setPillarAngle(a.id)} style={{padding:"8px 12px",borderRadius:9,border:`1px solid ${pillarAngle===a.id?"#362d52":"#d8d0e0"}`,background:pillarAngle===a.id?"#362d52":"#f0eef8",color:pillarAngle===a.id?"#f4f1ec":"#362d52",fontSize:12,cursor:"pointer",textAlign:"left"}}>
+                        <div style={{fontWeight:700,marginBottom:1}}>{a.label}</div>
+                        <div style={{fontSize:10,opacity:.8}}>{a.desc}</div>
                       </button>
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* Optional rubric - only 3 functional rubrics */}
-              {!isCase && sordellQuad && (
-                <div style={{marginBottom:18}}>
-                  <Label text="Дополнительная функция поста" hint="Выбери если хочешь изменить функцию поста — иначе пост строится по логике квадранта" />
-                  <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                    {[
-                      {id:"engaging", icon:"🔥", label:"Вовлекающий", desc:"Добавляет вопрос или опрос в конец поста. Цель: получить комментарии и реакции.", prompt:"Заверши пост вопросом к аудитории который провоцирует ответ в комментариях."},
-                      {id:"pain", icon:"💊", label:"Боль / Проблема", desc:"Пост строится вокруг точного называния боли. Тон: «я вижу тебя», без советов и решений.", prompt:"Весь пост — точное называние боли читателя его словами. Без объяснений и решений."},
-                      {id:"selling", icon:"💰", label:"Продающий", desc:"Пост содержит конкретный оффер и CTA. Только для стадий 3–4.", prompt:"Включи конкретный оффер и призыв к действию в конце.", disabled:(stage==="unaware"||stage==="aware")},
-                    ].map(r=>{
-                      const isDisabled = r.disabled;
-                      return (
-                        <div key={r.id}>
-                          <button onClick={()=>!isDisabled&&setRubric(rubric===r.id?"":r.id)}
-                            style={{width:"100%",padding:"10px 14px",borderRadius:9,border:`1px solid ${rubric===r.id?"#362d52":isDisabled?"#e8e0f0":"#d8d0e0"}`,background:rubric===r.id?"#362d52":isDisabled?"#fafafa":"#f0eef8",color:rubric===r.id?"#f4f1ec":isDisabled?"#c4b8d8":"#362d52",fontSize:13,cursor:isDisabled?"not-allowed":"pointer",textAlign:"left",opacity:isDisabled?.6:1}}>
-                            <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
-                              <span>{r.icon}</span>
-                              <span style={{fontWeight:600}}>{r.label}</span>
-                              {isDisabled && <span style={{fontSize:10,color:"#c4b8d8",marginLeft:"auto"}}>недоступно для стадий 0–1</span>}
-                            </div>
-                            <div style={{fontSize:11,color:rubric===r.id?"rgba(244,241,236,.8)":isDisabled?"#c4b8d8":"#5c4e7a"}}>{r.desc}</div>
-                          </button>
-                          {/* Threads + Selling warning */}
-                          {rubric===r.id && r.id==="selling" && platforms.includes("threads") && (
-                            <div style={{marginTop:6,padding:"8px 12px",background:"rgba(225,100,50,.08)",border:"1px solid rgba(225,100,50,.25)",borderRadius:8,fontSize:11,color:"#c46a4a"}}>
-                              ⚠️ Продающие посты в Threads работают только после 10+ прогревочных постов («джебов»). Убедитесь что аудитория уже прогрета.
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                    {rubric && <button onClick={()=>setRubric("")} style={{padding:"6px",borderRadius:7,border:"none",background:"transparent",color:"#9a88b8",fontSize:11,cursor:"pointer",textAlign:"left"}}>× Убрать дополнительную функцию</button>}
-                  </div>
-                </div>
-              )}
-
-              {isCase ? (
-                <>
-                  <div style={{padding:"12px 14px",background:"rgba(54,45,82,.05)",borderRadius:10,border:"1px solid #e8e0f0",marginBottom:18}}>
-                    <div style={{fontSize:12,color:"#362d52",fontWeight:600,marginBottom:4}}>⭐ История успеха · Было → стало → результат</div>
-                    <div style={{fontSize:11,color:"#5c4e7a",lineHeight:1.6}}>Опиши реальный кейс — конкретные детали создают доверие. Приложение оформит историю под каждую платформу.</div>
-                  </div>
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
-                    <div>
-                      <Label text="Клиент / герой кейса" hint="Имя, возраст, профессия" />
-                      <textarea style={inpAuto} rows={1} placeholder="Мария, 42 года, бухгалтер" value={caseClient} onChange={e=>{setCaseClient(e.target.value);e.target.style.height="auto";e.target.style.height=e.target.scrollHeight+"px";}} />
-                    </div>
-                    <div>
-                      <Label text="Контекст / ниша клиента" />
-                      <textarea style={inpAuto} rows={1} placeholder="Работает из дома, ноутбук — основной инструмент" value={caseNiche} onChange={e=>{setCaseNiche(e.target.value);e.target.style.height="auto";e.target.style.height=e.target.scrollHeight+"px";}} />
-                    </div>
-                  </div>
-                  <div style={{marginBottom:14}}>
-                    <Label text="БЫЛО — ситуация до" hint="Проблема, боль, с чем пришёл клиент" />
-                    <textarea style={inp} rows={3} placeholder="Ноутбук перегревался и выключался сам по себе каждые 30 минут. Работать было невозможно — срывались дедлайны..." value={caseBefore} onChange={e=>setCaseBefore(e.target.value)} />
-                  </div>
-                  <div style={{marginBottom:14}}>
-                    <Label text="СТАЛО — что сделали" hint="Процесс, действия, решение" />
-                    <textarea style={inp} rows={3} placeholder="Провели полную чистку от пыли, заменили термопасту, проверили систему охлаждения..." value={caseAfter} onChange={e=>setCaseAfter(e.target.value)} />
-                  </div>
-                  <div style={{marginBottom:14}}>
-                    <Label text="РЕЗУЛЬТАТ — цифры, факты, эмоции" hint="Конкретные измеримые изменения" />
-                    <textarea style={inp} rows={3} placeholder="Температура процессора снизилась с 92° до 54°. Ноутбук работает без сбоев уже 4 месяца. Клиент написал: «Как будто новый купила!»" value={caseResult} onChange={e=>setCaseResult(e.target.value)} />
-                  </div>
-                  <div style={{marginBottom:0}}>
-                    <Label text="Боль / урок для аудитории" hint="Что должен вынести читатель из этой истории" />
-                    <textarea style={inpAuto} rows={1} placeholder="Регулярная чистка продлевает жизнь ноутбука на годы" value={pain} onChange={e=>{setPain(e.target.value);e.target.style.height="auto";e.target.style.height=e.target.scrollHeight+"px";}} />
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div style={{marginBottom:14}}>
-                    <Label text="Тема поста" />
-                    <textarea style={inpAuto} rows={2} placeholder="Например: чистка ноутбука от пыли" value={topic} onChange={e=>{setTopic(e.target.value);e.target.style.height="auto";e.target.style.height=e.target.scrollHeight+"px";}} />
-                  </div>
-                  {/* Launch mode block */}
-                  {products.length > 0 && (
-                    <div style={{marginBottom:14,padding:"12px 14px",background:launchMode?"#362d52":"#f4f1ec",borderRadius:10,border:`1px solid ${launchMode?"#362d52":"#e8e0f0"}`}}>
-                      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:launchMode?12:0}}>
-                        <input type="checkbox" checked={launchMode} onChange={e=>{setLaunchMode(e.target.checked);if(!e.target.checked){setSelectedProduct(null);setSelectedPhase(null);}}}
-                          style={{width:16,height:16,cursor:"pointer"}} />
-                        <span style={{fontSize:13,fontWeight:600,color:launchMode?"#f4f1ec":"#362d52"}}>🚀 Пост входит в запуск продукта</span>
-                      </div>
-                      {launchMode && (
-                        <div>
-                          <div style={{marginBottom:10}}>
-                            <div style={{fontSize:11,color:"rgba(244,241,236,.7)",marginBottom:5}}>Продукт:</div>
-                            <div style={{display:"flex",flexDirection:"column",gap:5}}>
-                              {products.map(p=>(
-                                <button key={p.id} onClick={()=>setSelectedProduct(p)}
-                                  style={{padding:"7px 12px",borderRadius:7,border:`1px solid ${selectedProduct?.id===p.id?"#e1df2c":"rgba(244,241,236,.25)"}`,background:selectedProduct?.id===p.id?"rgba(225,223,44,.15)":"transparent",color:"#f4f1ec",fontSize:12,cursor:"pointer",textAlign:"left",fontWeight:selectedProduct?.id===p.id?700:400}}>
-                                  {p.name}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                          {selectedProduct && (
-                            <div>
-                              <div style={{fontSize:11,color:"rgba(244,241,236,.7)",marginBottom:5}}>Фаза запуска:</div>
-                              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
-                                {[
-                                  {n:1,label:"Прогрев темы",desc:"Стадии 0–1, без продукта"},
-                                  {n:2,label:"Прогрев продукта",desc:"Стадии 2–3, мягкое упоминание"},
-                                  {n:3,label:"Продажи",desc:"Стадии 3–4, полное раскрытие"},
-                                ].map(ph=>(
-                                  <button key={ph.n} onClick={()=>{
-                                    setSelectedPhase(ph.n);
-                                    // Auto-set stage and quadrant based on phase
-                                    if(ph.n===1){setStage("unaware");setSordellQuad("personal_unexpected");}
-                                    else if(ph.n===2){setStage("seeking");setSordellQuad("professional_unexpected");}
-                                    else if(ph.n===3){setStage("choosing");setSordellQuad("professional_unexpected");setRubric("selling");}
-                                  }}
-                                    style={{padding:"8px 8px",borderRadius:7,border:`1px solid ${selectedPhase===ph.n?"#e1df2c":"rgba(244,241,236,.25)"}`,background:selectedPhase===ph.n?"rgba(225,223,44,.15)":"transparent",color:"#f4f1ec",fontSize:11,cursor:"pointer",textAlign:"left"}}>
-                                    <div style={{fontWeight:700,marginBottom:2}}>Фаза {ph.n}</div>
-                                    <div style={{fontSize:9,opacity:.8}}>{ph.label}</div>
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  <div style={{marginBottom:14}}>
-                    <Label text="Боль аудитории" hint={currentPainHint} />
-                    <textarea style={inpAuto} rows={1} placeholder="Например: боится что ноутбук сломается и потеряет все данные" value={pain} onChange={e=>{setPain(e.target.value);e.target.style.height="auto";e.target.style.height=e.target.scrollHeight+"px";}} />
-                  </div>
-                  <div style={{marginBottom:14}}>
-                    <Label text="Ключевые факты и УТП" hint="Что обязательно отразить — цифры, преимущества, детали" />
-                    <textarea style={inp} rows={4} placeholder={"Что важно донести:\n— чистка каждые 6-12 месяцев\n— стоимость 50 лари\n— доставка курьером после ремонта"} value={details} onChange={e=>setDetails(e.target.value)} />
-                  </div>
-                </>
-              )}
-
-              {/* Quick platform selector on topic step */}
+              {/* Stage */}
               <div style={{marginBottom:14}}>
-                <Label text="Платформы для этого поста" hint="Можешь изменить для конкретного поста" />
-                <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-                  {PLATFORMS.map(p=>(
-                    <button key={p.id} onClick={()=>{
-                      setPlatforms(prev=>prev.includes(p.id)?prev.filter(x=>x!==p.id):[...prev,p.id]);
-                    }} style={{padding:"6px 12px",borderRadius:8,border:`1px solid ${platforms.includes(p.id)?"#362d52":"#d8d0e0"}`,background:platforms.includes(p.id)?"#362d52":"#fff",color:platforms.includes(p.id)?"#f4f1ec":"#362d52",fontSize:12,cursor:"pointer"}}>
-                      {p.icon} {p.label}
+                <Label text="Стадия аудитории" hint="По Шварцу — как хорошо аудитория осознаёт свою проблему" />
+                <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                  {AWARENESS_STAGES.map(s=>(
+                    <button key={s.id} onClick={()=>setStage(s.id)} style={{padding:"9px 12px",borderRadius:9,border:`1px solid ${stage===s.id?"#362d52":"#d8d0e0"}`,background:stage===s.id?"#362d52":"#f0eef8",color:stage===s.id?"#f4f1ec":"#362d52",fontSize:12,cursor:"pointer",textAlign:"left"}}>
+                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:2}}>
+                        <span style={{fontWeight:700}}>{s.label}</span>
+                        <span style={{fontSize:10,background:stage===s.id?"rgba(225,223,44,.3)":"#e1df2c",color:"#362d52",padding:"1px 7px",borderRadius:8,fontWeight:700}}>{s.share}</span>
+                      </div>
+                      <div style={{fontSize:11,opacity:.8}}>{s.goal}</div>
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Strategy summary */}
-              <div style={{padding:"10px 14px",background:"#362d52",borderRadius:9,border:"none",fontSize:11,color:"#f4f1ec",lineHeight:1.7,textAlign:"center"}}>
-                {[
-                  pillar && `📌 Блок: ${pillar}`,
-                  sordellQuad && `${selectedSordell?.icon} ${selectedSordell?.label}`,
-                  pillarAngle && `📐 Угол: ${PILLAR_ANGLES.find(a=>a.id===pillarAngle)?.label}`,
-                  stage && `👥 Стадия: ${selectedStage?.label}`,
-                  rubric && `📂 Рубрика: ${selectedRubric?.icon} ${selectedRubric?.label}`,
-                  cta && `🎯 CTA: ${selectedCta?.label}`,
-                ].filter(Boolean).join("  ·  ") || "Стратегия не выбрана"}
+              {/* Sordell */}
+              <div style={{marginBottom:14}}>
+                <Label text="Угол подачи — матрица Сорделл" hint="Определяет тон и структуру поста" />
+                <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                  {SORDELL_MATRIX.map(q=>(
+                    <button key={q.id} onClick={()=>setSordellQuad(sordellQuad===q.id?"":q.id)}
+                      style={{padding:"10px 12px",borderRadius:9,border:`1px solid ${sordellQuad===q.id?"#362d52":"#d8d0e0"}`,background:sordellQuad===q.id?"#362d52":"#f0eef8",color:sordellQuad===q.id?"#f4f1ec":"#362d52",fontSize:12,cursor:"pointer",textAlign:"left"}}>
+                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:2}}>
+                        <span style={{fontWeight:700}}>{q.icon} {q.label} {(q.id==="personal_unexpected"||q.id==="professional_unexpected")?"⭐":""}</span>
+                        <span style={{fontSize:10,opacity:.7}}>{q.share}</span>
+                      </div>
+                      <div style={{fontSize:11,opacity:.8}}>{q.desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Optional rubric */}
+              <div style={{marginBottom:6}}>
+                <Label text="Дополнительная функция" hint="Опционально — оставь пустым если не нужно" />
+                <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                  {[
+                    {id:"engaging",icon:"🔥",label:"Вовлекающий",desc:"Вопрос в конце — получить комментарии"},
+                    {id:"pain",icon:"💊",label:"Боль / Проблема",desc:"Точное называние боли без решений"},
+                    {id:"selling",icon:"💰",label:"Продающий",desc:"Оффер и CTA. Только стадии 3–4.",disabled:(stage==="unaware"||stage==="aware")},
+                  ].map(r=>(
+                    <div key={r.id}>
+                      <button onClick={()=>!r.disabled&&setRubric(rubric===r.id?"":r.id)}
+                        style={{width:"100%",padding:"9px 12px",borderRadius:9,border:`1px solid ${rubric===r.id?"#362d52":r.disabled?"#e8e0f0":"#d8d0e0"}`,background:rubric===r.id?"#362d52":r.disabled?"#fafafa":"#f0eef8",color:rubric===r.id?"#f4f1ec":r.disabled?"#c4b8d8":"#362d52",fontSize:12,cursor:r.disabled?"not-allowed":"pointer",textAlign:"left",opacity:r.disabled?.6:1}}>
+                        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:1}}>
+                          <span>{r.icon}</span><span style={{fontWeight:700}}>{r.label}</span>
+                          {r.disabled&&<span style={{fontSize:10,color:"#c4b8d8",marginLeft:"auto"}}>недоступно для стадий 0–1</span>}
+                        </div>
+                        <div style={{fontSize:10,opacity:.8}}>{r.desc}</div>
+                      </button>
+                      {rubric===r.id&&r.id==="selling"&&platforms.includes("threads")&&(
+                        <div style={{marginTop:4,padding:"6px 10px",background:"rgba(225,100,50,.08)",border:"1px solid rgba(225,100,50,.25)",borderRadius:7,fontSize:11,color:"#c46a4a"}}>
+                          ⚠️ Продающие посты в Threads работают только после 10+ прогревочных постов
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {rubric&&<button onClick={()=>setRubric("")} style={{padding:"5px",border:"none",background:"transparent",color:"#9a88b8",fontSize:11,cursor:"pointer",textAlign:"left"}}>× Убрать функцию</button>}
+                </div>
               </div>
             </Card>
 
-            {loading ? (
-              <Card>
-                <div style={{textAlign:"center",padding:"10px 0"}}>
-                  <div style={{width:28,height:28,border:`2px solid ${S.border}`,borderTopColor:"#362d52",borderRadius:"50%",animation:"sp .8s linear infinite",margin:"0 auto 12px"}} />
-                  <style>{`@keyframes sp{to{transform:rotate(360deg)}}`}</style>
-                  <p style={{fontSize:13,color:S.muted}}>Создаю заголовок, хук и посты…</p>
+            {error&&<p style={{color:"#e05c5c",fontSize:13,textAlign:"center",marginBottom:10}}>{error}</p>}
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>setStep(2)} style={{flex:1,padding:12,borderRadius:10,border:`1px solid ${S.border}`,background:"transparent",color:"#5c4e7a",fontSize:13,cursor:"pointer"}}>← Назад</button>
+              <button onClick={()=>{setError("");setStep(4);}} style={{flex:3,padding:15,borderRadius:12,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:15,fontWeight:700,cursor:"pointer"}}>
+                Далее → Подтвердить
+              </button>
+            </div>
+          </div>
+        )}
+step===4&&mode!=="plan"&&mode!=="sordell"&&mode!=="carousel"&&(
+          <div>
+            <Card>
+              <div style={{fontFamily:"'Cormorant Garamond', serif",fontSize:19,color:"#362d52",fontWeight:600,marginBottom:16,display:"flex",alignItems:"center",gap:9}}>
+                <StepNum n="4" /> Подтвердить и создать
+              </div>
+
+              {/* Summary */}
+              <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:16}}>
+                {[
+                  {label:"Тема", value:topic||"не указана", step:2},
+                  {label:"Боль", value:pain||"—", step:2},
+                  {label:"Детали", value:details||"—", step:2},
+                  {label:"Хук", value:HOOK_TYPES.find(h=>h.id===hookType)?.label||"—", step:2},
+                  {label:"Длина", value:LENGTH_OPTIONS.find(l=>l.id===length)?.label||"—", step:2},
+                  {label:"CTA", value:CTA_OPTIONS.find(c=>c.id===cta)?.label||"—", step:2},
+                  {label:"Платформы", value:PLATFORMS.filter(p=>platforms.includes(p.id)).map(p=>p.label).join(", ")||"не выбраны", step:2},
+                  {label:"Блок", value:pillar||"—", step:3},
+                  {label:"Угол блока", value:PILLAR_ANGLES.find(a=>a.id===pillarAngle)?.label||"—", step:3},
+                  {label:"Стадия", value:AWARENESS_STAGES.find(s=>s.id===stage)?.label||"—", step:3},
+                  {label:"Сорделл", value:SORDELL_MATRIX.find(q=>q.id===sordellQuad)?.label||"—", step:3},
+                  {label:"Функция", value:rubric?{engaging:"🔥 Вовлекающий",pain:"💊 Боль",selling:"💰 Продающий"}[rubric]:"без доп. функции", step:3},
+                ].map((row,i)=>(
+                  <div key={i} style={{display:"flex",alignItems:"flex-start",gap:10,padding:"8px 12px",background:"#f4f1ec",borderRadius:8,border:"1px solid #e8e0f0"}}>
+                    <div style={{fontSize:11,color:"#9a88b8",fontWeight:600,width:80,flexShrink:0,paddingTop:1}}>{row.label}</div>
+                    <div style={{fontSize:12,color:"#362d52",flex:1,lineHeight:1.5}}>{row.value}</div>
+                    <button onClick={()=>setStep(row.step)} style={{padding:"2px 8px",borderRadius:6,border:"1px solid #d8d0e0",background:"transparent",color:"#9a88b8",fontSize:10,cursor:"pointer",flexShrink:0,whiteSpace:"nowrap"}}>
+                      ✏️ Изменить
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {error&&<p style={{color:"#e05c5c",fontSize:13,textAlign:"center",marginBottom:10}}>{error}</p>}
+            </Card>
+
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>setStep(3)} style={{flex:1,padding:12,borderRadius:10,border:`1px solid ${S.border}`,background:"transparent",color:"#5c4e7a",fontSize:13,cursor:"pointer"}}>← Назад</button>
+              <button onClick={generate} style={{flex:3,padding:15,borderRadius:12,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"sans-serif"}}>
+                ✦ Создать пост
+              </button>
+            </div>
+          </div>
+        )}
+step===2&&mode!=="plan"&&mode!=="sordell"&&mode!=="carousel"&&(
+          <div>
+            <Card>
+              <div style={{fontFamily:"'Cormorant Garamond', serif",fontSize:19,color:"#362d52",fontWeight:600,marginBottom:18,display:"flex",alignItems:"center",gap:9}}>
+                <StepNum n="2" /> Тема поста
+              </div>
+
+              {/* Launch mode */}
+              {products.length > 0 && (
+                <div style={{marginBottom:14,padding:"12px 14px",background:launchMode?"#362d52":"#f4f1ec",borderRadius:10,border:`1px solid ${launchMode?"#362d52":"#e8e0f0"}`}}>
+                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:launchMode?12:0}}>
+                    <input type="checkbox" checked={launchMode} onChange={e=>{setLaunchMode(e.target.checked);if(!e.target.checked){setSelectedProduct(null);setSelectedPhase(null);}}} style={{width:16,height:16,cursor:"pointer"}} />
+                    <span style={{fontSize:13,fontWeight:600,color:launchMode?"#f4f1ec":"#362d52"}}>🚀 Пост входит в запуск продукта</span>
+                  </div>
+                  {launchMode && (
+                    <div>
+                      <div style={{marginBottom:10}}>
+                        <div style={{fontSize:11,color:"rgba(244,241,236,.7)",marginBottom:5}}>Продукт:</div>
+                        <div style={{display:"flex",flexDirection:"column",gap:5}}>
+                          {products.map(p=>(<button key={p.id} onClick={()=>setSelectedProduct(p)} style={{padding:"7px 12px",borderRadius:7,border:`1px solid ${selectedProduct?.id===p.id?"#e1df2c":"rgba(244,241,236,.25)"}`,background:selectedProduct?.id===p.id?"rgba(225,223,44,.15)":"transparent",color:"#f4f1ec",fontSize:12,cursor:"pointer",textAlign:"left",fontWeight:selectedProduct?.id===p.id?700:400}}>{p.name}</button>))}
+                        </div>
+                      </div>
+                      {selectedProduct && (
+                        <div>
+                          <div style={{fontSize:11,color:"rgba(244,241,236,.7)",marginBottom:5}}>Фаза:</div>
+                          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
+                            {[{n:1,label:"Прогрев темы"},{n:2,label:"Прогрев продукта"},{n:3,label:"Продажи"}].map(ph=>(
+                              <button key={ph.n} onClick={()=>{setSelectedPhase(ph.n);if(ph.n===1){setStage("unaware");setSordellQuad("personal_unexpected");}else if(ph.n===2){setStage("seeking");setSordellQuad("professional_unexpected");}else{setStage("choosing");setSordellQuad("professional_unexpected");setRubric("selling");}}}
+                                style={{padding:"7px 8px",borderRadius:7,border:`1px solid ${selectedPhase===ph.n?"#e1df2c":"rgba(244,241,236,.25)"}`,background:selectedPhase===ph.n?"rgba(225,223,44,.15)":"transparent",color:"#f4f1ec",fontSize:11,cursor:"pointer",textAlign:"left"}}>
+                                <div style={{fontWeight:700}}>Фаза {ph.n}</div>
+                                <div style={{fontSize:9,opacity:.8}}>{ph.label}</div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-              </Card>
-            ) : (
-              <>
-                {isCase ? (
-                  <button onClick={generate} disabled={!caseBefore.trim()} style={{width:"100%",padding:15,borderRadius:12,border:"none",background:!caseBefore.trim()?"#d8d0e0":"#362d52",color:!caseBefore.trim()?"#9a88b8":"#f4f1ec",fontSize:15,fontWeight:700,cursor:caseBefore.trim()?"pointer":"not-allowed",fontFamily:"sans-serif",marginBottom:10}}>
-                    ⭐ Создать кейс
-                  </button>
-                ) : (
-                  <button onClick={()=>{if(!topic.trim()){setError("Укажи тему поста");return;}if(!sordellQuad){setError("Выбери квадрант Сорделл");return;}setStep(3);}} style={{width:"100%",padding:15,borderRadius:12,border:"none",background:!topic.trim()||!sordellQuad?"#d8d0e0":"#362d52",color:"#f4f1ec",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"sans-serif",marginBottom:10}}>
-                    Далее → Стратегия поста
-                  </button>
-                )}
-                {error&&<p style={{color:"#e05c5c",fontSize:13,textAlign:"center",marginBottom:10}}>{error}</p>}
-                <button onClick={()=>setStep(1)} style={{width:"100%",padding:10,borderRadius:10,border:`1px solid ${S.border}`,background:"transparent",color:"#5c4e7a",fontSize:13,cursor:"pointer",fontFamily:"sans-serif"}}>← Назад</button>
-              </>
-            )}
+              )}
+
+              {/* Topic */}
+              {!isCase && (
+                <div style={{marginBottom:14}}>
+                  <Label text="Тема поста" hint="О чём пост — конкретно и коротко" />
+                  <textarea value={topic} onChange={e=>{setTopic(e.target.value);setBrandChanged(true);}} placeholder="Например: почему клиенты уходят в самый важный момент" rows={2} style={{...inpAuto,fontSize:13}} />
+                </div>
+              )}
+
+              {/* Pain */}
+              <div style={{marginBottom:14}}>
+                <Label text="Боль аудитории" hint="Какую боль или страх затрагивает этот пост" />
+                <textarea value={pain} onChange={e=>setPain(e.target.value)} placeholder="Что беспокоит читателя прямо сейчас" rows={2} style={{...inpAuto,fontSize:13}} />
+              </div>
+
+              {/* Facts / details */}
+              <div style={{marginBottom:14}}>
+                <Label text="Факты и детали" hint="Что важно включить: цифры, случай, наблюдение, УТП" />
+                <textarea value={details} onChange={e=>setDetails(e.target.value)} placeholder="Например: клиент пришёл через полгода после консультации и сказал..." rows={2} style={{...inpAuto,fontSize:13}} />
+              </div>
+
+              {/* Hook type */}
+              <div style={{marginBottom:14}}>
+                <Label text="Тип хука" />
+                <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                  {HOOK_TYPES.map(h=>(
+                    <button key={h.id} onClick={()=>setHookType(h.id)} style={{padding:"9px 12px",borderRadius:9,border:`1px solid ${hookType===h.id?"#362d52":"#d8d0e0"}`,background:hookType===h.id?"#362d52":"#f0eef8",color:hookType===h.id?"#f4f1ec":"#362d52",fontSize:12,cursor:"pointer",textAlign:"left"}}>
+                      <div style={{fontWeight:700,marginBottom:1}}>{h.label}</div>
+                      <div style={{fontSize:11,opacity:.8}}>{h.example}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Length */}
+              <div style={{marginBottom:14}}>
+                <Label text="Длина поста" />
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+                  {LENGTH_OPTIONS.map(l=>(
+                    <button key={l.id} onClick={()=>setLength(l.id)} style={{padding:"9px 12px",borderRadius:9,border:`1px solid ${length===l.id?"#362d52":"#d8d0e0"}`,background:length===l.id?"#362d52":"#f0eef8",color:length===l.id?"#f4f1ec":"#362d52",fontSize:12,cursor:"pointer",textAlign:"left"}}>
+                      <div style={{fontWeight:700,marginBottom:1}}>{l.label}</div>
+                      <div style={{fontSize:10,opacity:.8}}>{l.desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* CTA */}
+              <div style={{marginBottom:14}}>
+                <Label text="CTA — призыв к действию" />
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+                  {CTA_OPTIONS.map(c=>(
+                    <button key={c.id} onClick={()=>setCta(c.id)} style={{padding:"8px 12px",borderRadius:9,border:`1px solid ${cta===c.id?"#362d52":"#d8d0e0"}`,background:cta===c.id?"#362d52":"#f0eef8",color:cta===c.id?"#f4f1ec":"#362d52",fontSize:12,cursor:"pointer",textAlign:"left"}}>
+                      <div style={{fontWeight:700,marginBottom:1}}>{c.label}</div>
+                      <div style={{fontSize:10,opacity:.8}}>{c.desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Platforms */}
+              <div style={{marginBottom:6}}>
+                <Label text="Платформы" />
+                <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                  {PLATFORMS.map(p=>(
+                    <button key={p.id} onClick={()=>setPlatforms(prev=>prev.includes(p.id)?prev.filter(x=>x!==p.id):[...prev,p.id])}
+                      style={{padding:"6px 12px",borderRadius:8,border:`1px solid ${platforms.includes(p.id)?"#362d52":"#d8d0e0"}`,background:platforms.includes(p.id)?"#362d52":"transparent",color:platforms.includes(p.id)?"#f4f1ec":"#362d52",fontSize:12,cursor:"pointer"}}>
+                      {p.icon} {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </Card>
+
+            {error&&<p style={{color:"#e05c5c",fontSize:13,textAlign:"center",marginBottom:10}}>{error}</p>}
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>setStep(1)} style={{flex:1,padding:12,borderRadius:10,border:`1px solid ${S.border}`,background:"transparent",color:"#5c4e7a",fontSize:13,cursor:"pointer"}}>← Назад</button>
+              <button onClick={()=>{if(!topic.trim()&&!isCase){setError("Укажи тему поста");return;}setError("");setStep(3);}}
+                style={{flex:3,padding:15,borderRadius:12,border:"none",background:topic.trim()||isCase?"#362d52":"#d8d0e0",color:"#f4f1ec",fontSize:15,fontWeight:700,cursor:"pointer"}}>
+                Далее → Стратегия
+              </button>
+            </div>
           </div>
         )}
 
-        {/* STEP 5 — Result */}
         {step===5&&result&&mode!=="plan"&&mode!=="sordell"&&mode!=="carousel"&&(
           <div>
             {/* Strategy badge */}
