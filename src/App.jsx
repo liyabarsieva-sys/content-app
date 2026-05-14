@@ -2101,16 +2101,7 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
                 )}
               </div>
 
-              <div style={{marginBottom:0}}>
-                <Label text="Платформы" />
-                <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
-                  {PLATFORMS.map(p=>(
-                    <button key={p.id} onClick={()=>toggle(p.id)} style={{padding:"8px 14px",borderRadius:9,border:`1px solid ${platforms.includes(p.id)?"#362d52":"#d8d0e0"}`,background:platforms.includes(p.id)?"#362d52":"#fff",color:platforms.includes(p.id)?"#f4f1ec":"#362d52",fontSize:13,cursor:"pointer",fontFamily:"sans-serif",display:"flex",alignItems:"center",gap:5}}>
-                      {p.icon} {p.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
+
             </Card>
             <button onClick={()=>setStep(isCase ? 3 : 2)} style={{width:"100%",padding:15,borderRadius:12,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"sans-serif"}}>
               {isCase ? "Далее → Данные кейса" : isPlan ? "Далее → Параметры плана" : mode==="sordell" ? "Далее → Интервью" : "Далее → Тема поста"}
