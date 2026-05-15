@@ -2440,11 +2440,11 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
               {/* Period */}
               <div style={{marginBottom:18}}>
                 <Label text="Период" />
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-                  {[{id:"week",label:"Неделя",icon:"📅"},{id:"two_weeks",label:"2 недели",icon:"📆"},{id:"three_weeks",label:"3 недели",icon:"🗓"},{id:"month",label:"Месяц",icon:"📅"},{id:"quarter",label:"Квартал",icon:"📊"}].map(p=>(
+                <div style={{display:"flex",gap:6}}>
+                  {[{id:"week",label:"Неделя"},{id:"two_weeks",label:"2 нед."},{id:"three_weeks",label:"3 нед."},{id:"month",label:"Месяц"},{id:"quarter",label:"Квартал"}].map(p=>(
                     <button key={p.id} onClick={()=>setPlanPeriod(p.id)}
-                      style={{padding:"12px 14px",borderRadius:9,border:`1px solid ${planPeriod===p.id?"#362d52":"#d8d0e0"}`,background:planPeriod===p.id?"#362d52":"#f0eef8",color:planPeriod===p.id?"#f4f1ec":"#362d52",fontSize:14,fontWeight:600,cursor:"pointer",textAlign:"center"}}>
-                      {p.icon} {p.label}
+                      style={{padding:"6px 8px",borderRadius:7,border:`1px solid ${planPeriod===p.id?"#362d52":"#d8d0e0"}`,background:planPeriod===p.id?"#362d52":"#f0eef8",color:planPeriod===p.id?"#f4f1ec":"#362d52",fontSize:11,fontWeight:600,cursor:"pointer",textAlign:"center",flex:1}}>
+                      {p.label}
                     </button>
                   ))}
                 </div>
