@@ -2450,6 +2450,37 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
                 </div>
               </div>
 
+              {/* Product warmup link */}
+              {products.length > 0 && (
+                <div style={{marginBottom:18}}>
+                  <Label text="Прогрев к продукту" hint="Включи если план должен вести к запуску продукта" />
+                  <div style={{padding:"12px 14px",background:launchMode?"#362d52":"#f4f1ec",borderRadius:10,border:`1px solid ${launchMode?"#362d52":"#e8e0f0"}`}}>
+                    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:launchMode?12:0}}>
+                      <input type="checkbox" checked={launchMode} onChange={e=>{setLaunchMode(e.target.checked);if(!e.target.checked){setSelectedProduct(null);setSelectedPhase(null);}}} style={{width:16,height:16,cursor:"pointer"}} />
+                      <span style={{fontSize:13,fontWeight:600,color:launchMode?"#f4f1ec":"#362d52"}}>🚀 Включить прогрев к продукту</span>
+                    </div>
+                    {launchMode && (
+                      <div>
+                        <div style={{fontSize:11,color:"rgba(244,241,236,.7)",marginBottom:6}}>Выбери продукт:</div>
+                        <div style={{display:"flex",flexDirection:"column",gap:5}}>
+                          {products.map(p=>(
+                            <button key={p.id} onClick={()=>setSelectedProduct(p)}
+                              style={{padding:"8px 12px",borderRadius:8,border:`1px solid ${selectedProduct?.id===p.id?"#e1df2c":"rgba(244,241,236,.25)"}`,background:selectedProduct?.id===p.id?"rgba(225,223,44,.15)":"transparent",color:"#f4f1ec",fontSize:12,cursor:"pointer",textAlign:"left",fontWeight:selectedProduct?.id===p.id?700:400}}>
+                              {p.name} {p.cost?`· ${p.cost}`:""}
+                            </button>
+                          ))}
+                        </div>
+                        {selectedProduct && (
+                          <div style={{marginTop:8,padding:"8px 10px",background:"rgba(225,223,44,.1)",borderRadius:8,fontSize:11,color:"rgba(244,241,236,.8)"}}>
+                            ✓ Алгоритм будет строить нарратив ведущий к запуску «{selectedProduct.name}»
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Per-platform frequency */}
               <div style={{marginBottom:18}}>
                 <Label text="Частота по платформам" hint="Укажи количество постов в неделю для каждой платформы" />
