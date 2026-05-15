@@ -2576,7 +2576,26 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
                   <DownloadCSVBtn planResult={planResult} period={planPeriod} />
                 </div>
               </div>
-              <div style={{marginBottom:16}} />
+
+              {/* Plan management buttons */}
+              <div style={{display:"flex",gap:8,marginTop:12,marginBottom:4}}>
+                <button onClick={()=>setStep(2)}
+                  style={{flex:1,padding:"9px 12px",borderRadius:9,border:"1px solid #d8d0e0",background:"transparent",color:"#9a88b8",fontSize:12,cursor:"pointer"}}>
+                  ⚙️ Настройки
+                </button>
+                <button onClick={()=>{setPlanResult(null);setPlanProgress("");setStep(2);}}
+                  style={{flex:1,padding:"9px 12px",borderRadius:9,border:"1px solid #e05c5c",background:"transparent",color:"#e05c5c",fontSize:12,cursor:"pointer"}}>
+                  🗑 Очистить план
+                </button>
+                {products.length>0 && (
+                  <button onClick={()=>setShowLaunchPlanModal(true)}
+                    style={{flex:1,padding:"9px 12px",borderRadius:9,border:"none",background:"#e1df2c",color:"#362d52",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                    🚀 Запуск
+                  </button>
+                )}
+              </div>
+
+              <div style={{marginBottom:12}} />
 
               <div style={{display:"flex",flexDirection:"column",gap:10}}>
                 {planResult.map((post,i)=>(
