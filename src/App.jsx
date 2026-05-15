@@ -127,6 +127,7 @@ export default function App() {
   });
   const [showBrandPicker, setShowBrandPicker] = useState(false);
   const [brandChanged, setBrandChanged] = useState(false);
+  const [brandSaved, setBrandSaved] = useState(false);
   const [showExpertPanel, setShowExpertPanel] = useState(false);
   const [showStoryBankPanel, setShowStoryBankPanel] = useState(false);
 
@@ -414,6 +415,7 @@ ${toneOfVoice ? `Голос бренда / пример поста: ${toneOfVoic
   function saveBrand() {
     if (!expert.trim()) return;
     setBrandChanged(false);
+    setBrandSaved(true); setTimeout(()=>setBrandSaved(false), 2000);
     const brand = {
       id: Date.now(), expert, niche, audience, tone, toneOfVoice,
       platforms, pillars, audiencePains,
@@ -2103,8 +2105,8 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
               {/* Brand actions */}
               <div style={{display:"flex",gap:8,marginBottom:14}}>
                 <button onClick={saveBrand} disabled={!expert.trim()}
-                  style={{flex:1,padding:"8px 12px",borderRadius:8,border:"1px solid #362d52",background:"transparent",color:expert.trim()?"#362d52":"#c4b8d8",fontSize:11,fontWeight:600,cursor:expert.trim()?"pointer":"not-allowed"}}>
-                  💾 Сохранить бренд
+                  style={{flex:1,padding:"8px 12px",borderRadius:8,border:`1px solid ${brandSaved?"#4a9a6a":"#362d52"}`,background:brandSaved?"#4a9a6a":"transparent",color:brandSaved?"#fff":expert.trim()?"#362d52":"#c4b8d8",fontSize:11,fontWeight:600,cursor:expert.trim()?"pointer":"not-allowed",transition:"all .3s"}}>
+                  {brandSaved ? "✓ Сохранено" : "💾 Сохранить бренд"}
                 </button>
                 {brands.length > 0 && (
                   <button onClick={()=>setShowBrandPicker(true)}
