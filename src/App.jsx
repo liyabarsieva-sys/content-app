@@ -2108,6 +2108,17 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
                   style={{flex:1,padding:"8px 12px",borderRadius:8,border:`1px solid ${brandSaved?"#4a9a6a":"#362d52"}`,background:brandSaved?"#4a9a6a":"transparent",color:brandSaved?"#fff":expert.trim()?"#362d52":"#c4b8d8",fontSize:11,fontWeight:600,cursor:expert.trim()?"pointer":"not-allowed",transition:"all .3s"}}>
                   {brandSaved ? "✓ Сохранено" : "💾 Сохранить бренд"}
                 </button>
+                <button onClick={()=>{
+                  if (expert.trim()) saveBrand();
+                  setExpert(""); setNiche(""); setAudience(""); setToneOfVoice("");
+                  setPillars([]); setAudiencePains([]); setAudienceBarriers([]);
+                  setPlatforms(["telegram"]); setTone(TONES[1]);
+                  setPlanResult(null); setSordellResult(null);
+                  localStorage.removeItem("lia_expert");
+                  setBrandChanged(false);
+                }} style={{flex:1,padding:"8px 12px",borderRadius:8,border:"1px solid #9a88b8",background:"transparent",color:"#5c4e7a",fontSize:11,fontWeight:600,cursor:"pointer"}}>
+                  + Новый бренд
+                </button>
                 {brands.length > 0 && (
                   <button onClick={()=>setShowBrandPicker(true)}
                     style={{flex:1,padding:"8px 12px",borderRadius:8,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:11,fontWeight:600,cursor:"pointer"}}>
