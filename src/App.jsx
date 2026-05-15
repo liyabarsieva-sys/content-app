@@ -79,7 +79,7 @@ function DownloadCSVBtn({ planResult, period }) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `контент-план-${period==="week"?"неделя":period==="month"?"месяц":"квартал"}.csv`;
+      a.download = `контент-план-${period==="week"?"неделя":period==="two_weeks"?"2-недели":period==="three_weeks"?"3-недели":period==="month"?"месяц":"квартал"}-${expert||"план"}.csv`;
       a.click();
       URL.revokeObjectURL(url);
     }} style={{padding:"8px 14px",borderRadius:8,border:"1px solid #362d52",background:"transparent",color:"#362d52",fontSize:12,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap"}}>
@@ -529,11 +529,10 @@ ${toneOfVoice ? `Голос бренда / пример поста: ${toneOfVoic
     if (planResult && planResult.length > 0) {
       setStep(5);
     } else {
-      setStep(1);
+      setStep(2);
     }
   }
-  function startNewPlan() { setMode("plan"); setStep(1); setPlanResult(null); setResult(null); setError(""); }
-  function startCarousel() { switchMode("carousel"); }
+  function startNewPlan() { setMode("plan"); setStep(2); setPlanResult(null); setResult(null); setError(""); }
   function startCarousel() { setMode("carousel"); setStep(2); setCarouselResult(null); setResult(null); }
   function startSordell() {
     setStep(2); // always reset step to avoid conflicts
@@ -1058,6 +1057,20 @@ ${sordellCtx ? "Для личных тем используй ТОЛЬКО ре�
         const posts = await generatePlanChunk("Неделя", weekTotal, sordellCtx, "", prevCtx, blocksText);
         allPosts = posts;
 
+      } else if (planPeriod === "two_weeks") {
+        for (let w = 1; w <= 2; w++) {
+          setPlanProgress(`Генерирую неделю ${w} из 2…`);
+          const posts = await generatePlanChunk(`2 недели, Неделя ${w}`, weekTotal, sordellCtx, "", prevCtx, blocksText);
+          allPosts = [...allPosts, ...posts];
+        }
+
+      } else if (planPeriod === "three_weeks") {
+        for (let w = 1; w <= 3; w++) {
+          setPlanProgress(`Генерирую неделю ${w} из 3…`);
+          const posts = await generatePlanChunk(`3 недели, Неделя ${w}`, weekTotal, sordellCtx, "", prevCtx, blocksText);
+          allPosts = [...allPosts, ...posts];
+        }
+
       } else if (planPeriod === "month") {
         for (let w = 1; w <= 4; w++) {
           setPlanProgress(`Генерирую неделю ${w} из 4…`);
@@ -1086,7 +1099,7 @@ ${sordellCtx ? "Для личных тем используй ТОЛЬКО ре�
       setPlanGeneratedAt(new Date().toLocaleString("ru", {day:"numeric",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit"}));
       setStep(5);
       setPlanProgress("");
-      saveGeneration("plan", `План ${planPeriod==="week"?"неделя":planPeriod==="month"?"месяц":"квартал"}`, { posts: allPosts }, { planPeriod, platforms });
+      saveGeneration("plan", `План (${planPeriod==="week"?"неделя":planPeriod==="two_weeks"?"2 недели":planPeriod==="three_weeks"?"3 недели":planPeriod==="month"?"месяц":"квартал"}) — ${expert||"эксперт"}`, { posts: allPosts }, { planPeriod, platforms, expert, niche });
     } catch(e) {
       setError("Ошибка: " + e.message);
       setPlanProgress("");
@@ -2428,7 +2441,7 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
               <div style={{marginBottom:18}}>
                 <Label text="Период" />
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-                  {[{id:"week",label:"Неделя",icon:"📅"},{id:"month",label:"Месяц",icon:"🗓"},{id:"quarter",label:"Квартал",icon:"📊"}].map(p=>(
+                  {[{id:"week",label:"Неделя",icon:"📅"},{id:"two_weeks",label:"2 недели",icon:"📆"},{id:"three_weeks",label:"3 недели",icon:"🗓"},{id:"month",label:"Месяц",icon:"📅"},{id:"quarter",label:"Квартал",icon:"📊"}].map(p=>(
                     <button key={p.id} onClick={()=>setPlanPeriod(p.id)}
                       style={{padding:"12px 14px",borderRadius:9,border:`1px solid ${planPeriod===p.id?"#362d52":"#d8d0e0"}`,background:planPeriod===p.id?"#362d52":"#f0eef8",color:planPeriod===p.id?"#f4f1ec":"#362d52",fontSize:14,fontWeight:600,cursor:"pointer",textAlign:"center"}}>
                       {p.icon} {p.label}
