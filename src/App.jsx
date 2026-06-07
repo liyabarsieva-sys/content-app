@@ -47,17 +47,6 @@ const inp = {
 const inpAuto = { ...inp, resize:"none", overflow:"hidden", minHeight:42, lineHeight:1.5 };
 
 
-
-
-
-
-
-
-
-
-
-
-
 function DownloadCSVBtn({ planResult, period }) {
   return (
     <button onClick={()=>{
@@ -106,6 +95,12 @@ export default function App() {
   const [calendarDate, setCalendarDate] = useState("");
   const [calendarPlatform, setCalendarPlatform] = useState("");
   const [pillarInput, setPillarInput] = useState("");
+
+  // Series
+  const [seriesBlock, setSeriesBlock] = useState(null);
+  const [seriesTopic, setSeriesTopic] = useState("");
+  const [seriesResult, setSeriesResult] = useState(null);
+  const [seriesLoading, setSeriesLoading] = useState(false);
 
   // Products
   const [products, setProducts] = useState(() => {
@@ -511,6 +506,9 @@ ${toneOfVoice ? `Голос бренда / пример поста: ${toneOfVoic
       if (planResult && planResult.length > 0) setStep(5);
       else setStep(hasContext ? 2 : 1);
     }
+    else if (newMode === "series") {
+      setSeriesResult(null); setSeriesBlock(null); setSeriesTopic(""); setStep(1);
+    }
     else if (newMode === "sordell") {
       if (sordellResult && sordellResult.length > 0) { setStep(2); setSordellStep(13); }
       else { setStep(2); setSordellStep(0); setSordellAnswers([]); setSordellCurrentAnswer(""); }
@@ -772,6 +770,52 @@ ${existing}
     setExpandingTopic(null);
   }
 
+  async function generateSeries() {
+    if (!seriesBlock || !seriesTopic.trim()) return;
+    setSeriesLoading(true); setSeriesResult(null);
+    const block = SERIES_BLOCKS.find(b => b.id === seriesBlock);
+    if (!block) { setSeriesLoading(false); return; }
+    const formulasList = block.formulas.map((f,i) => (i+1)+". "+f.label+": "+f.prompt).join("\n");
+    const platform = block.platform === "telegram" ? "Telegram (150-400 слов, прозой)" : block.platform === "threads" ? "Threads (30-80 слов)" : "выбери сам по длине";
+
+    const prompt = `Ты опытный контент-маркетолог для экспертов-психологов. Напиши серию постов.
+
+Эксперт: ${expert||"психолог"}. Ниша: ${niche||"-"}.
+Аудитория: ${audience||"-"}. Тон: ${tone}.
+Тема серии: ${seriesTopic}
+
+Платформа: ${platform}
+
+Блок формул: ${block.label}
+Напиши по одному посту для каждой формулы ниже:
+${formulasList}
+
+ПРАВИЛА КАЧЕСТВА (обязательно):
+— Активный залог. Сильные глаголы. Никакого канцелярита.
+— Конкретное > абстрактного. Сенсорные детали.
+— Открытые финалы — не закрывать, не давать советы если формула не предполагает.
+— Каждый пост самостоятельный — можно читать без других.
+
+Ответь ТОЛЬКО валидным JSON:
+{"posts":[{"formula_id":"id формулы","formula_label":"название формулы","text":"текст поста"}]}`;
+
+    try {
+      const resp = await fetch("/api/claude", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({ model:"claude-sonnet-4-5-20251022", max_tokens:6000, messages:[{role:"user",content:prompt}] }),
+      });
+      const data = await resp.json();
+      if (data.error) throw new Error(data.error.message);
+      const text = data.content.map(b=>b.text||"").join("");
+      const match = text.match(/\{[\s\S]*\}/);
+      if (!match) throw new Error("Нет JSON в ответе");
+      const parsed = JSON.parse(match[0]);
+      setSeriesResult(parsed.posts||[]);
+      saveGeneration("series", `Серия: ${block.label} — ${seriesTopic}`, {block:block.label, topic:seriesTopic, posts:parsed.posts}, {expert,niche});
+    } catch(e) { console.error(e); }
+    setSeriesLoading(false);
+  }
+
   async function generateCarousel() {
     if (!carouselTemplate) return;
     setCarouselLoading(true); setCarouselResult(null);
@@ -861,6 +905,52 @@ ${existing}
     setSordellLoadingMore(false);
   }
 
+
+  async function generateSeries() {
+    if (!seriesBlock || !seriesTopic.trim()) return;
+    setSeriesLoading(true); setSeriesResult(null);
+    const block = SERIES_BLOCKS.find(b => b.id === seriesBlock);
+    if (!block) { setSeriesLoading(false); return; }
+
+    const platform = block.platform === "telegram" ? "Telegram (150-400 слов, прозой)" : block.platform === "threads" ? "Threads (30-80 слов)" : "выбери сам по длине";
+
+    const prompt = `Ты опытный контент-маркетолог для экспертов-психологов. Напиши серию постов.
+
+Эксперт: ${expert||"психолог"}. Ниша: ${niche||"-"}.
+Аудитория: ${audience||"-"}. Тон: ${tone}.
+Тема серии: ${seriesTopic}
+
+Платформа: ${platform}
+
+Блок формул: ${block.label}
+Напиши по одному посту для каждой формулы ниже:
+${formulasList}
+
+ПРАВИЛА КАЧЕСТВА (обязательно):
+— Активный залог. Сильные глаголы. Никакого канцелярита.
+— Конкретное > абстрактного. Сенсорные детали.
+— Открытые финалы — не закрывать, не давать советы если формула не предполагает.
+— Каждый пост самостоятельный — можно читать без других.
+
+Ответь ТОЛЬКО валидным JSON:
+{"posts":[{"formula_id":"id формулы","formula_label":"название формулы","text":"текст поста"}]}`;
+
+    try {
+      const resp = await fetch("/api/claude", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({ model:"claude-sonnet-4-5-20251022", max_tokens:6000, messages:[{role:"user",content:prompt}] }),
+      });
+      const data = await resp.json();
+      if (data.error) throw new Error(data.error.message);
+      const text = data.content.map(b=>b.text||"").join("");
+      const match = text.match(/\{[\s\S]*\}/);
+      if (!match) throw new Error("Нет JSON в ответе");
+      const parsed = JSON.parse(match[0]);
+      setSeriesResult(parsed.posts||[]);
+      saveGeneration("series", `Серия: ${block.label} — ${seriesTopic}`, {block:block.label, topic:seriesTopic, posts:parsed.posts}, {expert,niche});
+    } catch(e) { console.error(e); }
+    setSeriesLoading(false);
+  }
 
   async function generateCarousel() {
     if (!topic.trim()) { return; }
@@ -1752,7 +1842,7 @@ ${'{"headline":"заголовок","hook":"хук",' + platforms.map(pid=>`"${p
                     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
                       <div style={{display:"flex",alignItems:"center",gap:8}}>
                         <span style={{fontSize:10,background:"#362d52",color:"#f4f1ec",padding:"1px 8px",borderRadius:6,fontWeight:600}}>
-                          {h.type==="post"?"✦ Пост":h.type==="plan"?"📅 План":h.type==="carousel"?"🎨 Карусель":h.type==="sordell"?"🎯 Темы Сорделл":h.type==="sordell_angles"?"⊞ Углы подачи":h.type==="product"?"🛍 Продукт":"⭐ Кейс"}
+                          {h.type==="post"?"✦ Пост":h.type==="plan"?"📅 План":h.type==="carousel"?"🎨 Карусель":h.type==="sordell"?"🎯 Темы Сорделл":h.type==="sordell_angles"?"⊞ Углы подачи":h.type==="product"?"🛍 Продукт":h.type==="series"?"📐 Серия":"⭐ Кейс"}
                         </span>
                         <span style={{fontSize:10,color:"#9a88b8"}}>{new Date(h.created_at).toLocaleDateString("ru")}</span>
                         {h.strategy?.expert && <span style={{fontSize:10,background:"rgba(54,45,82,.08)",color:"#362d52",padding:"1px 7px",borderRadius:5,fontWeight:600}}>{h.strategy.expert}</span>}
@@ -2085,7 +2175,6 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
                   </div>
                 )}
               </div>
-
 
 
               <div style={{marginBottom:14}}>
@@ -2686,7 +2775,6 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
               </div>
 
 
-
               {/* Pillar */}
               <div style={{marginBottom:18}}>
                 <Label text="Смысловой блок" hint={pillars.length ? "Выбери смысловой блок" : "Добавь блоки через кнопку «Настроить блоки» вверху"} />
@@ -3026,7 +3114,6 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
         )}
 
 
-
         {/* STEP 5 — Result */}
         {step===5&&result&&mode!=="plan"&&mode!=="sordell"&&mode!=="carousel"&&(
           <div>
@@ -3048,7 +3135,6 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
                 </span>
               ))}
             </div>
-
 
 
             {/* Tabs */}
