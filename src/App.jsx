@@ -159,6 +159,14 @@ export default function App() {
   const [caseAfter, setCaseAfter] = useState("");
   const [caseResult, setCaseResult] = useState("");
   const [caseClient, setCaseClient] = useState("");
+  const [microsegments, setMicrosegments] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("lia_microsegments") || "[]"); } catch { return []; }
+  });
+  const [selectedMs, setSelectedMs] = useState(null); // id of selected MS for current post
+  const [showMsEditor, setShowMsEditor] = useState(false);
+  const [editingMs, setEditingMs] = useState(null); // null=list, {}=new/edit
+  const [newMsInput, setNewMsInput] = useState({ name:"", desc:"", pains:"", barriers:"", language:"" });
+
   const [audienceBarriers, setAudienceBarriers] = useState(() => {
     try { return JSON.parse(localStorage.getItem("lia_audience_barriers") || "[]"); } catch { return []; }
   });
@@ -166,6 +174,7 @@ export default function App() {
     try { return JSON.parse(localStorage.getItem("lia_audience_pains") || "[]"); } catch { return []; }
   });
   const [suggestingPains, setSuggestingPains] = useState(false);
+  const [suggestingTopicPains, setSuggestingTopicPains] = useState(false);
   const [showPains, setShowPains] = useState(false);
   const [suggestingBarriers, setSuggestingBarriers] = useState(false);
   const [showBarriers, setShowBarriers] = useState(false);
@@ -221,6 +230,7 @@ export default function App() {
   useEffect(() => { localStorage.setItem("lia_calendar", JSON.stringify(calendarPosts)); }, [calendarPosts]);
   useEffect(() => { localStorage.setItem("lia_audience_pains", JSON.stringify(audiencePains)); }, [audiencePains]);
   useEffect(() => { localStorage.setItem("lia_audience_barriers", JSON.stringify(audienceBarriers)); }, [audienceBarriers]);
+  useEffect(() => { localStorage.setItem("lia_microsegments", JSON.stringify(microsegments)); }, [microsegments]);
   useEffect(() => { localStorage.setItem("lia_personal_stories", JSON.stringify(personalStories)); }, [personalStories]);
   useEffect(() => { localStorage.setItem("lia_brand_q2", brandQ2); }, [brandQ2]);
   useEffect(() => { localStorage.setItem("lia_plan_freq", String(planMainFreq)); }, [planMainFreq]);
@@ -250,6 +260,24 @@ export default function App() {
 
   const [suggestingPillars, setSuggestingPillars] = useState(false);
   const [suggestedPillars, setSuggestedPillars] = useState([]);
+
+  async function suggestTopicPains() {
+    if (!topic.trim()) return;
+    setSuggestingTopicPains(true);
+    const prompt = `Ты маркетолог. Определи 4 конкретных боли аудитории которые связаны именно с этой темой поста.
+Эксперт: ${expert||"-"}. Ниша: ${niche||"-"}. Аудитория: ${audience||"-"}.
+Тема поста: "${topic}"
+Боль — это конкретное переживание или страх который возникает у читателя в связи с этой темой. Формулируй словами читателя, коротко.
+ТОЛЬКО валидный JSON: {"pains":["боль 1","боль 2","боль 3","боль 4"]}`;
+    try {
+      const resp = await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:400,messages:[{role:"user",content:prompt}]})});
+      const data = await resp.json();
+      const text = data.content.map(b=>b.text||"").join("");
+      const parsed = JSON.parse(text.replace(/```json|```/g,"").trim());
+      if (parsed.pains?.length) setPain(parsed.pains[0]);
+    } catch(e) { console.error(e); }
+    setSuggestingTopicPains(false);
+  }
 
   async function suggestBarriers() {
     setSuggestingBarriers(true);
@@ -417,6 +445,7 @@ ${toneOfVoice ? `Голос бренда / пример поста: ${toneOfVoic
       sordellTopics: sordellResult || [],
       products: products || [],
       audienceBarriers: audienceBarriers || [],
+      microsegments: microsegments || [],
       sordellAnswers: sordellAnswers || [],
       savedAt: new Date().toLocaleDateString("ru"),
     };
@@ -437,6 +466,10 @@ ${toneOfVoice ? `Голос бренда / пример поста: ${toneOfVoic
     if (brand.products?.length) {
       setProducts(brand.products);
       localStorage.setItem("lia_products", JSON.stringify(brand.products));
+    }
+    if (brand.microsegments?.length) {
+      setMicrosegments(brand.microsegments);
+      localStorage.setItem("lia_microsegments", JSON.stringify(brand.microsegments));
     }
     if (brand.audienceBarriers?.length) {
       setAudienceBarriers(brand.audienceBarriers);
@@ -1015,7 +1048,8 @@ ${tmpl.prompt}
 
 Эксперт/бренд: ${expert||"-"}
 Ниша: ${niche||"-"}
-Аудитория: ${audience||"-"}
+Аудитория: ${selectedMs&&microsegments.find(m=>m.id===selectedMs)?`${microsegments.find(m=>m.id===selectedMs).name}: ${microsegments.find(m=>m.id===selectedMs).desc}`:audience||"-"}
+${selectedMs&&microsegments.find(m=>m.id===selectedMs)?.language?`Язык аудитории (используй эти формулировки): ${microsegments.find(m=>m.id===selectedMs).language}`:""}
 Боли аудитории: ${audiencePains.length>0?audiencePains.map((p,i)=>`${i+1}. ${p}`).join("; "):"не указаны"}
 Тональность: ${tone}
 ${tovSection}
@@ -2176,6 +2210,93 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
                 )}
               </div>
 
+
+              {/* Microsegments */}
+              <div style={{marginBottom:14}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
+                  <Label text="Микросегменты аудитории" hint="Каждый МС — это точное описание подгруппы. При создании поста выбираешь для кого пишешь." />
+                  <button onClick={()=>setShowMsEditor(p=>!p)}
+                    style={{padding:"4px 10px",borderRadius:7,border:"1px solid #362d52",background:"transparent",color:"#362d52",fontSize:11,fontWeight:600,cursor:"pointer",flexShrink:0,marginLeft:8}}>
+                    {showMsEditor?"Скрыть ▲":"Управлять ▼"}
+                  </button>
+                </div>
+
+                {/* MS summary chips */}
+                {microsegments.length > 0 && !showMsEditor && (
+                  <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+                    {microsegments.map(ms=>(
+                      <span key={ms.id} style={{fontSize:11,background:"rgba(54,45,82,.08)",color:"#362d52",padding:"3px 10px",borderRadius:6,fontWeight:600}}>
+                        {ms.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {showMsEditor && (
+                  <div>
+                    {/* List */}
+                    {!editingMs && (
+                      <div>
+                        {microsegments.length === 0 && (
+                          <p style={{fontSize:12,color:"#9a88b8",fontStyle:"italic",marginBottom:8}}>Нет микросегментов. Добавь первый.</p>
+                        )}
+                        <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:8}}>
+                          {microsegments.map(ms=>(
+                            <div key={ms.id} style={{padding:"10px 12px",background:"#f4f1ec",borderRadius:9,border:"1px solid #e8e0f0"}}>
+                              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:3}}>
+                                <div style={{fontSize:13,fontWeight:700,color:"#362d52"}}>{ms.name}</div>
+                                <div style={{display:"flex",gap:5}}>
+                                  <button onClick={()=>setEditingMs({...ms})} style={{padding:"2px 8px",borderRadius:5,border:"1px solid #d8d0e0",background:"transparent",color:"#5c4e7a",fontSize:11,cursor:"pointer"}}>✏️</button>
+                                  <button onClick={()=>setMicrosegments(prev=>prev.filter(m=>m.id!==ms.id))} style={{padding:"2px 8px",borderRadius:5,border:"none",background:"transparent",color:"#c4b8d8",fontSize:13,cursor:"pointer"}}>×</button>
+                                </div>
+                              </div>
+                              {ms.desc && <div style={{fontSize:11,color:"#5c4e7a",lineHeight:1.5}}>{ms.desc.substring(0,100)}{ms.desc.length>100?"…":""}</div>}
+                            </div>
+                          ))}
+                        </div>
+                        <button onClick={()=>setEditingMs({id:null,name:"",desc:"",pains:"",barriers:"",language:""})}
+                          style={{width:"100%",padding:"8px",borderRadius:8,border:"1px dashed #362d52",background:"transparent",color:"#362d52",fontSize:12,fontWeight:600,cursor:"pointer"}}>
+                          + Добавить микросегмент
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Editor */}
+                    {editingMs && (
+                      <div style={{padding:"12px 14px",background:"#f4f1ec",borderRadius:10,border:"1px solid #e8e0f0"}}>
+                        <div style={{fontSize:13,fontWeight:700,color:"#362d52",marginBottom:10}}>
+                          {editingMs.id?"Редактировать":"Новый микросегмент"}
+                        </div>
+                        {[
+                          {key:"name", label:"Название", ph:"МС1: Женщины в декрете 30-40", hint:""},
+                          {key:"desc", label:"Описание", ph:"Кто это, чем живут, контекст", hint:"", rows:2},
+                          {key:"pains", label:"Специфические боли", ph:"Их конкретные боли через запятую или с новой строки", hint:"Что болит именно у них", rows:2},
+                          {key:"barriers", label:"Барьеры", ph:"Что мешает именно им обратиться", hint:"", rows:2},
+                          {key:"language", label:"Их язык", ph:"Как они говорят о проблеме: 'я не успеваю', 'я срываюсь на ребёнке'...", hint:"Фразы их словами", rows:2},
+                        ].map(f=>(
+                          <div key={f.key} style={{marginBottom:8}}>
+                            <div style={{fontSize:10,color:"#5c4e7a",fontWeight:600,marginBottom:3,textTransform:"uppercase",letterSpacing:".05em"}}>{f.label}{f.hint&&<span style={{fontWeight:400,textTransform:"none",letterSpacing:0,marginLeft:4}}>— {f.hint}</span>}</div>
+                            <textarea value={editingMs[f.key]||""} onChange={e=>setEditingMs(p=>({...p,[f.key]:e.target.value}))}
+                              placeholder={f.ph} rows={f.rows||1}
+                              style={{width:"100%",padding:"7px 10px",borderRadius:7,border:"1px solid #d8d0e0",fontSize:12,color:"#362d52",outline:"none",resize:"none",fontFamily:"'Nunito Sans',sans-serif",boxSizing:"border-box"}} />
+                          </div>
+                        ))}
+                        <div style={{display:"flex",gap:6,marginTop:4}}>
+                          <button onClick={()=>setEditingMs(null)} style={{flex:1,padding:"8px",borderRadius:7,border:"1px solid #d8d0e0",background:"transparent",color:"#5c4e7a",fontSize:12,cursor:"pointer"}}>Отмена</button>
+                          <button onClick={()=>{
+                            if (!editingMs.name.trim()) return;
+                            const ms = editingMs.id ? editingMs : {...editingMs, id:Date.now()};
+                            setMicrosegments(prev => editingMs.id ? prev.map(m=>m.id===ms.id?ms:m) : [...prev,ms]);
+                            setEditingMs(null);
+                          }} style={{flex:2,padding:"8px",borderRadius:7,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                            💾 Сохранить МС
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
 
               <div style={{marginBottom:14}}>
                 <Label text="Тональность" />
