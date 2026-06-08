@@ -159,14 +159,6 @@ export default function App() {
   const [caseAfter, setCaseAfter] = useState("");
   const [caseResult, setCaseResult] = useState("");
   const [caseClient, setCaseClient] = useState("");
-  const [microsegments, setMicrosegments] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("lia_microsegments") || "[]"); } catch { return []; }
-  });
-  const [selectedMs, setSelectedMs] = useState(null); // id of selected MS for current post
-  const [showMsEditor, setShowMsEditor] = useState(false);
-  const [editingMs, setEditingMs] = useState(null); // null=list, {}=new/edit
-  const [newMsInput, setNewMsInput] = useState({ name:"", desc:"", pains:"", barriers:"", language:"" });
-
   const [audienceBarriers, setAudienceBarriers] = useState(() => {
     try { return JSON.parse(localStorage.getItem("lia_audience_barriers") || "[]"); } catch { return []; }
   });
@@ -230,8 +222,6 @@ export default function App() {
   useEffect(() => { localStorage.setItem("lia_calendar", JSON.stringify(calendarPosts)); }, [calendarPosts]);
   useEffect(() => { localStorage.setItem("lia_audience_pains", JSON.stringify(audiencePains)); }, [audiencePains]);
   useEffect(() => { localStorage.setItem("lia_audience_barriers", JSON.stringify(audienceBarriers)); }, [audienceBarriers]);
-  useEffect(() => { localStorage.setItem("lia_microsegments", JSON.stringify(microsegments)); }, [microsegments]);
-  useEffect(() => { localStorage.setItem("lia_custom_formats", JSON.stringify(customFormats)); }, [customFormats]);
   useEffect(() => { localStorage.setItem("lia_personal_stories", JSON.stringify(personalStories)); }, [personalStories]);
   useEffect(() => { localStorage.setItem("lia_brand_q2", brandQ2); }, [brandQ2]);
   useEffect(() => { localStorage.setItem("lia_plan_freq", String(planMainFreq)); }, [planMainFreq]);
@@ -446,8 +436,6 @@ ${toneOfVoice ? `Голос бренда / пример поста: ${toneOfVoic
       sordellTopics: sordellResult || [],
       products: products || [],
       audienceBarriers: audienceBarriers || [],
-      microsegments: microsegments || [],
-      customFormats: customFormats || [],
       sordellAnswers: sordellAnswers || [],
       savedAt: new Date().toLocaleDateString("ru"),
     };
@@ -468,14 +456,6 @@ ${toneOfVoice ? `Голос бренда / пример поста: ${toneOfVoic
     if (brand.products?.length) {
       setProducts(brand.products);
       localStorage.setItem("lia_products", JSON.stringify(brand.products));
-    }
-    if (brand.customFormats?.length) {
-      setCustomFormats(brand.customFormats);
-      localStorage.setItem("lia_custom_formats", JSON.stringify(brand.customFormats));
-    }
-    if (brand.microsegments?.length) {
-      setMicrosegments(brand.microsegments);
-      localStorage.setItem("lia_microsegments", JSON.stringify(brand.microsegments));
     }
     if (brand.audienceBarriers?.length) {
       setAudienceBarriers(brand.audienceBarriers);
@@ -809,49 +789,6 @@ ${existing}
     setExpandingTopic(null);
   }
 
-  async function generateFormatSeries(format, topicsList) {
-    if (!format || !topicsList.length) return;
-    setFormatSeriesLoading(true); setFormatSeriesResult(null);
-
-    const topics = topicsList.slice(0, 20); // max 20 per request
-    const prompt = `Ты опытный копирайтер для экспертов-психологов.
-
-Эксперт: ${expert||"-"}. Ниша: ${niche||"-"}. Тон: ${tone}.
-
-АВТОРСКИЙ ФОРМАТ «${format.name}»:
-Вот пример поста в этом формате — изучи структуру, ритм, стиль, длину:
----
-${format.example}
----
-
-Напиши ${topics.length} постов в ТОЧНО ТАКОЙ ЖЕ структуре и стиле для каждой темы из списка.
-Сохраняй: структуру, ритм предложений, длину, характерные приёмы автора.
-Пиши на русском, в тоне оригинала.
-
-Темы:
-${topics.map((t,i) => (i+1)+". "+t).join("\n")}
-
-
-ТОЛЬКО валидный JSON:
-{"posts":[{"topic":"тема","text":"текст поста в авторском формате"}]}`;
-
-    try {
-      const resp = await fetch("/api/claude", {
-        method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ model:"claude-sonnet-4-5-20251022", max_tokens:8000, messages:[{role:"user",content:prompt}] }),
-      });
-      const data = await resp.json();
-      if (data.error) throw new Error(data.error.message);
-      const text = data.content.map(b=>b.text||"").join("");
-      const match = text.match(/\{[\s\S]*\}/);
-      if (!match) throw new Error("Нет JSON");
-      const parsed = JSON.parse(match[0]);
-      setFormatSeriesResult(parsed.posts||[]);
-      saveGeneration("format_series", `Серия «${format.name}»`, {format:format.name, posts:parsed.posts}, {expert,niche});
-    } catch(e) { console.error(e); }
-    setFormatSeriesLoading(false);
-  }
-
   async function generateSeries() {
     if (!seriesBlock || !seriesTopic.trim()) return;
     setSeriesLoading(true); setSeriesResult(null);
@@ -988,48 +925,6 @@ ${existing}
   }
 
 
-  async function generateFormatSeries(format, topicsList) {
-    if (!format || !topicsList.length) return;
-    setFormatSeriesLoading(true); setFormatSeriesResult(null);
-
-    const topics = topicsList.slice(0, 20); // max 20 per request
-    const prompt = `Ты опытный копирайтер для экспертов-психологов.
-
-Эксперт: ${expert||"-"}. Ниша: ${niche||"-"}. Тон: ${tone}.
-
-АВТОРСКИЙ ФОРМАТ «${format.name}»:
-Вот пример поста в этом формате — изучи структуру, ритм, стиль, длину:
----
-${format.example}
----
-
-Напиши ${topics.length} постов в ТОЧНО ТАКОЙ ЖЕ структуре и стиле для каждой темы из списка.
-Сохраняй: структуру, ритм предложений, длину, характерные приёмы автора.
-Пиши на русском, в тоне оригинала.
-
-Темы:
-${topics.map((t,i)=>(i+1)+'. '+t).join('\n')}
-
-ТОЛЬКО валидный JSON:
-{"posts":[{"topic":"тема","text":"текст поста в авторском формате"}]}`;
-
-    try {
-      const resp = await fetch("/api/claude", {
-        method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ model:"claude-sonnet-4-5-20251022", max_tokens:8000, messages:[{role:"user",content:prompt}] }),
-      });
-      const data = await resp.json();
-      if (data.error) throw new Error(data.error.message);
-      const text = data.content.map(b=>b.text||"").join("");
-      const match = text.match(/\{[\s\S]*\}/);
-      if (!match) throw new Error("Нет JSON");
-      const parsed = JSON.parse(match[0]);
-      setFormatSeriesResult(parsed.posts||[]);
-      saveGeneration("format_series", `Серия «${format.name}»`, {format:format.name, posts:parsed.posts}, {expert,niche});
-    } catch(e) { console.error(e); }
-    setFormatSeriesLoading(false);
-  }
-
   async function generateSeries() {
     if (!seriesBlock || !seriesTopic.trim()) return;
     setSeriesLoading(true); setSeriesResult(null);
@@ -1139,8 +1034,7 @@ ${tmpl.prompt}
 
 Эксперт/бренд: ${expert||"-"}
 Ниша: ${niche||"-"}
-Аудитория: ${selectedMs&&microsegments.find(m=>m.id===selectedMs)?`${microsegments.find(m=>m.id===selectedMs).name}: ${microsegments.find(m=>m.id===selectedMs).desc}`:audience||"-"}
-${selectedMs&&microsegments.find(m=>m.id===selectedMs)?.language?`Язык аудитории (используй эти формулировки): ${microsegments.find(m=>m.id===selectedMs).language}`:""}
+Аудитория: ${audience||"-"}
 Боли аудитории: ${audiencePains.length>0?audiencePains.map((p,i)=>`${i+1}. ${p}`).join("; "):"не указаны"}
 Тональность: ${tone}
 ${tovSection}
@@ -1624,137 +1518,6 @@ ${'{"headline":"заголовок","hook":"хук",' + platforms.map(pid=>`"${p
         <div style={{display:isMobile?"block":"flex",gap:24,alignItems:"flex-start"}}>
         <div style={{flex:1,minWidth:0}}>
 
-        {/* CUSTOM FORMATS PANEL */}
-        {showFormats && (
-          <Card>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
-              <div style={{fontFamily:"'Cormorant Garamond', serif",fontSize:20,color:"#362d52",fontWeight:600}}>🗂 Мои форматы</div>
-              <div style={{display:"flex",gap:8}}>
-                <button onClick={()=>setEditingFormat({id:null,name:"",example:""})}
-                  style={{padding:"7px 14px",borderRadius:8,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:12,fontWeight:700,cursor:"pointer"}}>
-                  + Новый формат
-                </button>
-                <button onClick={()=>setShowFormats(false)} style={{background:"transparent",border:"none",fontSize:22,cursor:"pointer",color:"#9a88b8"}}>×</button>
-              </div>
-            </div>
-
-            {/* Format editor */}
-            {editingFormat && (
-              <div style={{padding:"14px",background:"#f4f1ec",borderRadius:10,border:"1px solid #e8e0f0",marginBottom:12}}>
-                <div style={{fontSize:14,fontWeight:700,color:"#362d52",marginBottom:12}}>{editingFormat.id?"Редактировать":"Новый формат"}</div>
-                <div style={{marginBottom:10}}>
-                  <div style={{fontSize:11,color:"#5c4e7a",fontWeight:600,marginBottom:3,textTransform:"uppercase",letterSpacing:".05em"}}>Название формата</div>
-                  <input value={editingFormat.name} onChange={e=>setEditingFormat(p=>({...p,name:e.target.value}))}
-                    placeholder="Например: Рецепт, Непопулярное мнение, Инструкция..."
-                    style={{width:"100%",padding:"9px 12px",borderRadius:8,border:"1px solid #d8d0e0",fontSize:13,color:"#362d52",outline:"none",boxSizing:"border-box"}} />
-                </div>
-                <div style={{marginBottom:12}}>
-                  <div style={{fontSize:11,color:"#5c4e7a",fontWeight:600,marginBottom:3,textTransform:"uppercase",letterSpacing:".05em"}}>Пример поста в этом формате</div>
-                  <div style={{fontSize:11,color:"#9a88b8",marginBottom:5,lineHeight:1.5}}>Вставь один готовый пост — Claude изучит структуру и будет воспроизводить её для любых тем</div>
-                  <textarea value={editingFormat.example} onChange={e=>setEditingFormat(p=>({...p,example:e.target.value}))}
-                    placeholder="Рецепт / Ингредиенты / Приготовление..."
-                    rows={8} style={{width:"100%",padding:"10px 12px",borderRadius:8,border:"1px solid #d8d0e0",fontSize:12,color:"#362d52",outline:"none",resize:"vertical",fontFamily:"'Nunito Sans',sans-serif",boxSizing:"border-box",lineHeight:1.7}} />
-                </div>
-                <div style={{display:"flex",gap:8}}>
-                  <button onClick={()=>setEditingFormat(null)} style={{flex:1,padding:10,borderRadius:8,border:"1px solid #d8d0e0",background:"transparent",color:"#5c4e7a",fontSize:12,cursor:"pointer"}}>Отмена</button>
-                  <button onClick={()=>{
-                    if (!editingFormat.name.trim()||!editingFormat.example.trim()) return;
-                    const fmt = editingFormat.id ? editingFormat : {...editingFormat, id:Date.now()};
-                    setCustomFormats(prev => editingFormat.id ? prev.map(f=>f.id===fmt.id?fmt:f) : [...prev,fmt]);
-                    setEditingFormat(null);
-                  }} style={{flex:2,padding:10,borderRadius:8,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:12,fontWeight:700,cursor:"pointer"}}>
-                    💾 Сохранить формат
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Formats list */}
-            {customFormats.length === 0 && !editingFormat && (
-              <p style={{fontSize:13,color:"#9a88b8",textAlign:"center",padding:"20px 0"}}>Нет сохранённых форматов. Добавь первый — вставь пример поста.</p>
-            )}
-
-            {customFormats.map(fmt=>(
-              <div key={fmt.id} style={{marginBottom:12,borderRadius:10,border:"1px solid #e8e0f0",overflow:"hidden"}}>
-                <div style={{padding:"12px 14px",background:"#362d52",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                  <div style={{fontSize:14,fontWeight:700,color:"#f4f1ec"}}>🗂 {fmt.name}</div>
-                  <div style={{display:"flex",gap:6}}>
-                    <button onClick={()=>setEditingFormat({...fmt})} style={{padding:"3px 9px",borderRadius:6,border:"1px solid rgba(244,241,236,.3)",background:"transparent",color:"#f4f1ec",fontSize:11,cursor:"pointer"}}>✏️</button>
-                    <button onClick={()=>setCustomFormats(prev=>prev.filter(f=>f.id!==fmt.id))} style={{padding:"3px 9px",borderRadius:6,border:"none",background:"transparent",color:"rgba(244,241,236,.5)",fontSize:13,cursor:"pointer"}}>×</button>
-                  </div>
-                </div>
-
-                {/* Example preview */}
-                <div style={{padding:"10px 14px",background:"#fafafa",fontSize:11,color:"#5c4e7a",lineHeight:1.7,borderBottom:"1px solid #e8e0f0",fontStyle:"italic",whiteSpace:"pre-wrap"}}>
-                  {fmt.example.substring(0,200)}{fmt.example.length>200?"…":""}
-                </div>
-
-                {/* Series generator */}
-                <div style={{padding:"12px 14px",background:"#fff"}}>
-                  <div style={{fontSize:11,color:"#5c4e7a",fontWeight:600,marginBottom:6,textTransform:"uppercase",letterSpacing:".05em"}}>Создать серию постов в этом формате</div>
-                  <div style={{fontSize:11,color:"#9a88b8",marginBottom:6}}>Введи темы — по одной на строке. Максимум 20 за раз.</div>
-                  <textarea
-                    value={selectedFormat===fmt.id ? formatSeriesTopics : ""}
-                    onChange={e=>{setSelectedFormat(fmt.id);setFormatSeriesTopics(e.target.value);}}
-                    placeholder={"созависимость\nэмоциональное выгорание\nтревога в отношениях\nстрах одиночества"}
-                    rows={4} style={{width:"100%",padding:"9px 12px",borderRadius:8,border:"1px solid #d8d0e0",fontSize:12,color:"#362d52",outline:"none",resize:"none",fontFamily:"'Nunito Sans',sans-serif",boxSizing:"border-box",marginBottom:8}} />
-                  <button onClick={()=>{
-                    const topics = formatSeriesTopics.split("\n").map(t=>t.trim()).filter(Boolean);
-                    if (topics.length) generateFormatSeries(fmt, topics);
-                  }} disabled={formatSeriesLoading||!formatSeriesTopics.trim()}
-                    style={{width:"100%",padding:"10px",borderRadius:9,border:"none",background:formatSeriesTopics.trim()?"#362d52":"#d8d0e0",color:"#f4f1ec",fontSize:13,fontWeight:700,cursor:formatSeriesTopics.trim()?"pointer":"not-allowed",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-                    {formatSeriesLoading&&selectedFormat===fmt.id
-                      ? <><div style={{width:14,height:14,border:"2px solid rgba(244,241,236,.3)",borderTopColor:"#f4f1ec",borderRadius:"50%",animation:"sp .8s linear infinite"}} /> Генерирую серию…</>
-                      : "✦ Создать серию"
-                    }
-                  </button>
-                </div>
-              </div>
-            ))}
-
-            {/* Series results */}
-            {formatSeriesResult&&formatSeriesResult.length>0&&(
-              <div style={{marginTop:12}}>
-                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-                  <div style={{fontFamily:"'Cormorant Garamond', serif",fontSize:17,color:"#362d52",fontWeight:600}}>{formatSeriesResult.length} постов готово</div>
-                  <button onClick={()=>{
-                    const text = formatSeriesResult.map(p=>`=== ${p.topic} ===
-${p.text}`).join("
-
----
-
-");
-                    navigator.clipboard.writeText(text);
-                  }} style={{padding:"6px 12px",borderRadius:8,border:"1px solid #362d52",background:"transparent",color:"#362d52",fontSize:11,fontWeight:600,cursor:"pointer"}}>
-                    📋 Скопировать все
-                  </button>
-                </div>
-                {formatSeriesResult.map((post,i)=>{
-                  const [cop,setCop] = React.useState(false);
-                  return (
-                    <div key={i} style={{marginBottom:10,borderRadius:10,border:"1px solid #e8e0f0",overflow:"hidden"}}>
-                      <div style={{padding:"8px 14px",background:"#362d52",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                        <span style={{fontSize:12,fontWeight:700,color:"#f4f1ec"}}>{post.topic}</span>
-                        <div style={{display:"flex",gap:5}}>
-                          <button onClick={()=>{navigator.clipboard.writeText(post.text);setCop(true);setTimeout(()=>setCop(false),1500);}}
-                            style={{padding:"3px 9px",borderRadius:6,border:"1px solid rgba(244,241,236,.3)",background:"transparent",color:cop?"#e1df2c":"rgba(244,241,236,.8)",fontSize:11,cursor:"pointer"}}>
-                            {cop?"✓":"📋"}
-                          </button>
-                          <button onClick={()=>addToCalendar(post.topic, platforms[0]||"telegram", null, "format_series", {})}
-                            style={{padding:"3px 9px",borderRadius:6,border:"1px solid rgba(244,241,236,.3)",background:"transparent",color:"rgba(244,241,236,.8)",fontSize:11,cursor:"pointer"}}>
-                            📆
-                          </button>
-                        </div>
-                      </div>
-                      <div style={{padding:"12px 14px",fontSize:13,lineHeight:1.8,color:"#362d52",whiteSpace:"pre-wrap"}}>{post.text}</div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </Card>
-        )}
-
         {/* PRODUCTS PANEL */}
         {showProducts && (
           <Card>
@@ -2098,7 +1861,7 @@ ${p.text}`).join("
                     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
                       <div style={{display:"flex",alignItems:"center",gap:8}}>
                         <span style={{fontSize:10,background:"#362d52",color:"#f4f1ec",padding:"1px 8px",borderRadius:6,fontWeight:600}}>
-                          {h.type==="post"?"✦ Пост":h.type==="plan"?"📅 План":h.type==="carousel"?"🎨 Карусель":h.type==="sordell"?"🎯 Темы Сорделл":h.type==="sordell_angles"?"⊞ Углы подачи":h.type==="product"?"🛍 Продукт":h.type==="series"?"📐 Серия":h.type==="format_series"?"🗂 Серия форматов":"⭐ Кейс"}
+                          {h.type==="post"?"✦ Пост":h.type==="plan"?"📅 План":h.type==="carousel"?"🎨 Карусель":h.type==="sordell"?"🎯 Темы Сорделл":h.type==="sordell_angles"?"⊞ Углы подачи":h.type==="product"?"🛍 Продукт":h.type==="series"?"📐 Серия":"⭐ Кейс"}
                         </span>
                         <span style={{fontSize:10,color:"#9a88b8"}}>{new Date(h.created_at).toLocaleDateString("ru")}</span>
                         {h.strategy?.expert && <span style={{fontSize:10,background:"rgba(54,45,82,.08)",color:"#362d52",padding:"1px 7px",borderRadius:5,fontWeight:600}}>{h.strategy.expert}</span>}
@@ -2432,93 +2195,6 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
                 )}
               </div>
 
-
-              {/* Microsegments */}
-              <div style={{marginBottom:14}}>
-                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
-                  <Label text="Микросегменты аудитории" hint="Каждый МС — это точное описание подгруппы. При создании поста выбираешь для кого пишешь." />
-                  <button onClick={()=>setShowMsEditor(p=>!p)}
-                    style={{padding:"4px 10px",borderRadius:7,border:"1px solid #362d52",background:"transparent",color:"#362d52",fontSize:11,fontWeight:600,cursor:"pointer",flexShrink:0,marginLeft:8}}>
-                    {showMsEditor?"Скрыть ▲":"Управлять ▼"}
-                  </button>
-                </div>
-
-                {/* MS summary chips */}
-                {microsegments.length > 0 && !showMsEditor && (
-                  <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
-                    {microsegments.map(ms=>(
-                      <span key={ms.id} style={{fontSize:11,background:"rgba(54,45,82,.08)",color:"#362d52",padding:"3px 10px",borderRadius:6,fontWeight:600}}>
-                        {ms.name}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                {showMsEditor && (
-                  <div>
-                    {/* List */}
-                    {!editingMs && (
-                      <div>
-                        {microsegments.length === 0 && (
-                          <p style={{fontSize:12,color:"#9a88b8",fontStyle:"italic",marginBottom:8}}>Нет микросегментов. Добавь первый.</p>
-                        )}
-                        <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:8}}>
-                          {microsegments.map(ms=>(
-                            <div key={ms.id} style={{padding:"10px 12px",background:"#f4f1ec",borderRadius:9,border:"1px solid #e8e0f0"}}>
-                              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:3}}>
-                                <div style={{fontSize:13,fontWeight:700,color:"#362d52"}}>{ms.name}</div>
-                                <div style={{display:"flex",gap:5}}>
-                                  <button onClick={()=>setEditingMs({...ms})} style={{padding:"2px 8px",borderRadius:5,border:"1px solid #d8d0e0",background:"transparent",color:"#5c4e7a",fontSize:11,cursor:"pointer"}}>✏️</button>
-                                  <button onClick={()=>setMicrosegments(prev=>prev.filter(m=>m.id!==ms.id))} style={{padding:"2px 8px",borderRadius:5,border:"none",background:"transparent",color:"#c4b8d8",fontSize:13,cursor:"pointer"}}>×</button>
-                                </div>
-                              </div>
-                              {ms.desc && <div style={{fontSize:11,color:"#5c4e7a",lineHeight:1.5}}>{ms.desc.substring(0,100)}{ms.desc.length>100?"…":""}</div>}
-                            </div>
-                          ))}
-                        </div>
-                        <button onClick={()=>setEditingMs({id:null,name:"",desc:"",pains:"",barriers:"",language:""})}
-                          style={{width:"100%",padding:"8px",borderRadius:8,border:"1px dashed #362d52",background:"transparent",color:"#362d52",fontSize:12,fontWeight:600,cursor:"pointer"}}>
-                          + Добавить микросегмент
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Editor */}
-                    {editingMs && (
-                      <div style={{padding:"12px 14px",background:"#f4f1ec",borderRadius:10,border:"1px solid #e8e0f0"}}>
-                        <div style={{fontSize:13,fontWeight:700,color:"#362d52",marginBottom:10}}>
-                          {editingMs.id?"Редактировать":"Новый микросегмент"}
-                        </div>
-                        {[
-                          {key:"name", label:"Название", ph:"МС1: Женщины в декрете 30-40", hint:""},
-                          {key:"desc", label:"Описание", ph:"Кто это, чем живут, контекст", hint:"", rows:2},
-                          {key:"pains", label:"Специфические боли", ph:"Их конкретные боли через запятую или с новой строки", hint:"Что болит именно у них", rows:2},
-                          {key:"barriers", label:"Барьеры", ph:"Что мешает именно им обратиться", hint:"", rows:2},
-                          {key:"language", label:"Их язык", ph:"Как они говорят о проблеме: 'я не успеваю', 'я срываюсь на ребёнке'...", hint:"Фразы их словами", rows:2},
-                        ].map(f=>(
-                          <div key={f.key} style={{marginBottom:8}}>
-                            <div style={{fontSize:10,color:"#5c4e7a",fontWeight:600,marginBottom:3,textTransform:"uppercase",letterSpacing:".05em"}}>{f.label}{f.hint&&<span style={{fontWeight:400,textTransform:"none",letterSpacing:0,marginLeft:4}}>— {f.hint}</span>}</div>
-                            <textarea value={editingMs[f.key]||""} onChange={e=>setEditingMs(p=>({...p,[f.key]:e.target.value}))}
-                              placeholder={f.ph} rows={f.rows||1}
-                              style={{width:"100%",padding:"7px 10px",borderRadius:7,border:"1px solid #d8d0e0",fontSize:12,color:"#362d52",outline:"none",resize:"none",fontFamily:"'Nunito Sans',sans-serif",boxSizing:"border-box"}} />
-                          </div>
-                        ))}
-                        <div style={{display:"flex",gap:6,marginTop:4}}>
-                          <button onClick={()=>setEditingMs(null)} style={{flex:1,padding:"8px",borderRadius:7,border:"1px solid #d8d0e0",background:"transparent",color:"#5c4e7a",fontSize:12,cursor:"pointer"}}>Отмена</button>
-                          <button onClick={()=>{
-                            if (!editingMs.name.trim()) return;
-                            const ms = editingMs.id ? editingMs : {...editingMs, id:Date.now()};
-                            setMicrosegments(prev => editingMs.id ? prev.map(m=>m.id===ms.id?ms:m) : [...prev,ms]);
-                            setEditingMs(null);
-                          }} style={{flex:2,padding:"8px",borderRadius:7,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:12,fontWeight:700,cursor:"pointer"}}>
-                            💾 Сохранить МС
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
 
               <div style={{marginBottom:14}}>
                 <Label text="Тональность" />
@@ -3375,33 +3051,6 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
                   )}
 
                   <div style={{marginBottom:14}}>
-                    {/* Microsegment selector */}
-                    {microsegments.length > 0 && (
-                      <div style={{marginBottom:12}}>
-                        <Label text="Для кого этот пост?" hint="Выбери МС — его боли и язык подставятся в промпт автоматически" />
-                        <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-                          {microsegments.map(ms=>(
-                            <button key={ms.id} onClick={()=>setSelectedMs(selectedMs===ms.id?null:ms.id)}
-                              style={{padding:"6px 12px",borderRadius:8,border:`1px solid ${selectedMs===ms.id?"#362d52":"#d8d0e0"}`,background:selectedMs===ms.id?"#362d52":"#f0eef8",color:selectedMs===ms.id?"#f4f1ec":"#362d52",fontSize:12,fontWeight:selectedMs===ms.id?700:400,cursor:"pointer",whiteSpace:"nowrap"}}>
-                              {selectedMs===ms.id?"✓ ":""}{ms.name}
-                            </button>
-                          ))}
-                          {selectedMs && (
-                            <button onClick={()=>setSelectedMs(null)}
-                              style={{padding:"6px 10px",borderRadius:8,border:"none",background:"transparent",color:"#9a88b8",fontSize:11,cursor:"pointer"}}>
-                              × общая аудитория
-                            </button>
-                          )}
-                        </div>
-                        {selectedMs && microsegments.find(m=>m.id===selectedMs) && (
-                          <div style={{marginTop:6,padding:"8px 10px",background:"rgba(54,45,82,.06)",borderRadius:8,fontSize:11,color:"#5c4e7a",lineHeight:1.6}}>
-                            {microsegments.find(m=>m.id===selectedMs).desc&&<div style={{marginBottom:3}}>👤 {microsegments.find(m=>m.id===selectedMs).desc.substring(0,100)}</div>}
-                            {microsegments.find(m=>m.id===selectedMs).pains&&<div>💊 {microsegments.find(m=>m.id===selectedMs).pains.substring(0,100)}</div>}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
                     <Label text="Боль аудитории" hint={currentPainHint} />
                     <textarea style={inpAuto} rows={1} placeholder="Например: боится что ноутбук сломается и потеряет все данные" value={pain} onChange={e=>{setPain(e.target.value);e.target.style.height="auto";e.target.style.height=e.target.scrollHeight+"px";}} />
                   </div>
