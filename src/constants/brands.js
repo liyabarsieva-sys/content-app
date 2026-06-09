@@ -47,7 +47,7 @@ const PLATFORM_FREQ_HINTS = {
   telegram:  { rec: 3,  hint: "3-5 в нед",   max: 7  },
   vk:        { rec: 3,  hint: "3-5 в нед",   max: 7  },
   facebook:  { rec: 4,  hint: "4-5 в нед",   max: 7  },
-  threads:   { rec: 14, hint: "1-3 в день",  max: 21 },
+  threads:   { rec: 14, hint: "1-5 в день",  max: 70 },
   instagram: { rec: 4,  hint: "4-5 в нед",   max: 7  },
   zen:       { rec: 2,  hint: "1-3 в нед",   max: 5  },
   linkedin:  { rec: 3,  hint: "3-5 в нед",   max: 7  },
