@@ -96,6 +96,17 @@ export default function App() {
   const [calendarPlatform, setCalendarPlatform] = useState("");
   const [pillarInput, setPillarInput] = useState("");
 
+  // Custom formats
+  const [customFormats, setCustomFormats] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("lia_custom_formats") || "[]"); } catch { return []; }
+  });
+  const [showFormats, setShowFormats] = useState(false);
+  const [editingFormat, setEditingFormat] = useState(null);
+  const [formatSeriesTopics, setFormatSeriesTopics] = useState("");
+  const [formatSeriesResult, setFormatSeriesResult] = useState(null);
+  const [formatSeriesLoading, setFormatSeriesLoading] = useState(false);
+  const [selectedFormat, setSelectedFormat] = useState(null);
+
   // Series
   const [seriesBlock, setSeriesBlock] = useState(null);
   const [seriesTopic, setSeriesTopic] = useState("");
