@@ -1168,8 +1168,8 @@ ${tovSection}
 ПЛАТФОРМЫ для генерации: ${names}
 Для каждой платформы напиши отдельный адаптированный текст.
 
-ТОЛЬКО валидный JSON без markdown, строго такой формат:
-${jsonExample}`;
+Ответь ТОЛЬКО валидным JSON без markdown:
+{"headline": "заголовок поста до 10 слов", "hook": "хук 1-2 предложения", ${jsonFields}}`;
 
     try {
       const resp = await fetch("/api/claude", {
@@ -1207,7 +1207,7 @@ ${jsonExample}`;
       setActiveTab(usePlatforms[0]);
       setStep(5);
       saveGeneration("post", useTopic, parsed, { sordellQuad: useSordellQuad, rubric: useRubric });
-    } catch(e) { setError("Ошибка: " + e.message); }
+    } catch(e) { setError("Ошибка: " + (e.message||"Попробуй снова")); }
     setLoading(false);
   }
 
