@@ -1181,7 +1181,11 @@ ${tovSection}
           messages:[{role:"user",content:prompt}],
         }),
       });
-      if (!resp.ok) throw new Error("Сервер вернул " + resp.status);
+      if (!resp.ok) {
+        let errBody = "";
+        try { const eb = await resp.json(); errBody = JSON.stringify(eb); } catch {}
+        throw new Error("Сервер вернул " + resp.status + ": " + errBody);
+      }
       const data = await resp.json();
       if (data.error) throw new Error(data.error.message||JSON.stringify(data.error));
       if (!data.content) throw new Error("Пустой ответ от API");
@@ -1213,8 +1217,11 @@ ${tovSection}
       setStep(5);
       saveGeneration("post", useTopic, parsed, { sordellQuad: useSordellQuad, rubric: useRubric });
     } catch(e) {
-      setError("Ошибка генерации: " + (e.message||"Неизвестная ошибка. Попробуй снова."));
-      setStep(2);
+      setError("Ошибка генерации: " + (e.message||"Попробуй снова"));
+      // Return to plan if we came from plan, otherwise stay on current step
+      if (mode === "post" && !result) {
+        setMode("plan"); setStep(5);
+      }
     }
     setLoading(false);
   }
