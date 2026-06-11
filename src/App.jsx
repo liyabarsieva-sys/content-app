@@ -728,7 +728,7 @@ ${qa}
     try {
       const resp = await fetch("/api/claude", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ model:"claude-sonnet-4-20250514", max_tokens:4000, messages:[{role:"user",content:prompt}] }),
+        body:JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:4000, messages:[{role:"user",content:prompt}] }),
       });
       const data = await resp.json();
       if (data.error) throw new Error(data.error.message);
@@ -848,7 +848,7 @@ ${topics.map((t,i) => (i+1)+". "+t).join("\n")}
     try {
       const resp = await fetch("/api/claude", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ model:"claude-sonnet-4-5-20251022", max_tokens:8000, messages:[{role:"user",content:prompt}] }),
+        body:JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:8000, messages:[{role:"user",content:prompt}] }),
       });
       const data = await resp.json();
       if (data.error) throw new Error(data.error.message);
@@ -894,7 +894,7 @@ ${formulasList}
     try {
       const resp = await fetch("/api/claude", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ model:"claude-sonnet-4-5-20251022", max_tokens:6000, messages:[{role:"user",content:prompt}] }),
+        body:JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:6000, messages:[{role:"user",content:prompt}] }),
       });
       const data = await resp.json();
       if (data.error) throw new Error(data.error.message);
@@ -944,7 +944,7 @@ ${tmpl?.prompt}
     try {
       const resp = await fetch("/api/claude", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ model:"claude-sonnet-4-20250514", max_tokens:3000, messages:[{role:"user",content:prompt}] }),
+        body:JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:3000, messages:[{role:"user",content:prompt}] }),
       });
       const data = await resp.json();
       if (data.error) throw new Error(data.error.message);
@@ -1024,7 +1024,7 @@ ${topics.map((t,i)=>(i+1)+'. '+t).join('\n')}
     try {
       const resp = await fetch("/api/claude", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ model:"claude-sonnet-4-5-20251022", max_tokens:8000, messages:[{role:"user",content:prompt}] }),
+        body:JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:8000, messages:[{role:"user",content:prompt}] }),
       });
       const data = await resp.json();
       if (data.error) throw new Error(data.error.message);
@@ -1070,7 +1070,7 @@ ${formulasList}
     try {
       const resp = await fetch("/api/claude", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ model:"claude-sonnet-4-5-20251022", max_tokens:6000, messages:[{role:"user",content:prompt}] }),
+        body:JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:6000, messages:[{role:"user",content:prompt}] }),
       });
       const data = await resp.json();
       if (data.error) throw new Error(data.error.message);
@@ -1114,7 +1114,7 @@ ${tmpl.prompt}
     try {
       const resp = await fetch("/api/claude", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ model:"claude-sonnet-4-5-20251022", max_tokens:4000, messages:[{role:"user",content:prompt}] }),
+        body:JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:4000, messages:[{role:"user",content:prompt}] }),
       });
       const data = await resp.json();
       if (data.error) throw new Error(data.error.message);
@@ -1176,16 +1176,12 @@ ${tovSection}
       const resp = await fetch("/api/claude", {
         method:"POST", headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
-          model:"claude-sonnet-4-5-20251022",
+          model:"claude-haiku-4-5-20251001",
           max_tokens:4000,
           messages:[{role:"user",content:prompt}],
         }),
       });
-      if (!resp.ok) {
-        let errBody = "";
-        try { const eb = await resp.json(); errBody = JSON.stringify(eb); } catch {}
-        throw new Error("Сервер вернул " + resp.status + ": " + errBody);
-      }
+      if (!resp.ok) throw new Error("Ошибка API: " + resp.status);
       const data = await resp.json();
       if (data.error) throw new Error(data.error.message||JSON.stringify(data.error));
       if (!data.content) throw new Error("Пустой ответ от API");
@@ -1268,7 +1264,7 @@ ${sordellCtx ? "Для личных тем используй ТОЛЬКО ре�
 
     const resp = await fetch("/api/claude", {
       method:"POST", headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({ model:"claude-sonnet-4-20250514", max_tokens:4000, messages:[{role:"user",content:prompt}] }),
+      body:JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:4000, messages:[{role:"user",content:prompt}] }),
     });
     const data = await resp.json();
     if (data.error) throw new Error(data.error.message);
@@ -1512,7 +1508,7 @@ ${'{"headline":"заголовок","hook":"хук",' + platforms.map(pid=>`"${p
           "Content-Type":"application/json",
         },
         body:JSON.stringify({
-          model:"claude-sonnet-4-20250514",
+          model:"claude-haiku-4-5-20251001",
           max_tokens:platforms.includes("yt_long") ? 5000 : 3500,
           messages:[{role:"user",content:prompt}],
         }),
@@ -2758,33 +2754,43 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
                   </button>
                 </div>
 
-                {/* Personal story bank */}
-                <div style={{marginTop:16,padding:"14px 16px",background:"#f4f1ec",borderRadius:10,border:"1px solid #e8e0f0"}}>
-                  <div style={{fontSize:12,fontWeight:700,color:"#362d52",marginBottom:4}}>📝 Банк личного опыта</div>
-                  <div style={{fontSize:11,color:"#5c4e7a",marginBottom:12,lineHeight:1.5}}>
-                    Добавляйте новые истории, наблюдения и инсайты по мере появления — они будут использованы при генерации личных тем в контент-плане.
+                {/* Personal story bank - collapsible */}
+                <div style={{marginTop:16,padding:"12px 14px",background:"#f4f1ec",borderRadius:10,border:"1px solid #e8e0f0"}}>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                    <div style={{fontSize:12,fontWeight:700,color:"#362d52"}}>📝 Банк личного опыта</div>
+                    <span style={{fontSize:11,color:"#9a88b8"}}>{personalStories.length>0?`${personalStories.length} записей`:""}</span>
                   </div>
-                  {personalStories.length > 0 && (
-                    <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:12}}>
-                      {personalStories.map((s,i)=>(
-                        <div key={i} style={{display:"flex",alignItems:"flex-start",gap:8,padding:"8px 10px",background:"#fff",borderRadius:8,border:"1px solid #e8e0f0"}}>
-                          <div style={{fontSize:12,color:"#362d52",flex:1,lineHeight:1.5}}>{s}</div>
-                          <button onClick={()=>setPersonalStories(prev=>prev.filter((_,idx)=>idx!==i))}
-                            style={{background:"transparent",border:"none",color:"#c4b8d8",cursor:"pointer",fontSize:16,flexShrink:0,padding:0,lineHeight:1}}>×</button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                   <div style={{display:"flex",gap:8}}>
                     <textarea value={newStoryInput} onChange={e=>setNewStoryInput(e.target.value)}
-                      placeholder="Например: недавно поняла что клиенты боятся не ошибиться, а выглядеть глупо перед коллегами..."
+                      placeholder="Инсайт, наблюдение, случай из практики..."
                       rows={2} style={{...inp,flex:1,fontSize:12}} />
                     <button onClick={()=>{
                       if(!newStoryInput.trim()) return;
                       setPersonalStories(prev=>[newStoryInput.trim(),...prev]);
                       setNewStoryInput("");
+                      setBankOpytExpanded(false);
                     }} style={{padding:"10px 14px",borderRadius:9,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:13,fontWeight:700,cursor:"pointer",flexShrink:0}}>+</button>
                   </div>
+                  {personalStories.length > 0 && (
+                    <div style={{marginTop:8}}>
+                      <button onClick={()=>setBankOpytExpanded(p=>!p)}
+                        style={{width:"100%",padding:"6px 10px",borderRadius:7,border:"1px solid #e8e0f0",background:"#fff",color:"#5c4e7a",fontSize:11,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                        <span>📚 {personalStories.length} {personalStories.length===1?"запись":"записей"} в банке</span>
+                        <span>{bankOpytExpanded?"Скрыть ▲":"Показать ▼"}</span>
+                      </button>
+                      {bankOpytExpanded && (
+                        <div style={{display:"flex",flexDirection:"column",gap:5,marginTop:6,maxHeight:200,overflowY:"auto"}}>
+                          {personalStories.map((s,i)=>(
+                            <div key={i} style={{display:"flex",alignItems:"flex-start",gap:8,padding:"7px 10px",background:"#fff",borderRadius:7,border:"1px solid #e8e0f0"}}>
+                              <div style={{fontSize:11,color:"#362d52",flex:1,lineHeight:1.5,overflow:"hidden",textOverflow:"ellipsis",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{s}</div>
+                              <button onClick={()=>setPersonalStories(prev=>prev.filter((_,idx)=>idx!==i))}
+                                style={{background:"transparent",border:"none",color:"#c4b8d8",cursor:"pointer",fontSize:14,flexShrink:0,padding:0}}>×</button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
               </Card>
