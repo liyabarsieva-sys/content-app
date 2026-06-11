@@ -1943,29 +1943,38 @@ ${'{"headline":"заголовок","hook":"хук",' + platforms.map(pid=>`"${p
         {/* Bank Opyt panel */}
         {showBankOpyt && (
           <Card>
-            <div style={{fontFamily:"Georgia,serif",fontSize:16,color:S.text,marginBottom:4}}>📝 Банк личного опыта</div>
-            <div style={{fontSize:11,color:"#5c4e7a",marginBottom:12,lineHeight:1.5}}>
-              Добавляйте новые истории, наблюдения и инсайты — они используются при генерации личных тем.
-            </div>
-            {personalStories.length > 0 && (
-              <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:12}}>
-                {personalStories.map((s,i)=>(
-                  <div key={i} style={{display:"flex",alignItems:"flex-start",gap:8,padding:"8px 10px",background:"#f4f1ec",borderRadius:8,border:"1px solid #e8e0f0"}}>
-                    <div style={{fontSize:12,color:"#362d52",flex:1,lineHeight:1.5}}>{s}</div>
-                    <button onClick={()=>setPersonalStories(prev=>prev.filter((_,idx)=>idx!==i))}
-                      style={{background:"transparent",border:"none",color:"#c4b8d8",cursor:"pointer",fontSize:16,flexShrink:0,padding:0,lineHeight:1}}>×</button>
-                  </div>
-                ))}
-              </div>
-            )}
-            {personalStories.length===0 && <p style={{fontSize:12,color:"#9a88b8",fontStyle:"italic",marginBottom:12}}>Пока пусто — добавьте первую историю</p>}
-            <div style={{display:"flex",gap:8}}>
+            <div style={{fontFamily:"Georgia,serif",fontSize:16,color:S.text,marginBottom:8}}>📝 Банк личного опыта</div>
+
+            <div style={{display:"flex",gap:8,marginBottom:10}}>
               <textarea value={newStoryInput} onChange={e=>setNewStoryInput(e.target.value)}
-                placeholder="Например: недавно заметила что клиенты боятся не ошибиться, а выглядеть глупо..."
+                placeholder="Инсайт, наблюдение, случай из практики..."
                 rows={2} style={{...inp,flex:1,fontSize:12}} />
               <button onClick={()=>{ if(!newStoryInput.trim()) return; setPersonalStories(prev=>[newStoryInput.trim(),...prev]); setNewStoryInput(""); setBankOpytExpanded(false); }}
                 style={{padding:"10px 14px",borderRadius:9,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:13,fontWeight:700,cursor:"pointer",flexShrink:0}}>+</button>
             </div>
+
+            {personalStories.length===0 && <p style={{fontSize:12,color:"#9a88b8",fontStyle:"italic"}}>Пока пусто — добавьте первую историю</p>}
+
+            {personalStories.length > 0 && (
+              <div>
+                <button onClick={()=>setBankOpytExpanded(p=>!p)}
+                  style={{width:"100%",padding:"7px 12px",borderRadius:8,border:"1px solid #e8e0f0",background:"#f4f1ec",color:"#362d52",fontSize:11,fontWeight:600,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <span>📚 {personalStories.length} {personalStories.length===1?"запись":"записей"} в банке</span>
+                  <span style={{color:"#9a88b8"}}>{bankOpytExpanded?"Скрыть ▲":"Показать ▼"}</span>
+                </button>
+                {bankOpytExpanded && (
+                  <div style={{display:"flex",flexDirection:"column",gap:5,marginTop:6,maxHeight:300,overflowY:"auto"}}>
+                    {personalStories.map((s,i)=>(
+                      <div key={i} style={{display:"flex",alignItems:"flex-start",gap:8,padding:"7px 10px",background:"#f4f1ec",borderRadius:8,border:"1px solid #e8e0f0"}}>
+                        <div style={{fontSize:11,color:"#362d52",flex:1,lineHeight:1.5,overflow:"hidden",textOverflow:"ellipsis",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{s}</div>
+                        <button onClick={()=>setPersonalStories(prev=>prev.filter((_,idx)=>idx!==i))}
+                          style={{background:"transparent",border:"none",color:"#c4b8d8",cursor:"pointer",fontSize:14,flexShrink:0,padding:0}}>×</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </Card>
         )}
 
