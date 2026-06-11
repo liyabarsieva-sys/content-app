@@ -1127,7 +1127,7 @@ ${tmpl.prompt}
 
   async function generateWithOverrides({ topicOverride, sordellQuadOverride, rubricOverride }) {
     setLoading(true); setError(""); setResult(null);
-    setMode("post"); setStep(4);  // stay on confirm step while loading
+    setMode("post"); setStep(5);  // go straight to result step
 
     const useTopic = topicOverride || topic;
     const useSordellQuad = sordellQuadOverride || sordellQuad;
@@ -2705,14 +2705,13 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
                         setSordellQuad(t.quadrant?.includes("Личное") ?
                           (t.quadrant?.includes("Неожиданное") ? "personal_unexpected" : "personal_known") :
                           (t.quadrant?.includes("Неожиданное") ? "professional_unexpected" : "professional_known"));
-                        setResult(null);
-                        setMode("post");
-                        setRubric(t.quadrant?.includes("Личное") ? "personal" : "expert");
-                        setLength("standard");
-                        setHookType("broken_prediction");
-                        // Use only first 2 platforms to avoid parse error
-                        if (platforms.length > 3) setPlatforms(platforms.slice(0,2));
-                        generateFromCard();
+                        generateWithOverrides({
+                          topicOverride: t.topic,
+                          sordellQuadOverride: t.quadrant?.includes("Личное") ?
+                            (t.quadrant?.includes("Неожиданное") ? "personal_unexpected" : "personal_known") :
+                            (t.quadrant?.includes("Неожиданное") ? "professional_unexpected" : "professional_known"),
+                          rubricOverride: t.quadrant?.includes("Личное") ? "personal" : "expert",
+                        });
                       }}
                       onExpand={()=>{
                         if (expandedTopics[t.topic]) {
@@ -3113,7 +3112,13 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
                       setMode("post");
                       setResult(null);
                       // Auto-generate immediately
-                      generateFromCard();
+                      generateWithOverrides({
+                        topicOverride: post.topic,
+                        sordellQuadOverride: post.sordell?.includes("Личное") ?
+                          (post.sordell?.includes("Неожиданное") ? "personal_unexpected" : "personal_known") :
+                          (post.sordell?.includes("Неожиданное") ? "professional_unexpected" : "professional_known"),
+                        rubricOverride: "expert",
+                      });
                     }}
                   />
                 ))}
