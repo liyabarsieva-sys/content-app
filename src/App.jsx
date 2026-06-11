@@ -87,6 +87,7 @@ export default function App() {
   });
   const [showPillarSetup, setShowPillarSetup] = useState(false);
   const [showBankOpyt, setShowBankOpyt] = useState(false);
+  const [bankOpytExpanded, setBankOpytExpanded] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [calendarPosts, setCalendarPosts] = useState(() => {
     try { return JSON.parse(localStorage.getItem("lia_calendar") || "[]"); } catch { return []; }
@@ -1180,34 +1181,41 @@ ${tovSection}
           messages:[{role:"user",content:prompt}],
         }),
       });
+      if (!resp.ok) throw new Error("Сервер вернул " + resp.status);
       const data = await resp.json();
-      if (data.error) throw new Error(data.error.message);
+      if (data.error) throw new Error(data.error.message||JSON.stringify(data.error));
+      if (!data.content) throw new Error("Пустой ответ от API");
       const text = data.content.map(b=>b.text||"").join("");
+      if (!text.trim()) throw new Error("Модель не вернула текст");
       let parsed;
       try {
         const clean = text.replace(/```json|```/g,"").trim();
         parsed = JSON.parse(clean);
-      } catch(jsonErr) {
-        // Try to extract JSON from response
+      } catch {
         const match = text.match(/\{[\s\S]*\}/);
         if (match) {
           try { parsed = JSON.parse(match[0]); }
-          catch { setError("Ошибка разбора ответа. Платформы: " + usePlatforms.join(",")); setLoading(false); return; }
+          catch { throw new Error("Ошибка разбора JSON: " + text.substring(0,100)); }
         } else {
-          setError("Модель не вернула JSON. Попробуй снова."); setLoading(false); return;
+          throw new Error("Нет JSON в ответе: " + text.substring(0,100));
         }
       }
-      // Ensure we have at least one platform text
       const hasText = usePlatforms.some(pid => parsed[pid]);
       if (!hasText) {
-        setError("Текст не сгенерирован. Попробуй снова."); setLoading(false); return;
+        // Try to use any string field as content
+        const anyField = Object.entries(parsed).find(([k,v])=>typeof v==="string"&&v.length>50&&k!=="headline"&&k!=="hook");
+        if (anyField) { parsed[usePlatforms[0]] = anyField[1]; }
+        else throw new Error("Текст постов не найден в ответе");
       }
       setResult(parsed);
       setTopic(useTopic);
       setActiveTab(usePlatforms[0]);
       setStep(5);
       saveGeneration("post", useTopic, parsed, { sordellQuad: useSordellQuad, rubric: useRubric });
-    } catch(e) { setError("Ошибка: " + (e.message||"Попробуй снова")); }
+    } catch(e) {
+      setError("Ошибка генерации: " + (e.message||"Неизвестная ошибка. Попробуй снова."));
+      setStep(2);
+    }
     setLoading(false);
   }
 
@@ -1952,7 +1960,7 @@ ${'{"headline":"заголовок","hook":"хук",' + platforms.map(pid=>`"${p
               <textarea value={newStoryInput} onChange={e=>setNewStoryInput(e.target.value)}
                 placeholder="Например: недавно заметила что клиенты боятся не ошибиться, а выглядеть глупо..."
                 rows={2} style={{...inp,flex:1,fontSize:12}} />
-              <button onClick={()=>{ if(!newStoryInput.trim()) return; setPersonalStories(prev=>[newStoryInput.trim(),...prev]); setNewStoryInput(""); }}
+              <button onClick={()=>{ if(!newStoryInput.trim()) return; setPersonalStories(prev=>[newStoryInput.trim(),...prev]); setNewStoryInput(""); setBankOpytExpanded(false); }}
                 style={{padding:"10px 14px",borderRadius:9,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:13,fontWeight:700,cursor:"pointer",flexShrink:0}}>+</button>
             </div>
           </Card>
