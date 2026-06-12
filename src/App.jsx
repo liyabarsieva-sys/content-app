@@ -3804,7 +3804,6 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
 
                 {/* Smart recommendations */}
                 {(() => {
-                  const msObj = selectedMs ? microsegments.find(m=>m.id===selectedMs) : null;
                   const recommended = HOOK_TYPES.filter(h => {
                     const goalMatch = !postGoal || h.goal?.includes(postGoal);
                     const platformMatch = platforms.some(p => h.platforms?.includes(p));
