@@ -157,6 +157,8 @@ export default function App() {
   const [pillarInput, setPillarInput] = useState("");
 
   const [selectedFormula, setSelectedFormula] = useState(null);
+  const [postGoal, setPostGoal] = useState(null);
+  const [showAllHooks, setShowAllHooks] = useState(false);
 
   // Custom formats
   const [customFormats, setCustomFormats] = useState(() => {
