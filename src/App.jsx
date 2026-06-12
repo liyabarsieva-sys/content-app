@@ -3653,6 +3653,24 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
                 </div>
               </div>
               <div style={{marginBottom:14}}>
+                <Label text="Цель поста" hint="Влияет на рекомендацию хука" />
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+                  {[
+                    {id:"share", icon:"🔄", label:"Репост / охват", desc:"Узнавание, парадокс"},
+                    {id:"comment", icon:"💬", label:"Комментарии", desc:"Провокация, вопрос"},
+                    {id:"save", icon:"🔖", label:"Сохранение", desc:"Переименование, история"},
+                    {id:"telegram", icon:"✈️", label:"Переход в TG", desc:"Обещание, инсайдер"},
+                  ].map(g=>(
+                    <button key={g.id} onClick={()=>setPostGoal(postGoal===g.id?null:g.id)}
+                      style={{padding:"8px 10px",borderRadius:9,border:`1px solid ${postGoal===g.id?"#362d52":"#d8d0e0"}`,background:postGoal===g.id?"#362d52":"#f0eef8",color:postGoal===g.id?"#f4f1ec":"#362d52",fontSize:12,cursor:"pointer",textAlign:"left"}}>
+                      <div style={{fontWeight:700,marginBottom:1}}>{g.icon} {g.label}</div>
+                      <div style={{fontSize:10,opacity:.7}}>{g.desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{marginBottom:14}}>
                 <Label text="Платформы для этого поста" hint="Можешь изменить для конкретного поста" />
                 <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
                   {PLATFORMS.map(p=>(
@@ -3780,4 +3798,70 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
       </div>
     </div>
   );
-}
+}              {/* Hook type */}
+              <div style={{marginBottom:14}}>
+                <Label text="Тип хука" hint="Первые 1-2 строки поста" />
+
+                {/* Smart recommendations */}
+                {(() => {
+                  const msObj = selectedMs ? microsegments.find(m=>m.id===selectedMs) : null;
+                  const recommended = HOOK_TYPES.filter(h => {
+                    const goalMatch = !postGoal || h.goal?.includes(postGoal);
+                    const platformMatch = platforms.some(p => h.platforms?.includes(p));
+                    return goalMatch && platformMatch;
+                  }).slice(0, 3);
+
+                  return recommended.length > 0 ? (
+                    <div style={{marginBottom:8}}>
+                      <div style={{fontSize:10,color:"#9a88b8",marginBottom:5,textTransform:"uppercase",letterSpacing:".05em"}}>
+                        ✨ Рекомендовано{postGoal?` для цели «${["share","comment","save","telegram"].map((_,i)=>["Репост","Комментарии","Сохранение","В Telegram"][i])[["share","comment","save","telegram"].indexOf(postGoal)]}»`:""}
+                      </div>
+                      <div style={{display:"flex",flexDirection:"column",gap:5}}>
+                        {recommended.map(h=>(
+                          <button key={h.id} onClick={()=>setHookType(hookType===h.id?"":h.id)}
+                            style={{padding:"9px 12px",borderRadius:9,border:`1px solid ${hookType===h.id?"#362d52":"#362d52"}`,background:hookType===h.id?"#362d52":"rgba(54,45,82,.06)",color:hookType===h.id?"#f4f1ec":"#362d52",fontSize:12,cursor:"pointer",textAlign:"left"}}>
+                            <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
+                              <span>{h.icon}</span>
+                              <span style={{fontWeight:700}}>{h.label}</span>
+                              {hookType===h.id && <span style={{marginLeft:"auto",fontSize:11}}>✓</span>}
+                            </div>
+                            <div style={{fontSize:11,opacity:.75,lineHeight:1.4}}>{h.example}</div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null;
+                })()}
+
+                {/* All hooks toggle */}
+                <button onClick={()=>setShowAllHooks(p=>!p)}
+                  style={{width:"100%",padding:"7px 12px",borderRadius:8,border:"1px solid #d8d0e0",background:"transparent",color:"#5c4e7a",fontSize:11,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:showAllHooks?8:0}}>
+                  <span>Все хуки (22)</span>
+                  <span>{showAllHooks?"▲":"▼"}</span>
+                </button>
+
+                {showAllHooks && (
+                  <div style={{display:"flex",flexDirection:"column",gap:5}}>
+                    {HOOK_TYPES.map(h=>(
+                      <button key={h.id} onClick={()=>{setHookType(hookType===h.id?"":h.id);setShowAllHooks(false);}}
+                        style={{padding:"9px 12px",borderRadius:9,border:`1px solid ${hookType===h.id?"#362d52":"#d8d0e0"}`,background:hookType===h.id?"#362d52":"#f0eef8",color:hookType===h.id?"#f4f1ec":"#362d52",fontSize:12,cursor:"pointer",textAlign:"left"}}>
+                        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
+                          <span>{h.icon}</span>
+                          <span style={{fontWeight:700}}>{h.label}</span>
+                          <span style={{fontSize:10,opacity:.6,marginLeft:"auto"}}>{h.desc}</span>
+                        </div>
+                        <div style={{fontSize:10,color:hookType===h.id?"rgba(244,241,236,.8)":"#9a88b8",lineHeight:1.4,fontStyle:"italic"}}>{h.example}</div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {hookType && !showAllHooks && (
+                  <div style={{marginTop:6,padding:"7px 10px",background:"rgba(54,45,82,.05)",borderRadius:7,fontSize:11,color:"#5c4e7a"}}>
+                    Выбран: <strong>{HOOK_TYPES.find(h=>h.id===hookType)?.label}</strong>
+                    <button onClick={()=>setHookType("")} style={{marginLeft:8,background:"transparent",border:"none",color:"#9a88b8",cursor:"pointer",fontSize:11}}>× убрать</button>
+                  </div>
+                )}
+              </div>
+
+
