@@ -19,65 +19,6 @@ const supabase = createClient(
   import.meta.env.VITE_SUPABASE_ANON_KEY || ""
 );
 
-const POST_FORMULAS = [
-  {id:1, text:"Все говорят X. Никто не говорит Y.", stages:["unaware","aware"], platforms:["threads","instagram"], sordell:["personal_unexpected","professional_unexpected"]},
-  {id:2, text:"Ты не [ярлык]. Ты человек которого [объяснение].", stages:["unaware","aware"], platforms:["threads","instagram","telegram"], sordell:["personal_unexpected","personal_known"]},
-  {id:3, text:"Первый раз это [А]. [Число] раз — уже [Б].", stages:["aware","seeking"], platforms:["threads","telegram"], sordell:["professional_unexpected","personal_unexpected"]},
-  {id:4, text:"Не [совет]. А [настоящее действие].", stages:["seeking","choosing"], platforms:["threads","telegram"], sordell:["professional_unexpected","professional_known"]},
-  {id:5, text:"[Вопрос] — это не вопрос про [А]. Это вопрос про [Б].", stages:["aware","seeking"], platforms:["threads","telegram"], sordell:["professional_unexpected","personal_unexpected"]},
-  {id:6, text:"За четыре года практики я заметила одну вещь.", stages:["unaware","aware","seeking"], platforms:["threads","instagram","telegram"], sordell:["personal_unexpected","personal_known"]},
-  {id:7, text:"Это выглядит как [А]. На самом деле это [Б].", stages:["unaware","aware"], platforms:["threads","instagram"], sordell:["personal_unexpected","professional_unexpected"]},
-  {id:8, text:"Никто не говорит тебе что [неудобная правда].", stages:["unaware","aware"], platforms:["threads","instagram"], sordell:["personal_unexpected","professional_unexpected"]},
-  {id:9, text:"Между [А] и [Б] — пропасть. И почти никто об этом не говорит.", stages:["aware","seeking"], platforms:["threads","telegram"], sordell:["professional_unexpected","personal_unexpected"]},
-  {id:10, text:"Хочу сказать тебе кое-что. Не как психолог — как человек который это видел.", stages:["unaware","aware"], platforms:["threads","instagram","telegram"], sordell:["personal_unexpected","personal_known"]},
-  {id:11, text:"[Короткое утверждение]. Это не [ярлык]. Это [переименование].", stages:["unaware","aware"], platforms:["threads","instagram"], sordell:["personal_unexpected","professional_unexpected"]},
-  {id:12, text:"Никто не готовит тебя к [X].", stages:["unaware","aware"], platforms:["threads","instagram"], sordell:["personal_unexpected","professional_unexpected"]},
-  {id:13, text:"Все ищут [X]. Мало кто замечает [Y].", stages:["aware","seeking"], platforms:["threads","telegram"], sordell:["professional_unexpected","personal_unexpected"]},
-  {id:14, text:"Назову это своим именем.", stages:["unaware","aware"], platforms:["threads","instagram","telegram"], sordell:["personal_unexpected","personal_known"]},
-  {id:15, text:"[Действие] — и ничего не меняется. Потому что [настоящая причина].", stages:["aware","seeking"], platforms:["threads","telegram"], sordell:["professional_unexpected","personal_unexpected"]},
-  {id:16, text:"Запомни одну вещь.", stages:["aware","seeking"], platforms:["threads","instagram","telegram"], sordell:["personal_unexpected","professional_unexpected"]},
-  {id:17, text:"Я видела это [число] раз. Выглядит одинаково.", stages:["unaware","aware"], platforms:["threads","instagram","telegram"], sordell:["personal_unexpected","personal_known"]},
-  {id:18, text:"Самый [прилагательное] вид [существительное] — это...", stages:["unaware","aware"], platforms:["threads","instagram"], sordell:["professional_unexpected","personal_unexpected"]},
-  {id:19, text:"[Действие] можно за [время]. [Следующее] — это [процесс].", stages:["seeking","choosing"], platforms:["telegram"], sordell:["professional_unexpected","professional_known"]},
-  {id:20, text:"Останови прокрутку на секунду.", stages:["unaware","aware"], platforms:["threads","instagram"], sordell:["personal_unexpected","personal_known"]},
-  {id:21, text:"Никто не учил тебя [X]. Поэтому ты до сих пор [Y].", stages:["unaware","aware"], platforms:["threads","instagram"], sordell:["personal_unexpected","professional_unexpected"]},
-  {id:22, text:"Это называется [X]. Не [негативный ярлык].", stages:["unaware","aware"], platforms:["threads","instagram","telegram"], sordell:["professional_unexpected","personal_unexpected"]},
-  {id:23, text:"Один вопрос который меняет всё: [вопрос]", stages:["seeking","choosing"], platforms:["threads","telegram"], sordell:["professional_unexpected","personal_unexpected"]},
-  {id:24, text:"Ты делаешь [X] не потому что [ложная причина]. А потому что [настоящая].", stages:["aware","seeking"], platforms:["threads","telegram"], sordell:["professional_unexpected","personal_unexpected"]},
-  {id:25, text:"Скажу тебе то что никто не говорит вслух.", stages:["unaware","aware"], platforms:["threads","instagram","telegram"], sordell:["personal_unexpected","personal_known"]},
-  {id:26, text:"[X] — это не финал. Это место откуда начинают.", stages:["aware","seeking"], platforms:["threads","telegram"], sordell:["personal_unexpected","personal_known"]},
-  {id:27, text:"Чем [больше/дольше] [X] — тем [неожиданное следствие].", stages:["aware","seeking"], platforms:["threads","telegram"], sordell:["professional_unexpected","personal_unexpected"]},
-  {id:28, text:"Позволь себе [X]. Не потому что легко. А потому что [настоящая причина].", stages:["seeking","choosing"], platforms:["telegram"], sordell:["personal_unexpected","personal_known"]},
-  {id:29, text:"Я не буду говорить тебе [банальный совет]. Скажу другое.", stages:["unaware","aware"], platforms:["threads","instagram","telegram"], sordell:["personal_unexpected","professional_unexpected"]},
-  {id:30, text:"[Короткое наблюдение]. Это не совпадение.", stages:["unaware","aware"], platforms:["threads","instagram"], sordell:["personal_unexpected","personal_known"]},
-  {id:31, text:"Ты когда-нибудь замечала что [наблюдение]?", stages:["unaware","aware"], platforms:["threads","instagram"], sordell:["personal_unexpected","personal_known"]},
-  {id:32, text:"Вот что происходит когда [X].", stages:["aware","seeking"], platforms:["threads","telegram"], sordell:["professional_unexpected","personal_unexpected"]},
-  {id:33, text:"Разница между [А] и [Б] — в одном.", stages:["aware","seeking"], platforms:["threads","telegram"], sordell:["professional_unexpected","professional_known"]},
-  {id:34, text:"Это не твоя черта характера. Это твоя история.", stages:["unaware","aware"], platforms:["threads","instagram","telegram"], sordell:["personal_unexpected","personal_known"]},
-  {id:35, text:"Пока ты [X] — ты не замечаешь [Y].", stages:["aware","seeking"], platforms:["threads","telegram"], sordell:["professional_unexpected","personal_unexpected"]},
-  {id:36, text:"Есть вещи которые выглядят как [А]. И они ею не являются.", stages:["unaware","aware"], platforms:["threads","instagram"], sordell:["personal_unexpected","professional_unexpected"]},
-  {id:37, text:"Спрошу тебя напрямую: [вопрос]?", stages:["seeking","choosing"], platforms:["threads","telegram"], sordell:["personal_unexpected","professional_unexpected"]},
-  {id:38, text:"За этим всегда стоит одно.", stages:["aware","seeking"], platforms:["threads","telegram"], sordell:["personal_unexpected","personal_known"]},
-  {id:39, text:"Это начинается не здесь.", stages:["unaware","aware"], platforms:["threads","instagram","telegram"], sordell:["personal_unexpected","personal_known"]},
-  {id:40, text:"Хочу чтобы ты это услышала.", stages:["unaware","aware","seeking"], platforms:["threads","instagram","telegram"], sordell:["personal_unexpected","personal_known"]},
-  {id:41, text:"Ты не [А]. Ты просто давно [Б].", stages:["unaware","aware"], platforms:["threads","instagram"], sordell:["personal_unexpected","personal_known"]},
-  {id:42, text:"Один момент который всё объясняет.", stages:["aware","seeking"], platforms:["threads","telegram"], sordell:["personal_unexpected","personal_known"]},
-  {id:43, text:"Перестань [X]. Начни [Y].", stages:["seeking","choosing"], platforms:["telegram"], sordell:["professional_unexpected","professional_known"]},
-  {id:44, text:"Это больно признавать. Но это правда.", stages:["aware","seeking"], platforms:["threads","instagram","telegram"], sordell:["personal_unexpected","personal_known"]},
-  {id:45, text:"Когда [X] — это уже не [А]. Это [Б].", stages:["aware","seeking"], platforms:["threads","telegram"], sordell:["professional_unexpected","personal_unexpected"]},
-  {id:46, text:"Ты не замечаешь [X] — потому что [Y] давно стало нормой.", stages:["unaware","aware"], platforms:["threads","instagram"], sordell:["personal_unexpected","professional_unexpected"]},
-  {id:47, text:"Простой вопрос. Почти никто не может на него ответить.", stages:["aware","seeking"], platforms:["threads","instagram"], sordell:["professional_unexpected","personal_unexpected"]},
-  {id:48, text:"Это не про тебя. Это про то что с тобой делали.", stages:["unaware","aware"], platforms:["threads","instagram","telegram"], sordell:["personal_unexpected","personal_known"]},
-  {id:49, text:"Позволь переформулировать.", stages:["aware","seeking"], platforms:["threads","telegram"], sordell:["professional_unexpected","personal_unexpected"]},
-  {id:50, text:"Не спрашивай как [X]. Спроси зачем тебе [X].", stages:["seeking","choosing"], platforms:["threads","telegram"], sordell:["professional_unexpected","professional_known"]},
-  {id:51, text:"Ты уже знаешь ответ. Просто он тебе не нравится.", stages:["seeking","choosing"], platforms:["threads","telegram"], sordell:["personal_unexpected","personal_known"]},
-  {id:52, text:"Пока это называется [А] — с этим ничего не сделать. Когда называешь [Б] — появляется выход.", stages:["aware","seeking"], platforms:["threads","telegram"], sordell:["professional_unexpected","personal_unexpected"]},
-  {id:53, text:"Я не знаю твою историю. Но я знаю этот момент.", stages:["unaware","aware"], platforms:["threads","instagram","telegram"], sordell:["personal_unexpected","personal_known"]},
-  {id:54, text:"Это не слабость. Это цена которую ты платишь за [X].", stages:["unaware","aware"], platforms:["threads","instagram","telegram"], sordell:["personal_unexpected","personal_known"]},
-  {id:55, text:"Раньше это тебя спасало. Сейчас это тебя держит.", stages:["aware","seeking"], platforms:["threads","instagram","telegram"], sordell:["personal_unexpected","personal_known"]},
-];
-
-
 const useIsMobile = () => {
   const [mobile, setMobile] = React.useState(window.innerWidth < 600);
   React.useEffect(() => {
@@ -146,7 +87,6 @@ export default function App() {
   });
   const [showPillarSetup, setShowPillarSetup] = useState(false);
   const [showBankOpyt, setShowBankOpyt] = useState(false);
-  const [bankOpytExpanded, setBankOpytExpanded] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [calendarPosts, setCalendarPosts] = useState(() => {
     try { return JSON.parse(localStorage.getItem("lia_calendar") || "[]"); } catch { return []; }
@@ -155,21 +95,6 @@ export default function App() {
   const [calendarDate, setCalendarDate] = useState("");
   const [calendarPlatform, setCalendarPlatform] = useState("");
   const [pillarInput, setPillarInput] = useState("");
-
-  const [selectedFormula, setSelectedFormula] = useState(null);
-  const [postGoal, setPostGoal] = useState(null);
-  const [showAllHooks, setShowAllHooks] = useState(false);
-
-  // Custom formats
-  const [customFormats, setCustomFormats] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("lia_custom_formats") || "[]"); } catch { return []; }
-  });
-  const [showFormats, setShowFormats] = useState(false);
-  const [editingFormat, setEditingFormat] = useState(null);
-  const [formatSeriesTopics, setFormatSeriesTopics] = useState("");
-  const [formatSeriesResult, setFormatSeriesResult] = useState(null);
-  const [formatSeriesLoading, setFormatSeriesLoading] = useState(false);
-  const [selectedFormat, setSelectedFormat] = useState(null);
 
   // Series
   const [seriesBlock, setSeriesBlock] = useState(null);
@@ -791,7 +716,7 @@ ${qa}
     try {
       const resp = await fetch("/api/claude", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:4000, messages:[{role:"user",content:prompt}] }),
+        body:JSON.stringify({ model:"claude-sonnet-4-20250514", max_tokens:4000, messages:[{role:"user",content:prompt}] }),
       });
       const data = await resp.json();
       if (data.error) throw new Error(data.error.message);
@@ -911,7 +836,7 @@ ${topics.map((t,i) => (i+1)+". "+t).join("\n")}
     try {
       const resp = await fetch("/api/claude", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:8000, messages:[{role:"user",content:prompt}] }),
+        body:JSON.stringify({ model:"claude-sonnet-4-5-20251022", max_tokens:8000, messages:[{role:"user",content:prompt}] }),
       });
       const data = await resp.json();
       if (data.error) throw new Error(data.error.message);
@@ -957,7 +882,7 @@ ${formulasList}
     try {
       const resp = await fetch("/api/claude", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:6000, messages:[{role:"user",content:prompt}] }),
+        body:JSON.stringify({ model:"claude-sonnet-4-5-20251022", max_tokens:6000, messages:[{role:"user",content:prompt}] }),
       });
       const data = await resp.json();
       if (data.error) throw new Error(data.error.message);
@@ -1007,7 +932,7 @@ ${tmpl?.prompt}
     try {
       const resp = await fetch("/api/claude", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:3000, messages:[{role:"user",content:prompt}] }),
+        body:JSON.stringify({ model:"claude-sonnet-4-20250514", max_tokens:3000, messages:[{role:"user",content:prompt}] }),
       });
       const data = await resp.json();
       if (data.error) throw new Error(data.error.message);
@@ -1087,7 +1012,7 @@ ${topics.map((t,i)=>(i+1)+'. '+t).join('\n')}
     try {
       const resp = await fetch("/api/claude", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:8000, messages:[{role:"user",content:prompt}] }),
+        body:JSON.stringify({ model:"claude-sonnet-4-5-20251022", max_tokens:8000, messages:[{role:"user",content:prompt}] }),
       });
       const data = await resp.json();
       if (data.error) throw new Error(data.error.message);
@@ -1133,7 +1058,7 @@ ${formulasList}
     try {
       const resp = await fetch("/api/claude", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:6000, messages:[{role:"user",content:prompt}] }),
+        body:JSON.stringify({ model:"claude-sonnet-4-5-20251022", max_tokens:6000, messages:[{role:"user",content:prompt}] }),
       });
       const data = await resp.json();
       if (data.error) throw new Error(data.error.message);
@@ -1177,7 +1102,7 @@ ${tmpl.prompt}
     try {
       const resp = await fetch("/api/claude", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:4000, messages:[{role:"user",content:prompt}] }),
+        body:JSON.stringify({ model:"claude-sonnet-4-5-20251022", max_tokens:4000, messages:[{role:"user",content:prompt}] }),
       });
       const data = await resp.json();
       if (data.error) throw new Error(data.error.message);
@@ -1191,7 +1116,7 @@ ${tmpl.prompt}
 
   async function generateWithOverrides({ topicOverride, sordellQuadOverride, rubricOverride }) {
     setLoading(true); setError(""); setResult(null);
-    setMode("post"); setStep(5);  // go straight to result step
+    setMode("post"); setStep(4);  // stay on confirm step while loading
 
     const useTopic = topicOverride || topic;
     const useSordellQuad = sordellQuadOverride || sordellQuad;
@@ -1232,153 +1157,100 @@ ${tovSection}
 ПЛАТФОРМЫ для генерации: ${names}
 Для каждой платформы напиши отдельный адаптированный текст.
 
-Ответь ТОЛЬКО валидным JSON без markdown:
-{"headline": "заголовок поста до 10 слов", "hook": "хук 1-2 предложения", ${jsonFields}}`;
+ТОЛЬКО валидный JSON без markdown, строго такой формат:
+${jsonExample}`;
 
     try {
       const resp = await fetch("/api/claude", {
         method:"POST", headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
-          model:"claude-haiku-4-5-20251001",
+          model:"claude-sonnet-4-5-20251022",
           max_tokens:4000,
           messages:[{role:"user",content:prompt}],
         }),
       });
-      if (!resp.ok) throw new Error("Ошибка API: " + resp.status);
       const data = await resp.json();
-      if (data.error) throw new Error(data.error.message||JSON.stringify(data.error));
-      if (!data.content) throw new Error("Пустой ответ от API");
+      if (data.error) throw new Error(data.error.message);
       const text = data.content.map(b=>b.text||"").join("");
-      if (!text.trim()) throw new Error("Модель не вернула текст");
       let parsed;
       try {
         const clean = text.replace(/```json|```/g,"").trim();
         parsed = JSON.parse(clean);
-      } catch {
+      } catch(jsonErr) {
+        // Try to extract JSON from response
         const match = text.match(/\{[\s\S]*\}/);
         if (match) {
           try { parsed = JSON.parse(match[0]); }
-          catch { throw new Error("Ошибка разбора JSON: " + text.substring(0,100)); }
+          catch { setError("Ошибка разбора ответа. Платформы: " + usePlatforms.join(",")); setLoading(false); return; }
         } else {
-          throw new Error("Нет JSON в ответе: " + text.substring(0,100));
+          setError("Модель не вернула JSON. Попробуй снова."); setLoading(false); return;
         }
       }
+      // Ensure we have at least one platform text
       const hasText = usePlatforms.some(pid => parsed[pid]);
       if (!hasText) {
-        // Try to use any string field as content
-        const anyField = Object.entries(parsed).find(([k,v])=>typeof v==="string"&&v.length>50&&k!=="headline"&&k!=="hook");
-        if (anyField) { parsed[usePlatforms[0]] = anyField[1]; }
-        else throw new Error("Текст постов не найден в ответе");
+        setError("Текст не сгенерирован. Попробуй снова."); setLoading(false); return;
       }
       setResult(parsed);
       setTopic(useTopic);
       setActiveTab(usePlatforms[0]);
       setStep(5);
       saveGeneration("post", useTopic, parsed, { sordellQuad: useSordellQuad, rubric: useRubric });
-    } catch(e) {
-      setError("Ошибка генерации: " + (e.message||"Попробуй снова"));
-      // Return to plan if we came from plan, otherwise stay on current step
-      if (mode === "post" && !result) {
-        setMode("plan"); setStep(5);
-      }
-    }
+    } catch(e) { setError("Ошибка: " + e.message); }
     setLoading(false);
   }
 
   async function generatePlanChunk(chunkLabel, chunkPosts, sordellCtx, archetypeCtx, prevCtx, blocksText) {
-
-    // Platform-aware stage distribution
-    const tgPosts = platforms.filter(p=>p==="telegram").length > 0
-      ? Math.round(chunkPosts * (planPlatformFreqs["telegram"] ?? PLATFORM_FREQ_HINTS["telegram"]?.rec ?? 3) /
-        platforms.reduce((s,p)=>s+(planPlatformFreqs[p]??PLATFORM_FREQ_HINTS[p]?.rec??3),0) * chunkPosts)
-      : 0;
-    const thPosts = chunkPosts - tgPosts;
-
-    // MS distribution
-    const msDistText = microsegments.length > 0
-      ? microsegments.reduce((acc,ms) => {
-          const pct = parseInt(ms.planPercent)||Math.round(100/microsegments.length);
-          const count = Math.max(1, Math.round(chunkPosts * pct / 100));
-          return acc + "— " + ms.name + " (" + pct + "%, ~" + count + " постов): " + ms.desc + ". Боли: " + (ms.pains||"-") + ". Язык: " + (ms.language||"-") + "\n";
-        }, "МИКРОСЕГМЕНТЫ (строго соблюдай пропорции):\n")
-      : "";
-
-
-    // Launch phase text
-    const launchText = (launchMode && selectedProduct) ? `
-ПРОГРЕВ К ПРОДУКТУ «${selectedProduct.name}»:
-Фаза 1 (прогрев темы): посты для Threads/Instagram, стадии 0-1, продукт НЕ упоминать
-Фаза 2 (прогрев продукта): стадии 2-3, можно намекнуть «скоро расскажу подробнее»
-Фаза 3 (продажи): стадии 3-4, только Telegram, полное раскрытие продукта
-Барьер: ${selectedProduct.barrier||"-"}. Результат: ${selectedProduct.result||"-"}` : "";
-
+    const dist = {
+      unaware:  Math.max(0, Math.round(chunkPosts * 0.40)),
+      aware:    Math.max(0, Math.round(chunkPosts * 0.25)),
+      seeking:  Math.max(0, Math.round(chunkPosts * 0.20)),
+      choosing: Math.max(0, Math.round(chunkPosts * 0.10)),
+      ready:    Math.max(0, Math.round(chunkPosts * 0.05)),
+    };
     const platBreakdown = platforms.map(pid=>{
       const p = PLATFORMS.find(pl=>pl.id===pid);
       const freq = planPlatformFreqs[pid] ?? PLATFORM_FREQ_HINTS[pid]?.rec ?? 3;
-      return `${p?.label}: ${freq} постов/нед`;
+      return `${p?.label}: ${freq} постов`;
     }).join(", ");
 
-    // Build audience pains and barriers context
-    const painsCtx = audiencePains.length > 0
-      ? "БОЛИ АУДИТОРИИ (главный источник тем — 60-70% постов должны отвечать на эти боли):\n" +
-        audiencePains.map(p => "— " + p).join("\n")
-      : "";
-    const barriersCtx = audienceBarriers.length > 0
-      ? "БАРЬЕРЫ АУДИТОРИИ (темы для стадий 2-3, снятие возражений):\n" +
-        audienceBarriers.map(b => "— " + b).join("\n")
-      : "";
+    const prompt = `Ты контент-стратег. Составь план для: ${chunkLabel}
 
-    const prompt = `Ты контент-стратег. Составь детальный контент-план: ${chunkLabel}
+Эксперт: ${expert||"-"}, Ниша: ${niche||"-"}, Аудитория: ${audience||"-"}
+Смысловые блоки (ОБЯЗАТЕЛЬНО чередуй их в плане): ${blocksText}
+${microsegments.length>0?"Микросегменты аудитории (распределяй посты пропорционально):\n"+microsegments.map(ms=>"— "+ms.name+(ms.planPercent?" ("+ms.planPercent+"%)":"")+": "+ms.desc).join("\n"):""} , Тональность: ${tone}
+${archetypeCtx}${sordellCtx}${prevCtx}
 
-Эксперт: ${expert||"-"}, Ниша: ${niche||"-"}, Тональность: ${tone}
 Платформы: ${platBreakdown}
-Всего постов: ${chunkPosts}
+Постов: ${chunkPosts}
 
-ПЛАТФОРМЕННЫЕ ПРАВИЛА (СТРОГО ОБЯЗАТЕЛЬНО):
-${platforms.includes("threads") ? "• Threads: стадии 0-1-2 ТОЛЬКО, длина 30-80 слов, без заголовков, формат личное/неожиданное" : ""}
-${platforms.includes("instagram") ? "• Instagram: стадии 0-1-2 ТОЛЬКО, визуальный крючок, 30-100 слов" : ""}
-${platforms.includes("telegram") ? "• Telegram: стадии 2-3-4, глубина, 150-400 слов, можно заголовок" : ""}
+В поле stage используй ТОЧНО:
+- "Не осознаёт проблему" (40%): ${dist.unaware} постов
+- "Осознаёт проблему" (25%): ${dist.aware} постов
+- "Ищет решение" (20%): ${dist.seeking} постов
+- "Выбирает решение" (10%): ${dist.choosing} постов
+- "Готов к покупке" (5%): ${dist.ready} постов
 
-СМЫСЛОВЫЕ БЛОКИ (чередуй равномерно): ${blocksText}
+По матрице Сорделл: 40% Личное+Неожиданное, 30% Профессиональное+Неожиданное, 20% Личное+Известное, 10% Профессиональное+Известное.
+${sordellCtx ? "Для личных тем используй ТОЛЬКО реальный опыт автора из раздела выше." : ""}
 
-${painsCtx}
+Каждый пост: платформа из [${platforms.join(", ")}], конкретная цепляющая тема на русском.
+Функции: узнавание / перелом / объяснение / усиление / действие
 
-${barriersCtx}
+ТОЛЬКО валидный JSON:
+{"posts":[{"day":"${chunkLabel}, День 1","platform":"telegram","block":"блок","topic":"тема","stage":"Не осознаёт проблему","sordell":"Личное + Неожиданное","function":"узнавание"}]}`;
 
-РАСПРЕДЕЛЕНИЕ ТЕМ:
-— 60-70% постов: темы из болей аудитории выше (узнавание боли, называние, объяснение механизма)
-— 15-20% постов: личный опыт эксперта (наблюдения из практики, истории клиентов)
-— 10-15% постов: экспертные инсайты, механизмы, факты
-${sordellCtx ? "— Личный опыт ТОЛЬКО из этого списка:\n" + sordellCtx : ""}
-
-${msDistText}
-${launchText}
-${prevCtx}
-
-Матрица Сорделл: 40% Личное+Неожиданное, 30% Проф+Неожиданное, 20% Личное+Известное, 10% Проф+Известное.
-Threads/Instagram → только Личное+Неожиданное и Проф+Неожиданное.
-
-ТОЛЬКО валидный JSON (без markdown):
-{"posts":[{"day":"День 1","platform":"threads","block":"блок","topic":"конкретная тема основанная на болях ца","stage":"Не осознаёт проблему","sordell":"Личное + Неожиданное","ms":"${microsegments[0]?.name||""}","phase":0,"function":"узнавание"}]}
-
-Поле ms: имя МС из списка выше или пусто.
-Поле phase: 1/2/3 если есть запуск, иначе 0.
-Поле stage СТРОГО одно из: "Не осознаёт проблему","Осознаёт проблему","Ищет решение","Выбирает решение","Готов к покупке"
-`;
-
-    try {
-      const resp = await fetch("/api/claude", {
-        method: "POST", headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:4000, messages:[{role:"user",content:prompt}] })
-      });
-      const data = await resp.json();
-      const text = data.content?.map(b=>b.text||"").join("")||"";
-      const match = text.match(/\{[\s\S]*\}/);
-      if (!match) return [];
-      const parsed = JSON.parse(match[0]);
-      return parsed.posts||[];
-    } catch(e) { console.error(e); return []; }
+    const resp = await fetch("/api/claude", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({ model:"claude-sonnet-4-20250514", max_tokens:4000, messages:[{role:"user",content:prompt}] }),
+    });
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error.message);
+    const text = data.content.map(b=>b.text||"").join("");
+    const parsed = JSON.parse(text.replace(/```json|```/g,"").trim());
+    return parsed.posts || [];
   }
+
   async function generatePlan() {
     setLoading(true); setError(""); setPlanProgress("");
 
@@ -1514,7 +1386,6 @@ ${selectedPhase===3?"Полное раскрытие: включи назван�
 Тональность: ${tone}
 ${tovSection}
 ${launchSection}
-${selectedFormula?`ФОРМУЛА ПОСТА (используй эту структуру как основу):\n"${POST_FORMULAS.find(f=>f.id===selectedFormula)?.text}"\nЗаполни шаблон содержанием темы. Сохрани ритм и структуру формулы.`:""}
 Тема: ${isCase ? (pain || "история успеха клиента") : topic}
 Ключевые факты и УТП: ${details || "нет"}
 ${caseSection}
@@ -1615,7 +1486,7 @@ ${'{"headline":"заголовок","hook":"хук",' + platforms.map(pid=>`"${p
           "Content-Type":"application/json",
         },
         body:JSON.stringify({
-          model:"claude-haiku-4-5-20251001",
+          model:"claude-sonnet-4-20250514",
           max_tokens:platforms.includes("yt_long") ? 5000 : 3500,
           messages:[{role:"user",content:prompt}],
         }),
@@ -2050,38 +1921,29 @@ ${'{"headline":"заголовок","hook":"хук",' + platforms.map(pid=>`"${p
         {/* Bank Opyt panel */}
         {showBankOpyt && (
           <Card>
-            <div style={{fontFamily:"Georgia,serif",fontSize:16,color:S.text,marginBottom:8}}>📝 Банк личного опыта</div>
-
-            <div style={{display:"flex",gap:8,marginBottom:10}}>
-              <textarea value={newStoryInput} onChange={e=>setNewStoryInput(e.target.value)}
-                placeholder="Инсайт, наблюдение, случай из практики..."
-                rows={2} style={{...inp,flex:1,fontSize:12}} />
-              <button onClick={()=>{ if(!newStoryInput.trim()) return; setPersonalStories(prev=>[newStoryInput.trim(),...prev]); setNewStoryInput(""); setBankOpytExpanded(false); }}
-                style={{padding:"10px 14px",borderRadius:9,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:13,fontWeight:700,cursor:"pointer",flexShrink:0}}>+</button>
+            <div style={{fontFamily:"Georgia,serif",fontSize:16,color:S.text,marginBottom:4}}>📝 Банк личного опыта</div>
+            <div style={{fontSize:11,color:"#5c4e7a",marginBottom:12,lineHeight:1.5}}>
+              Добавляйте новые истории, наблюдения и инсайты — они используются при генерации личных тем.
             </div>
-
-            {personalStories.length===0 && <p style={{fontSize:12,color:"#9a88b8",fontStyle:"italic"}}>Пока пусто — добавьте первую историю</p>}
-
             {personalStories.length > 0 && (
-              <div>
-                <button onClick={()=>setBankOpytExpanded(p=>!p)}
-                  style={{width:"100%",padding:"7px 12px",borderRadius:8,border:"1px solid #e8e0f0",background:"#f4f1ec",color:"#362d52",fontSize:11,fontWeight:600,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                  <span>📚 {personalStories.length} {personalStories.length===1?"запись":"записей"} в банке</span>
-                  <span style={{color:"#9a88b8"}}>{bankOpytExpanded?"Скрыть ▲":"Показать ▼"}</span>
-                </button>
-                {bankOpytExpanded && (
-                  <div style={{display:"flex",flexDirection:"column",gap:5,marginTop:6,maxHeight:300,overflowY:"auto"}}>
-                    {personalStories.map((s,i)=>(
-                      <div key={i} style={{display:"flex",alignItems:"flex-start",gap:8,padding:"7px 10px",background:"#f4f1ec",borderRadius:8,border:"1px solid #e8e0f0"}}>
-                        <div style={{fontSize:11,color:"#362d52",flex:1,lineHeight:1.5,overflow:"hidden",textOverflow:"ellipsis",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{s}</div>
-                        <button onClick={()=>setPersonalStories(prev=>prev.filter((_,idx)=>idx!==i))}
-                          style={{background:"transparent",border:"none",color:"#c4b8d8",cursor:"pointer",fontSize:14,flexShrink:0,padding:0}}>×</button>
-                      </div>
-                    ))}
+              <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:12}}>
+                {personalStories.map((s,i)=>(
+                  <div key={i} style={{display:"flex",alignItems:"flex-start",gap:8,padding:"8px 10px",background:"#f4f1ec",borderRadius:8,border:"1px solid #e8e0f0"}}>
+                    <div style={{fontSize:12,color:"#362d52",flex:1,lineHeight:1.5}}>{s}</div>
+                    <button onClick={()=>setPersonalStories(prev=>prev.filter((_,idx)=>idx!==i))}
+                      style={{background:"transparent",border:"none",color:"#c4b8d8",cursor:"pointer",fontSize:16,flexShrink:0,padding:0,lineHeight:1}}>×</button>
                   </div>
-                )}
+                ))}
               </div>
             )}
+            {personalStories.length===0 && <p style={{fontSize:12,color:"#9a88b8",fontStyle:"italic",marginBottom:12}}>Пока пусто — добавьте первую историю</p>}
+            <div style={{display:"flex",gap:8}}>
+              <textarea value={newStoryInput} onChange={e=>setNewStoryInput(e.target.value)}
+                placeholder="Например: недавно заметила что клиенты боятся не ошибиться, а выглядеть глупо..."
+                rows={2} style={{...inp,flex:1,fontSize:12}} />
+              <button onClick={()=>{ if(!newStoryInput.trim()) return; setPersonalStories(prev=>[newStoryInput.trim(),...prev]); setNewStoryInput(""); }}
+                style={{padding:"10px 14px",borderRadius:9,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:13,fontWeight:700,cursor:"pointer",flexShrink:0}}>+</button>
+            </div>
           </Card>
         )}
 
@@ -2832,13 +2694,14 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
                         setSordellQuad(t.quadrant?.includes("Личное") ?
                           (t.quadrant?.includes("Неожиданное") ? "personal_unexpected" : "personal_known") :
                           (t.quadrant?.includes("Неожиданное") ? "professional_unexpected" : "professional_known"));
-                        generateWithOverrides({
-                          topicOverride: t.topic,
-                          sordellQuadOverride: t.quadrant?.includes("Личное") ?
-                            (t.quadrant?.includes("Неожиданное") ? "personal_unexpected" : "personal_known") :
-                            (t.quadrant?.includes("Неожиданное") ? "professional_unexpected" : "professional_known"),
-                          rubricOverride: t.quadrant?.includes("Личное") ? "personal" : "expert",
-                        });
+                        setResult(null);
+                        setMode("post");
+                        setRubric(t.quadrant?.includes("Личное") ? "personal" : "expert");
+                        setLength("standard");
+                        setHookType("broken_prediction");
+                        // Use only first 2 platforms to avoid parse error
+                        if (platforms.length > 3) setPlatforms(platforms.slice(0,2));
+                        generateFromCard();
                       }}
                       onExpand={()=>{
                         if (expandedTopics[t.topic]) {
@@ -2870,43 +2733,33 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
                   </button>
                 </div>
 
-                {/* Personal story bank - collapsible */}
-                <div style={{marginTop:16,padding:"12px 14px",background:"#f4f1ec",borderRadius:10,border:"1px solid #e8e0f0"}}>
-                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
-                    <div style={{fontSize:12,fontWeight:700,color:"#362d52"}}>📝 Банк личного опыта</div>
-                    <span style={{fontSize:11,color:"#9a88b8"}}>{personalStories.length>0?`${personalStories.length} записей`:""}</span>
+                {/* Personal story bank */}
+                <div style={{marginTop:16,padding:"14px 16px",background:"#f4f1ec",borderRadius:10,border:"1px solid #e8e0f0"}}>
+                  <div style={{fontSize:12,fontWeight:700,color:"#362d52",marginBottom:4}}>📝 Банк личного опыта</div>
+                  <div style={{fontSize:11,color:"#5c4e7a",marginBottom:12,lineHeight:1.5}}>
+                    Добавляйте новые истории, наблюдения и инсайты по мере появления — они будут использованы при генерации личных тем в контент-плане.
                   </div>
+                  {personalStories.length > 0 && (
+                    <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:12}}>
+                      {personalStories.map((s,i)=>(
+                        <div key={i} style={{display:"flex",alignItems:"flex-start",gap:8,padding:"8px 10px",background:"#fff",borderRadius:8,border:"1px solid #e8e0f0"}}>
+                          <div style={{fontSize:12,color:"#362d52",flex:1,lineHeight:1.5}}>{s}</div>
+                          <button onClick={()=>setPersonalStories(prev=>prev.filter((_,idx)=>idx!==i))}
+                            style={{background:"transparent",border:"none",color:"#c4b8d8",cursor:"pointer",fontSize:16,flexShrink:0,padding:0,lineHeight:1}}>×</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   <div style={{display:"flex",gap:8}}>
                     <textarea value={newStoryInput} onChange={e=>setNewStoryInput(e.target.value)}
-                      placeholder="Инсайт, наблюдение, случай из практики..."
+                      placeholder="Например: недавно поняла что клиенты боятся не ошибиться, а выглядеть глупо перед коллегами..."
                       rows={2} style={{...inp,flex:1,fontSize:12}} />
                     <button onClick={()=>{
                       if(!newStoryInput.trim()) return;
                       setPersonalStories(prev=>[newStoryInput.trim(),...prev]);
                       setNewStoryInput("");
-                      setBankOpytExpanded(false);
                     }} style={{padding:"10px 14px",borderRadius:9,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:13,fontWeight:700,cursor:"pointer",flexShrink:0}}>+</button>
                   </div>
-                  {personalStories.length > 0 && (
-                    <div style={{marginTop:8}}>
-                      <button onClick={()=>setBankOpytExpanded(p=>!p)}
-                        style={{width:"100%",padding:"6px 10px",borderRadius:7,border:"1px solid #e8e0f0",background:"#fff",color:"#5c4e7a",fontSize:11,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                        <span>📚 {personalStories.length} {personalStories.length===1?"запись":"записей"} в банке</span>
-                        <span>{bankOpytExpanded?"Скрыть ▲":"Показать ▼"}</span>
-                      </button>
-                      {bankOpytExpanded && (
-                        <div style={{display:"flex",flexDirection:"column",gap:5,marginTop:6,maxHeight:200,overflowY:"auto"}}>
-                          {personalStories.map((s,i)=>(
-                            <div key={i} style={{display:"flex",alignItems:"flex-start",gap:8,padding:"7px 10px",background:"#fff",borderRadius:7,border:"1px solid #e8e0f0"}}>
-                              <div style={{fontSize:11,color:"#362d52",flex:1,lineHeight:1.5,overflow:"hidden",textOverflow:"ellipsis",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{s}</div>
-                              <button onClick={()=>setPersonalStories(prev=>prev.filter((_,idx)=>idx!==i))}
-                                style={{background:"transparent",border:"none",color:"#c4b8d8",cursor:"pointer",fontSize:14,flexShrink:0,padding:0}}>×</button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </div>
 
               </Card>
@@ -3232,24 +3085,13 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
                   <PlanCard key={i} post={post}
                     onAddToCalendar={()=>addToCalendar(post.topic, post.platform, null, "plan", {quadrant:post.sordell, hook:post.function})}
                     onCreatePost={()=>{
+                      // Auto-fill all strategy from plan data
                       setTopic(post.topic);
                       setPillar(post.block||"");
-                      // Set platform from card
-                      if (post.platform) setPlatforms([post.platform]);
-                      // Set stage from card
                       const stageObj = AWARENESS_STAGES.find(s=>s.label===post.stage||s.id===post.stage);
                       setStage(stageObj?.id||"unaware");
-                      // Set Sordell from card
                       const sordellObj = SORDELL_MATRIX.find(q=>post.sordell?.includes(q.label)||post.sordell?.includes(q.id));
                       setSordellQuad(sordellObj?.id||"professional_unexpected");
-                      // Set MS from card
-                      if (post.ms && microsegments.length > 0) {
-                        const msObj = microsegments.find(m=>m.name===post.ms||post.ms?.includes(m.name));
-                        if (msObj) setSelectedMs(msObj.id);
-                      }
-                      // Set platform-aware length
-                      if (post.platform==="threads"||post.platform==="instagram") setLength("short");
-                      else if (post.platform==="telegram") setLength("medium");
                       setRubric("expert");
                       setPillarAngle("reasons");
                       setLength("standard");
@@ -3260,13 +3102,7 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
                       setMode("post");
                       setResult(null);
                       // Auto-generate immediately
-                      generateWithOverrides({
-                        topicOverride: post.topic,
-                        sordellQuadOverride: post.sordell?.includes("Личное") ?
-                          (post.sordell?.includes("Неожиданное") ? "personal_unexpected" : "personal_known") :
-                          (post.sordell?.includes("Неожиданное") ? "professional_unexpected" : "professional_known"),
-                        rubricOverride: "expert",
-                      });
+                      generateFromCard();
                     }}
                   />
                 ))}
@@ -3331,6 +3167,51 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
               </div>
 
 {/* Матрица Сорделл */}
+
+              {/* Hook type with smart recommendations */}
+              {!isCase && (
+                <div style={{marginBottom:14}}>
+                  <Label text="Тип хука" hint="Первые 1-2 строки поста" />
+                  {HOOK_TYPES.filter(h =>
+                    platforms.some(p => h.platforms && h.platforms.includes(p)) &&
+                    (!postGoal || (h.goal && h.goal.includes(postGoal)))
+                  ).slice(0,3).length > 0 && (
+                    <div style={{display:"flex",flexDirection:"column",gap:5,marginBottom:8}}>
+                      <div style={{fontSize:10,color:"#9a88b8",marginBottom:3,textTransform:"uppercase",letterSpacing:".05em"}}>✨ Рекомендовано{postGoal?" для цели":""}</div>
+                      {HOOK_TYPES.filter(h =>
+                        platforms.some(p => h.platforms && h.platforms.includes(p)) &&
+                        (!postGoal || (h.goal && h.goal.includes(postGoal)))
+                      ).slice(0,3).map(h=>(
+                        <button key={h.id} onClick={()=>setHookType(hookType===h.id?"":h.id)}
+                          style={{padding:"9px 12px",borderRadius:9,border:"1px solid #362d52",background:hookType===h.id?"#362d52":"rgba(54,45,82,.06)",color:hookType===h.id?"#f4f1ec":"#362d52",fontSize:12,cursor:"pointer",textAlign:"left"}}>
+                          <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
+                            <span>{h.icon}</span><span style={{fontWeight:700}}>{h.label}</span>
+                            {hookType===h.id&&<span style={{marginLeft:"auto"}}>✓</span>}
+                          </div>
+                          <div style={{fontSize:10,opacity:.75,fontStyle:"italic",lineHeight:1.4}}>{h.example}</div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <button onClick={()=>setShowAllHooks(p=>!p)}
+                    style={{width:"100%",padding:"7px 12px",borderRadius:8,border:"1px solid #d8d0e0",background:"transparent",color:"#5c4e7a",fontSize:11,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:showAllHooks?8:0}}>
+                    <span>{hookType?(HOOK_TYPES.find(h=>h.id===hookType)?.icon+" "+HOOK_TYPES.find(h=>h.id===hookType)?.label):"Все хуки (22)..."}</span>
+                    <span style={{color:"#9a88b8"}}>{showAllHooks?"▲":"▼"}</span>
+                  </button>
+                  {showAllHooks&&(
+                    <div style={{display:"flex",flexDirection:"column",gap:4,maxHeight:400,overflowY:"auto"}}>
+                      {HOOK_TYPES.map(h=>(
+                        <button key={h.id} onClick={()=>{setHookType(hookType===h.id?"":h.id);setShowAllHooks(false);}}
+                          style={{padding:"8px 12px",borderRadius:8,border:`1px solid ${hookType===h.id?"#362d52":"#d8d0e0"}`,background:hookType===h.id?"#362d52":"#f0eef8",color:hookType===h.id?"#f4f1ec":"#362d52",fontSize:11,cursor:"pointer",textAlign:"left"}}>
+                          <span style={{fontWeight:700}}>{h.icon} {h.label}</span>
+                          <span style={{fontSize:10,opacity:.6,marginLeft:6}}>{h.desc}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {hookType&&<button onClick={()=>setHookType("")} style={{marginTop:4,padding:"3px",border:"none",background:"transparent",color:"#9a88b8",fontSize:11,cursor:"pointer"}}>× убрать хук</button>}
+                </div>
+              )}
               <div style={{marginBottom:18}}>
                 <Label text="Угол подачи — матрица Сорделл" />
                 <div style={{fontSize:11,color:"#5c4e7a",marginBottom:10,lineHeight:1.6,fontStyle:"italic"}}>Как зайти в тему — с какой стороны</div>
@@ -3400,30 +3281,6 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
 
             </Card>
 
-              {/* Formula selector */}
-              {!isCase && (() => {
-                const suggested = POST_FORMULAS.filter(f =>
-                  f.stages.includes(stage) &&
-                  platforms.some(p => f.platforms.includes(p)) &&
-                  (sordellQuad ? f.sordell.includes(sordellQuad) : true)
-                ).slice(0, 5);
-                return suggested.length > 0 ? (
-                  <div style={{marginBottom:6}}>
-                    <Label text="Формула поста" hint="Опционально — задаёт структуру и ритм текста под твои параметры" />
-                    <div style={{display:"flex",flexDirection:"column",gap:5}}>
-                      {suggested.map(f=>(
-                        <button key={f.id} onClick={()=>setSelectedFormula(selectedFormula===f.id?null:f.id)}
-                          style={{padding:"9px 12px",borderRadius:9,border:`1px solid ${selectedFormula===f.id?"#362d52":"#d8d0e0"}`,background:selectedFormula===f.id?"#362d52":"#f0eef8",color:selectedFormula===f.id?"#f4f1ec":"#362d52",fontSize:12,cursor:"pointer",textAlign:"left",lineHeight:1.5}}>
-                          <span style={{fontSize:10,opacity:.6,marginRight:6}}>#{f.id}</span>
-                          {f.text}
-                        </button>
-                      ))}
-                      {selectedFormula && <button onClick={()=>setSelectedFormula(null)} style={{padding:"4px",border:"none",background:"transparent",color:"#9a88b8",fontSize:11,cursor:"pointer",textAlign:"left"}}>× убрать формулу</button>}
-                    </div>
-                  </div>
-                ) : null;
-              })()}
-
             {error&&<p style={{color:"#e05c5c",fontSize:13,textAlign:"center",marginBottom:10}}>{error}</p>}
             <div style={{display:"flex",gap:8}}>
               <button onClick={()=>setStep(2)} style={{flex:1,padding:12,borderRadius:10,border:`1px solid ${S.border}`,background:"transparent",color:"#5c4e7a",fontSize:13,cursor:"pointer",fontFamily:"sans-serif"}}>← Назад</button>
@@ -3454,7 +3311,6 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
                   {label:"Стадия", value:AWARENESS_STAGES.find(s=>s.id===stage)?.label||"—", step:3},
                   {label:"Сорделл", value:SORDELL_MATRIX.find(q=>q.id===sordellQuad)?.label||"—", step:3},
                   {label:"Рубрика", value:rubric?{expert:"✦ Экспертный",personal:"👤 Личный",engaging:"🔥 Вовлекающий",pain:"💊 Боль",selling:"💰 Продающий"}[rubric]:"не выбрана", step:3},
-                  {label:"Формула", value:selectedFormula?("№"+selectedFormula+": "+POST_FORMULAS.find(f=>f.id===selectedFormula)?.text):"без формулы", step:3},
                 ].map((row,i)=>(
                   <div key={i} style={{display:"flex",alignItems:"flex-start",gap:10,padding:"8px 12px",background:"#f4f1ec",borderRadius:8,border:"1px solid #e8e0f0"}}>
                     <div style={{fontSize:11,color:"#9a88b8",fontWeight:600,width:80,flexShrink:0,paddingTop:2}}>{row.label}</div>
@@ -3571,7 +3427,38 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
                   )}
 
                   <div style={{marginBottom:14}}>
-                    {/* Microsegment selector */}
+                    <div style={{marginBottom:14}}>
+                <Label text="Цель поста" hint="Что хочешь получить от читателя — влияет на рекомендацию хука" />
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+                  {[
+                    {id:"share",icon:"🔄",label:"Репост / охват",desc:"узнавание, парадокс"},
+                    {id:"comment",icon:"💬",label:"Комментарии",desc:"провокация, вопрос"},
+                    {id:"save",icon:"🔖",label:"Сохранение",desc:"переименование, история"},
+                    {id:"telegram",icon:"✈️",label:"Переход в TG",desc:"обещание, инсайдер"},
+                  ].map(g=>(
+                    <button key={g.id} onClick={()=>setPostGoal(postGoal===g.id?null:g.id)}
+                      style={{padding:"8px 10px",borderRadius:9,border:`1px solid ${postGoal===g.id?"#362d52":"#d8d0e0"}`,background:postGoal===g.id?"#362d52":"#f0eef8",color:postGoal===g.id?"#f4f1ec":"#362d52",fontSize:12,cursor:"pointer",textAlign:"left"}}>
+                      <div style={{fontWeight:700,marginBottom:1}}>{g.icon} {g.label}</div>
+                      <div style={{fontSize:10,opacity:.7}}>{g.desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{marginBottom:14}}>
+                <Label text="Платформы для этого поста" hint="Можешь изменить для конкретного поста" />
+                <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                  {PLATFORMS.map(p=>(
+                    <button key={p.id} onClick={()=>{
+                      setPlatforms(prev=>prev.includes(p.id)?prev.filter(x=>x!==p.id):[...prev,p.id]);
+                    }} style={{padding:"6px 12px",borderRadius:8,border:`1px solid ${platforms.includes(p.id)?"#362d52":"#d8d0e0"}`,background:platforms.includes(p.id)?"#362d52":"#fff",color:platforms.includes(p.id)?"#f4f1ec":"#362d52",fontSize:12,cursor:"pointer"}}>
+                      {p.icon} {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Microsegment selector */}
                     {microsegments.length > 0 && (
                       <div style={{marginBottom:12}}>
                         <Label text="Для кого этот пост?" hint="Выбери МС — его боли и язык подставятся в промпт автоматически" />
@@ -3608,29 +3495,9 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
                 </>
               )}
 
-              {/* Hook type */}
-              <div style={{marginBottom:14}}>
-                <Label text="Тип хука" hint="Первые 1-2 строки поста" />
-                <button onClick={()=>setShowAllHooks(p=>!p)}
-                  style={{width:"100%",padding:"8px 12px",borderRadius:8,border:"1px solid #d8d0e0",background:"#f0eef8",color:"#362d52",fontSize:12,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:showAllHooks?8:0}}>
-                  <span>{hookType ? (HOOK_TYPES.find(h=>h.id===hookType)?.icon+" "+HOOK_TYPES.find(h=>h.id===hookType)?.label) : "Выбрать хук..."}</span>
-                  <span style={{color:"#9a88b8"}}>{showAllHooks?"▲":"▼"}</span>
-                </button>
-                {showAllHooks && (
-                  <div style={{display:"flex",flexDirection:"column",gap:5,marginBottom:8}}>
-                    {HOOK_TYPES.map(h=>(
-                      <button key={h.id} onClick={()=>{setHookType(hookType===h.id?"":h.id);setShowAllHooks(false);}}
-                        style={{padding:"9px 12px",borderRadius:9,border:`1px solid ${hookType===h.id?"#362d52":"#d8d0e0"}`,background:hookType===h.id?"#362d52":"#f0eef8",color:hookType===h.id?"#f4f1ec":"#362d52",fontSize:12,cursor:"pointer",textAlign:"left"}}>
-                        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
-                          <span>{h.icon}</span><span style={{fontWeight:700}}>{h.label}</span>
-                          <span style={{fontSize:10,opacity:.6,marginLeft:"auto"}}>{h.desc}</span>
-                        </div>
-                        <div style={{fontSize:10,color:hookType===h.id?"rgba(244,241,236,.8)":"#9a88b8",fontStyle:"italic",lineHeight:1.4}}>{h.example}</div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+              {/* Quick platform selector on topic step */}
+
+
               {/* Length */}
               <div style={{marginBottom:18}}>
                 <Label text="Длина поста" />
@@ -3659,36 +3526,7 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
                   ))}
                 </div>
               </div>
-              <div style={{marginBottom:14}}>
-                <Label text="Цель поста" hint="Влияет на рекомендацию хука" />
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
-                  {[
-                    {id:"share", icon:"🔄", label:"Репост / охват", desc:"Узнавание, парадокс"},
-                    {id:"comment", icon:"💬", label:"Комментарии", desc:"Провокация, вопрос"},
-                    {id:"save", icon:"🔖", label:"Сохранение", desc:"Переименование, история"},
-                    {id:"telegram", icon:"✈️", label:"Переход в TG", desc:"Обещание, инсайдер"},
-                  ].map(g=>(
-                    <button key={g.id} onClick={()=>setPostGoal(postGoal===g.id?null:g.id)}
-                      style={{padding:"8px 10px",borderRadius:9,border:`1px solid ${postGoal===g.id?"#362d52":"#d8d0e0"}`,background:postGoal===g.id?"#362d52":"#f0eef8",color:postGoal===g.id?"#f4f1ec":"#362d52",fontSize:12,cursor:"pointer",textAlign:"left"}}>
-                      <div style={{fontWeight:700,marginBottom:1}}>{g.icon} {g.label}</div>
-                      <div style={{fontSize:10,opacity:.7}}>{g.desc}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
 
-              <div style={{marginBottom:14}}>
-                <Label text="Платформы для этого поста" hint="Можешь изменить для конкретного поста" />
-                <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-                  {PLATFORMS.map(p=>(
-                    <button key={p.id} onClick={()=>{
-                      setPlatforms(prev=>prev.includes(p.id)?prev.filter(x=>x!==p.id):[...prev,p.id]);
-                    }} style={{padding:"6px 12px",borderRadius:8,border:`1px solid ${platforms.includes(p.id)?"#362d52":"#d8d0e0"}`,background:platforms.includes(p.id)?"#362d52":"#fff",color:platforms.includes(p.id)?"#f4f1ec":"#362d52",fontSize:12,cursor:"pointer"}}>
-                      {p.icon} {p.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
             </Card>
 
             {error&&<p style={{color:"#e05c5c",fontSize:13,textAlign:"center",marginBottom:10}}>{error}</p>}
