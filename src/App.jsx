@@ -3802,35 +3802,31 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
               <div style={{marginBottom:14}}>
                 <Label text="Тип хука" hint="Первые 1-2 строки поста" />
 
-                {/* Smart recommendations */}
-                {(() => {
-                  const recommended = HOOK_TYPES.filter(h => {
-                    const goalMatch = !postGoal || h.goal?.includes(postGoal);
-                    const platformMatch = platforms.some(p => h.platforms?.includes(p));
-                    return goalMatch && platformMatch;
-                  }).slice(0, 3);
-
-                  return recommended.length > 0 ? (
-                    <div style={{marginBottom:8}}>
-                      <div style={{fontSize:10,color:"#9a88b8",marginBottom:5,textTransform:"uppercase",letterSpacing:".05em"}}>
-                        ✨ Рекомендовано{postGoal?` для цели «${["share","comment","save","telegram"].map((_,i)=>["Репост","Комментарии","Сохранение","В Telegram"][i])[["share","comment","save","telegram"].indexOf(postGoal)]}»`:""}
-                      </div>
-                      <div style={{display:"flex",flexDirection:"column",gap:5}}>
-                        {recommended.map(h=>(
-                          <button key={h.id} onClick={()=>setHookType(hookType===h.id?"":h.id)}
-                            style={{padding:"9px 12px",borderRadius:9,border:`1px solid ${hookType===h.id?"#362d52":"#362d52"}`,background:hookType===h.id?"#362d52":"rgba(54,45,82,.06)",color:hookType===h.id?"#f4f1ec":"#362d52",fontSize:12,cursor:"pointer",textAlign:"left"}}>
-                            <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
-                              <span>{h.icon}</span>
-                              <span style={{fontWeight:700}}>{h.label}</span>
-                              {hookType===h.id && <span style={{marginLeft:"auto",fontSize:11}}>✓</span>}
-                            </div>
-                            <div style={{fontSize:11,opacity:.75,lineHeight:1.4}}>{h.example}</div>
-                          </button>
-                        ))}
-                      </div>
+                {/* Smart recommendations - pre-computed outside JSX */}
+                {HOOK_TYPES.filter(h =>
+                  (!postGoal || (h.goal&&h.goal.includes(postGoal))) &&
+                  platforms.some(p => h.platforms&&h.platforms.includes(p))
+                ).slice(0,3).length > 0 && (
+                  <div style={{marginBottom:8}}>
+                    <div style={{fontSize:10,color:"#9a88b8",marginBottom:5,textTransform:"uppercase",letterSpacing:".05em"}}>✨ Рекомендовано</div>
+                    <div style={{display:"flex",flexDirection:"column",gap:5}}>
+                      {HOOK_TYPES.filter(h =>
+                        (!postGoal || (h.goal&&h.goal.includes(postGoal))) &&
+                        platforms.some(p => h.platforms&&h.platforms.includes(p))
+                      ).slice(0,3).map(h=>(
+                        <button key={h.id} onClick={()=>setHookType(hookType===h.id?"":h.id)}
+                          style={{padding:"9px 12px",borderRadius:9,border:"1px solid #362d52",background:hookType===h.id?"#362d52":"rgba(54,45,82,.06)",color:hookType===h.id?"#f4f1ec":"#362d52",fontSize:12,cursor:"pointer",textAlign:"left"}}>
+                          <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
+                            <span>{h.icon}</span>
+                            <span style={{fontWeight:700}}>{h.label}</span>
+                            {hookType===h.id && <span style={{marginLeft:"auto",fontSize:11}}>✓</span>}
+                          </div>
+                          <div style={{fontSize:11,opacity:.75,lineHeight:1.4}}>{h.example}</div>
+                        </button>
+                      ))}
                     </div>
-                  ) : null;
-                })()}
+                  </div>
+                )}
 
                 {/* All hooks toggle */}
                 <button onClick={()=>setShowAllHooks(p=>!p)}
