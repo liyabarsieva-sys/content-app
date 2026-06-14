@@ -247,6 +247,7 @@ export default function App() {
   const [newPainInput, setNewPainInput] = useState("");
   const [newBarrierInput, setNewBarrierInput] = useState("");
   const [postGoal, setPostGoal] = useState(null);
+  const [planMix, setPlanMix] = useState({expert:60, personal:20, engaging:10, selling:10});
   const [hookPreview, setHookPreview] = useState([]);
   const [hookPreviewLoading, setHookPreviewLoading] = useState(false);
   const [showAllHooks, setShowAllHooks] = useState(false);
@@ -2825,14 +2826,13 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
                         setSordellQuad(t.quadrant?.includes("Личное") ?
                           (t.quadrant?.includes("Неожиданное") ? "personal_unexpected" : "personal_known") :
                           (t.quadrant?.includes("Неожиданное") ? "professional_unexpected" : "professional_known"));
-                        setResult(null);
-                        setMode("post");
-                        setRubric(t.quadrant?.includes("Личное") ? "personal" : "expert");
-                        setLength("standard");
-                        setHookType("broken_prediction");
-                        // Use only first 2 platforms to avoid parse error
-                        if (platforms.length > 3) setPlatforms(platforms.slice(0,2));
-                        generateFromCard();
+                        generateWithOverrides({
+                          topicOverride: t.topic,
+                          sordellQuadOverride: t.quadrant?.includes("Личное") ?
+                            (t.quadrant?.includes("Неожиданное") ? "personal_unexpected" : "personal_known") :
+                            (t.quadrant?.includes("Неожиданное") ? "professional_unexpected" : "professional_known"),
+                          rubricOverride: t.quadrant?.includes("Личное") ? "personal" : "expert",
+                        });
                       }}
                       onExpand={()=>{
                         if (expandedTopics[t.topic]) {
@@ -3164,7 +3164,40 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
                 {error&&<p style={{color:"#e05c5c",fontSize:13,textAlign:"center",marginBottom:10}}>{error}</p>}
                 <div style={{display:"flex",gap:8}}>
                   <button onClick={()=>setStep(1)} style={{flex:1,padding:12,borderRadius:10,border:`1px solid ${S.border}`,background:"transparent",color:"#5c4e7a",fontSize:13,cursor:"pointer"}}>← Назад</button>
-                  <button onClick={generatePlan} style={{flex:3,padding:15,borderRadius:12,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:15,fontWeight:700,cursor:"pointer"}}>
+                  {/* Content mix settings */}
+                <div style={{marginBottom:18}}>
+                  <Label text="Контент-микс" hint="Задай желаемое соотношение типов постов в плане" />
+                  <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                    {[
+                      {key:"expert", label:"Экспертные", desc:"Механизмы, факты, инсайты", color:"#362d52"},
+                      {key:"personal", label:"Личные", desc:"Истории, наблюдения из практики", color:"#5c4e7a"},
+                      {key:"engaging", label:"Вовлекающие", desc:"Вопросы, провокации, дискуссии", color:"#4a8a6a"},
+                      {key:"selling", label:"Продающие", desc:"Офферы, кейсы, результаты", color:"#e05c5c"},
+                    ].map(type => (
+                      <div key={type.key}>
+                        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
+                          <span style={{fontSize:12,color:"#362d52",fontWeight:600}}>{type.label}</span>
+                          <div style={{display:"flex",alignItems:"center",gap:6}}>
+                            <button onClick={()=>setPlanMix(p=>({...p,[type.key]:Math.max(0,p[type.key]-10)}))}
+                              style={{width:22,height:22,borderRadius:5,border:"1px solid #d8d0e0",background:"#f0eef8",color:"#362d52",fontSize:13,cursor:"pointer",lineHeight:1}}>−</button>
+                            <span style={{fontSize:13,fontWeight:700,color:type.color,width:36,textAlign:"center"}}>{planMix[type.key]}%</span>
+                            <button onClick={()=>setPlanMix(p=>({...p,[type.key]:Math.min(80,p[type.key]+10)}))}
+                              style={{width:22,height:22,borderRadius:5,border:"1px solid #d8d0e0",background:"#f0eef8",color:"#362d52",fontSize:13,cursor:"pointer",lineHeight:1}}>+</button>
+                          </div>
+                        </div>
+                        <div style={{height:6,background:"#e8e0f0",borderRadius:3,overflow:"hidden"}}>
+                          <div style={{height:"100%",width:planMix[type.key]+"%",background:type.color,borderRadius:3,transition:"width .2s"}} />
+                        </div>
+                        <div style={{fontSize:10,color:"#9a88b8",marginTop:2}}>{type.desc}</div>
+                      </div>
+                    ))}
+                    <div style={{fontSize:10,color:Object.values(planMix).reduce((a,b)=>a+b,0)!==100?"#e05c5c":"#4a8a6a",fontWeight:600,textAlign:"right",marginTop:2}}>
+                      Итого: {Object.values(planMix).reduce((a,b)=>a+b,0)}% {Object.values(planMix).reduce((a,b)=>a+b,0)!==100?"≠ 100 — скорректируй":"✓"}
+                    </div>
+                  </div>
+                </div>
+
+                <button onClick={generatePlan} style={{flex:3,padding:15,borderRadius:12,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:15,fontWeight:700,cursor:"pointer"}}>
                     📅 Создать план
                   </button>
                 </div>
@@ -3196,12 +3229,16 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
                 const total = planResult.length;
                 const counts = {expert:0, personal:0, selling:0, engaging:0, other:0};
                 planResult.forEach(p => {
-                  const fn = (p.function||p.sordell||"").toLowerCase();
-                  if (fn.includes("экспертн") || fn.includes("профессион") || fn.includes("узнавание") || fn.includes("объяснение")) counts.expert++;
-                  else if (fn.includes("личн") || fn.includes("история") || fn.includes("признание")) counts.personal++;
-                  else if (fn.includes("продаж") || fn.includes("конверс")) counts.selling++;
-                  else if (fn.includes("вовлеч") || fn.includes("комментар")) counts.engaging++;
-                  else counts.other++;
+                  // Check rubric first, then sordell quadrant, then function field
+                  const rubric = (p.rubric||"").toLowerCase();
+                  const sordell = (p.sordell||"").toLowerCase();
+                  const fn = (p.function||"").toLowerCase();
+                  const stage = (p.stage||"").toLowerCase();
+
+                  if (rubric.includes("продаж") || fn.includes("продаж") || fn.includes("конверс") || stage.includes("готов")) counts.selling++;
+                  else if (rubric.includes("вовлеч") || fn.includes("вовлеч") || fn.includes("комментар")) counts.engaging++;
+                  else if (sordell.includes("личное") || rubric.includes("личн") || fn.includes("личн") || fn.includes("история") || fn.includes("признание")) counts.personal++;
+                  else counts.expert++;
                 });
                 const pct = n => Math.round(n/total*100);
                 return (
