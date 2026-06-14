@@ -247,6 +247,8 @@ export default function App() {
   const [newPainInput, setNewPainInput] = useState("");
   const [newBarrierInput, setNewBarrierInput] = useState("");
   const [postGoal, setPostGoal] = useState(null);
+  const [hookPreview, setHookPreview] = useState([]);
+  const [hookPreviewLoading, setHookPreviewLoading] = useState(false);
   const [showAllHooks, setShowAllHooks] = useState(false);
   const [selectedFormula, setSelectedFormula] = useState(null);
   const [suggestingTopicPains, setSuggestingTopicPains] = useState(false);
@@ -925,6 +927,29 @@ ${topics.map((t,i) => (i+1)+". "+t).join("\n")}
     setFormatSeriesLoading(false);
   }
 
+  async function generateHookPreview() {
+    if (!topic.trim() || !hookType) return;
+    setHookPreviewLoading(true); setHookPreview([]);
+    const hookObj = HOOK_TYPES.find(h=>h.id===hookType);
+    const msObj = selectedMs ? microsegments.find(m=>m.id===selectedMs) : null;
+    const prompt = `Ты опытный копирайтер. Напиши 3 варианта первой строки поста.
+Тема: ${topic}
+Тип хука: ${hookObj?.label||hookType} — ${hookObj?.desc||""}
+Аудитория: ${msObj?msObj.name+": "+msObj.desc:audience||"-"}
+Платформа: ${platforms.includes("threads")?"Threads (30-80 слов, без заголовков)":platforms.includes("telegram")?"Telegram (150-400 слов)":"соцсети"}
+Требования: каждая строка — максимум 1-2 предложения. Без вступлений. Сразу зацепляет.
+ТОЛЬКО валидный JSON: {"lines":["строка 1","строка 2","строка 3"]}`;
+    try {
+      const resp = await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:400,messages:[{role:"user",content:prompt}]})});
+      const data = await resp.json();
+      const text = data.content?.map(b=>b.text||"").join("")||"";
+      const match = text.match(/\{[\s\S]*\}/);
+      if (match) { const parsed = JSON.parse(match[0]); setHookPreview(parsed.lines||[]); }
+    } catch(e) { console.error(e); }
+    setHookPreviewLoading(false);
+  }
+
   async function generateSeries() {
     if (!seriesBlock || !seriesTopic.trim()) return;
     setSeriesLoading(true); setSeriesResult(null);
@@ -1101,6 +1126,29 @@ ${topics.map((t,i)=>(i+1)+'. '+t).join('\n')}
     setFormatSeriesLoading(false);
   }
 
+  async function generateHookPreview() {
+    if (!topic.trim() || !hookType) return;
+    setHookPreviewLoading(true); setHookPreview([]);
+    const hookObj = HOOK_TYPES.find(h=>h.id===hookType);
+    const msObj = selectedMs ? microsegments.find(m=>m.id===selectedMs) : null;
+    const prompt = `Ты опытный копирайтер. Напиши 3 варианта первой строки поста.
+Тема: ${topic}
+Тип хука: ${hookObj?.label||hookType} — ${hookObj?.desc||""}
+Аудитория: ${msObj?msObj.name+": "+msObj.desc:audience||"-"}
+Платформа: ${platforms.includes("threads")?"Threads (30-80 слов, без заголовков)":platforms.includes("telegram")?"Telegram (150-400 слов)":"соцсети"}
+Требования: каждая строка — максимум 1-2 предложения. Без вступлений. Сразу зацепляет.
+ТОЛЬКО валидный JSON: {"lines":["строка 1","строка 2","строка 3"]}`;
+    try {
+      const resp = await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:400,messages:[{role:"user",content:prompt}]})});
+      const data = await resp.json();
+      const text = data.content?.map(b=>b.text||"").join("")||"";
+      const match = text.match(/\{[\s\S]*\}/);
+      if (match) { const parsed = JSON.parse(match[0]); setHookPreview(parsed.lines||[]); }
+    } catch(e) { console.error(e); }
+    setHookPreviewLoading(false);
+  }
+
   async function generateSeries() {
     if (!seriesBlock || !seriesTopic.trim()) return;
     setSeriesLoading(true); setSeriesResult(null);
@@ -1210,8 +1258,15 @@ ${tmpl.prompt}
 
 Эксперт/бренд: ${expert||"-"}
 Ниша: ${niche||"-"}
-Аудитория: ${selectedMs&&microsegments.find(m=>m.id===selectedMs)?`${microsegments.find(m=>m.id===selectedMs).name}: ${microsegments.find(m=>m.id===selectedMs).desc}`:audience||"-"}
-${selectedMs&&microsegments.find(m=>m.id===selectedMs)?.language?`Язык аудитории (используй эти формулировки): ${microsegments.find(m=>m.id===selectedMs).language}`:""}
+${(()=>{
+      const _ms = selectedMs ? microsegments.find(m=>m.id===selectedMs) : null;
+      return _ms
+        ? `Микросегмент аудитории: ${_ms.name}. ${_ms.desc}.
+Боли сегмента: ${_ms.pains||audience||"-"}.
+ЯЗЫК СЕГМЕНТА — используй именно эти формулировки, пиши словами читателя а не терминами: ${_ms.language||""}.
+Не переводи на психологический язык — если читатель говорит "я просто устала", пиши именно так.`
+        : `Аудитория: ${audience||"-"}`;
+    })()}
 Боли аудитории: ${audiencePains.length>0?audiencePains.map((p,i)=>`${i+1}. ${p}`).join("; "):"не указаны"}
 Тональность: ${tone}
 ${tovSection}
@@ -1461,6 +1516,7 @@ ${selectedPhase===3?"Полное раскрытие: включи назван�
 Тональность: ${tone}
 ${tovSection}
 ${launchSection}
+${postGoal ? `Цель поста: ${{"share":"РЕПОСТ И ОХВАТ — финал открытый без совета, читатель должен узнать себя и захотеть переслать. Не давай решений. Последняя строка — наблюдение, не инструкция.","comment":"КОММЕНТАРИИ — завершить провокационным утверждением или открытым вопросом. Читатель должен захотеть возразить или поделиться мнением.","save":"СОХРАНЕНИЕ — дай конкретный инсайт или переименование который хочется сохранить. Что-то чего у читателя не было слов назвать.","telegram":"ПЕРЕХОД В TELEGRAM — создай интригу или неполное раскрытие. Намекни что глубина и продолжение — в Telegram-канале."}[postGoal] || ""}` : ""}
 Тема: ${isCase ? (pain || "история успеха клиента") : topic}
 Ключевые факты и УТП: ${details || "нет"}
 ${caseSection}
@@ -3135,6 +3191,42 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
                 </div>
               </div>
 
+              {/* Content mix summary */}
+              {planResult && planResult.length > 0 && (()=>{
+                const total = planResult.length;
+                const counts = {expert:0, personal:0, selling:0, engaging:0, other:0};
+                planResult.forEach(p => {
+                  const fn = (p.function||p.sordell||"").toLowerCase();
+                  if (fn.includes("экспертн") || fn.includes("профессион") || fn.includes("узнавание") || fn.includes("объяснение")) counts.expert++;
+                  else if (fn.includes("личн") || fn.includes("история") || fn.includes("признание")) counts.personal++;
+                  else if (fn.includes("продаж") || fn.includes("конверс")) counts.selling++;
+                  else if (fn.includes("вовлеч") || fn.includes("комментар")) counts.engaging++;
+                  else counts.other++;
+                });
+                const pct = n => Math.round(n/total*100);
+                return (
+                  <div style={{marginTop:12,marginBottom:8,padding:"10px 14px",background:"#f4f1ec",borderRadius:10,border:"1px solid #e8e0f0"}}>
+                    <div style={{fontSize:11,fontWeight:700,color:"#362d52",marginBottom:8}}>Контент-микс плана</div>
+                    <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                      {[
+                        {label:"Экспертных", n:counts.expert, color:"#362d52"},
+                        {label:"Личных", n:counts.personal, color:"#5c4e7a"},
+                        {label:"Продающих", n:counts.selling, color:"#e05c5c"},
+                        {label:"Вовлекающих", n:counts.engaging, color:"#4a8a6a"},
+                      ].map(item=>(
+                        <div key={item.label} style={{padding:"4px 10px",borderRadius:6,background:item.n===0?"rgba(224,92,92,.1)":"rgba(54,45,82,.06)",border:`1px solid ${item.n===0?"#e05c5c":"#d8d0e0"}`}}>
+                          <span style={{fontSize:11,color:item.n===0?"#e05c5c":item.color,fontWeight:600}}>{item.label}: {item.n}</span>
+                          <span style={{fontSize:10,color:"#9a88b8",marginLeft:4}}>({pct(item.n)}%)</span>
+                          {item.n===0&&<span style={{fontSize:10,color:"#e05c5c",marginLeft:4}}>⚠️</span>}
+                        </div>
+                      ))}
+                    </div>
+                    {counts.personal===0 && <div style={{fontSize:10,color:"#e05c5c",marginTop:6}}>⚠️ Нет личных постов — добавь хотя бы 1–2 для баланса доверия</div>}
+                    {counts.selling>total*0.3 && <div style={{fontSize:10,color:"#e05c5c",marginTop:6}}>⚠️ Слишком много продающих — аудитория может устать</div>}
+                  </div>
+                );
+              })()}
+
               {/* Plan management buttons */}
               <div style={{display:"flex",gap:8,marginTop:12,marginBottom:4}}>
                 <button onClick={()=>setStep(2)}
@@ -3284,6 +3376,31 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
                     </div>
                   )}
                   {hookType&&<button onClick={()=>setHookType("")} style={{marginTop:4,padding:"3px",border:"none",background:"transparent",color:"#9a88b8",fontSize:11,cursor:"pointer"}}>× убрать хук</button>}
+
+                  {/* Hook preview */}
+                  {hookType && topic.trim() && (
+                    <div style={{marginTop:8}}>
+                      <button onClick={generateHookPreview} disabled={hookPreviewLoading}
+                        style={{width:"100%",padding:"8px 12px",borderRadius:8,border:"1px dashed #362d52",background:"rgba(54,45,82,.04)",color:hookPreviewLoading?"#9a88b8":"#362d52",fontSize:12,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                        {hookPreviewLoading
+                          ? <><div style={{width:12,height:12,border:"1.5px solid #d8d0e0",borderTopColor:"#362d52",borderRadius:"50%",animation:"sp .8s linear infinite"}}/> Подбираю первую строку…</>
+                          : "✨ Показать варианты первой строки"
+                        }
+                      </button>
+                      {hookPreview.length > 0 && (
+                        <div style={{display:"flex",flexDirection:"column",gap:5,marginTop:6}}>
+                          <div style={{fontSize:10,color:"#9a88b8",textTransform:"uppercase",letterSpacing:".05em"}}>Варианты первой строки — нажми чтобы использовать как хук:</div>
+                          {hookPreview.map((line,i)=>(
+                            <button key={i} onClick={()=>setPain(line)}
+                              style={{padding:"9px 12px",borderRadius:8,border:"1px solid #d8d0e0",background:"#f0eef8",color:"#362d52",fontSize:12,cursor:"pointer",textAlign:"left",lineHeight:1.5,fontStyle:"italic"}}>
+                              {line}
+                            </button>
+                          ))}
+                          <div style={{fontSize:10,color:"#9a88b8"}}>↑ Нажми на строку чтобы подставить её в поле «Боль/хук» поста</div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 
