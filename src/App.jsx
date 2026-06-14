@@ -3164,36 +3164,35 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
                 {error&&<p style={{color:"#e05c5c",fontSize:13,textAlign:"center",marginBottom:10}}>{error}</p>}
                 <div style={{display:"flex",gap:8}}>
                   <button onClick={()=>setStep(1)} style={{flex:1,padding:12,borderRadius:10,border:`1px solid ${S.border}`,background:"transparent",color:"#5c4e7a",fontSize:13,cursor:"pointer"}}>← Назад</button>
-                  {/* Content mix settings */}
-                <div style={{marginBottom:18}}>
-                  <Label text="Контент-микс" hint="Задай желаемое соотношение типов постов в плане" />
-                  <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  {/* Content mix settings - compact */}
+                <div style={{marginBottom:14}}>
+                  <Label text="Контент-микс" hint="Соотношение типов постов в плане" />
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:5}}>
                     {[
-                      {key:"expert", label:"Экспертные", desc:"Механизмы, факты, инсайты", color:"#362d52"},
-                      {key:"personal", label:"Личные", desc:"Истории, наблюдения из практики", color:"#5c4e7a"},
-                      {key:"engaging", label:"Вовлекающие", desc:"Вопросы, провокации, дискуссии", color:"#4a8a6a"},
-                      {key:"selling", label:"Продающие", desc:"Офферы, кейсы, результаты", color:"#e05c5c"},
-                    ].map(type => (
-                      <div key={type.key}>
+                      {key:"expert", label:"Экспертные", color:"#362d52"},
+                      {key:"personal", label:"Личные", color:"#5c4e7a"},
+                      {key:"engaging", label:"Вовлекающие", color:"#4a8a6a"},
+                      {key:"selling", label:"Продающие", color:"#e05c5c"},
+                    ].map(type=>(
+                      <div key={type.key} style={{padding:"7px 10px",background:"#f4f1ec",borderRadius:8,border:"1px solid #e8e0f0"}}>
                         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
-                          <span style={{fontSize:12,color:"#362d52",fontWeight:600}}>{type.label}</span>
-                          <div style={{display:"flex",alignItems:"center",gap:6}}>
+                          <span style={{fontSize:11,color:"#362d52",fontWeight:600}}>{type.label}</span>
+                          <div style={{display:"flex",alignItems:"center",gap:3}}>
                             <button onClick={()=>setPlanMix(p=>({...p,[type.key]:Math.max(0,p[type.key]-10)}))}
-                              style={{width:22,height:22,borderRadius:5,border:"1px solid #d8d0e0",background:"#f0eef8",color:"#362d52",fontSize:13,cursor:"pointer",lineHeight:1}}>−</button>
-                            <span style={{fontSize:13,fontWeight:700,color:type.color,width:36,textAlign:"center"}}>{planMix[type.key]}%</span>
+                              style={{width:18,height:18,borderRadius:4,border:"1px solid #d8d0e0",background:"#fff",color:"#362d52",fontSize:12,cursor:"pointer",lineHeight:1,padding:0}}>−</button>
+                            <span style={{fontSize:12,fontWeight:700,color:type.color,width:28,textAlign:"center"}}>{planMix[type.key]}%</span>
                             <button onClick={()=>setPlanMix(p=>({...p,[type.key]:Math.min(80,p[type.key]+10)}))}
-                              style={{width:22,height:22,borderRadius:5,border:"1px solid #d8d0e0",background:"#f0eef8",color:"#362d52",fontSize:13,cursor:"pointer",lineHeight:1}}>+</button>
+                              style={{width:18,height:18,borderRadius:4,border:"1px solid #d8d0e0",background:"#fff",color:"#362d52",fontSize:12,cursor:"pointer",lineHeight:1,padding:0}}>+</button>
                           </div>
                         </div>
-                        <div style={{height:6,background:"#e8e0f0",borderRadius:3,overflow:"hidden"}}>
-                          <div style={{height:"100%",width:planMix[type.key]+"%",background:type.color,borderRadius:3,transition:"width .2s"}} />
+                        <div style={{height:4,background:"#e8e0f0",borderRadius:2}}>
+                          <div style={{height:"100%",width:planMix[type.key]+"%",background:type.color,borderRadius:2,transition:"width .2s"}} />
                         </div>
-                        <div style={{fontSize:10,color:"#9a88b8",marginTop:2}}>{type.desc}</div>
                       </div>
                     ))}
-                    <div style={{fontSize:10,color:Object.values(planMix).reduce((a,b)=>a+b,0)!==100?"#e05c5c":"#4a8a6a",fontWeight:600,textAlign:"right",marginTop:2}}>
-                      Итого: {Object.values(planMix).reduce((a,b)=>a+b,0)}% {Object.values(planMix).reduce((a,b)=>a+b,0)!==100?"≠ 100 — скорректируй":"✓"}
-                    </div>
+                  </div>
+                  <div style={{fontSize:10,marginTop:5,textAlign:"right",fontWeight:600,color:Object.values(planMix).reduce((a,b)=>a+b,0)!==100?"#e05c5c":"#4a8a6a"}}>
+                    Итого: {Object.values(planMix).reduce((a,b)=>a+b,0)}% {Object.values(planMix).reduce((a,b)=>a+b,0)!==100?"⚠️ скорректируй до 100%":"✓"}
                   </div>
                 </div>
 
@@ -3300,13 +3299,22 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
                       setPillarAngle("reasons");
                       setLength("standard");
                       setCta("sub");
-                      setHookType("unexpected_change");
                       setPain("");
                       setDetails("");
-                      setMode("post");
-                      setResult(null);
-                      // Auto-generate immediately
-                      generateFromCard();
+                      if (post.platform) setPlatforms([post.platform]);
+                      if (post.ms && microsegments.length > 0) {
+                        const msObj = microsegments.find(m=>m.name===post.ms||post.ms?.includes(m.name));
+                        if (msObj) setSelectedMs(msObj.id);
+                      }
+                      if (post.platform==="threads"||post.platform==="instagram") setLength("short");
+                      else if (post.platform==="telegram") setLength("medium");
+                      generateWithOverrides({
+                        topicOverride: post.topic,
+                        sordellQuadOverride: post.sordell?.includes("Личное") ?
+                          (post.sordell?.includes("Неожиданное") ? "personal_unexpected" : "personal_known") :
+                          (post.sordell?.includes("Неожиданное") ? "professional_unexpected" : "professional_known"),
+                        rubricOverride: post.sordell?.includes("Личное") ? "personal" : "expert",
+                      });
                     }}
                   />
                 ))}
