@@ -3244,9 +3244,10 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
                   </div>
                 </div>
 
-                <button onClick={generatePlan} style={{flex:3,padding:15,borderRadius:12,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:15,fontWeight:700,cursor:"pointer"}}>
-                    📅 Создать план
-                  </button>
+                <div style={{display:"flex",gap:8,marginTop:4}}>
+                  <button onClick={()=>setStep(1)} style={{padding:"8px 14px",borderRadius:8,border:"1px solid #d8d0e0",background:"transparent",color:"#5c4e7a",fontSize:12,cursor:"pointer",fontWeight:600}}>← Назад</button>
+                  <button onClick={generatePlan} style={{flex:1,padding:"8px 14px",borderRadius:8,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:12,fontWeight:700,cursor:"pointer"}}>📅 Создать план</button>
+                </div>
                 </div>
               </>
             )}
