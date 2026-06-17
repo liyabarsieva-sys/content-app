@@ -1248,11 +1248,11 @@ ${tmpl.prompt}
     const useSordellQuad = sordellQuadOverride || sordellQuad;
     const useRubric = rubricOverride || rubric || "personal";
     const useSordell = SORDELL_MATRIX.find(q=>q.id===useSordellQuad);
-    const jsonFields = usePlatforms.map(pid => ('"'+pid+'": "текст поста для '+(PLATFORMS.find(p=>p.id===pid)?.label||pid)+'"')).join(", ");
     const useStage = AWARENESS_STAGES.find(s=>s.id===stage) || AWARENESS_STAGES[0];
     const useCta = CTA_OPTIONS.find(c=>c.id===cta) || {label:"по контексту"};
     const usePlatforms = platforms.length ? platforms : ["telegram"];
     const names = PLATFORMS.filter(p=>usePlatforms.includes(p.id)).map(p=>p.label).join(", ");
+    const jsonFields = usePlatforms.map(pid => '"'+pid+'": "текст поста для '+(PLATFORMS.find(p=>p.id===pid)?.label||pid)+'"').join(", ");
     const tovSection = toneOfVoice.trim() ? `\nГолос бренда (используй КАК ОБРАЗЕЦ СТИЛЯ, не копируй текст дословно):\n"${toneOfVoice}"\n` : "";
     const useLength = LENGTH_OPTIONS.find(l=>l.id===length) || LENGTH_OPTIONS[1];
 
