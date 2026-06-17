@@ -244,6 +244,8 @@ export default function App() {
   });
   const [suggestingPains, setSuggestingPains] = useState(false);
   const [bankOpytExpanded, setBankOpytExpanded] = useState(false);
+  const [editingStoryIdx, setEditingStoryIdx] = useState(null);
+  const [editingStoryText, setEditingStoryText] = useState("");
   const [newPainInput, setNewPainInput] = useState("");
   const [newBarrierInput, setNewBarrierInput] = useState("");
   const [postGoal, setPostGoal] = useState(null);
@@ -1246,6 +1248,7 @@ ${tmpl.prompt}
     const useSordellQuad = sordellQuadOverride || sordellQuad;
     const useRubric = rubricOverride || rubric || "personal";
     const useSordell = SORDELL_MATRIX.find(q=>q.id===useSordellQuad);
+    const jsonFields = usePlatforms.map(pid => ('"'+pid+'": "текст поста для '+(PLATFORMS.find(p=>p.id===pid)?.label||pid)+'"')).join(", ");
     const useStage = AWARENESS_STAGES.find(s=>s.id===stage) || AWARENESS_STAGES[0];
     const useCta = CTA_OPTIONS.find(c=>c.id===cta) || {label:"по контексту"};
     const usePlatforms = platforms.length ? platforms : ["telegram"];
@@ -1253,7 +1256,6 @@ ${tmpl.prompt}
     const tovSection = toneOfVoice.trim() ? `\nГолос бренда (используй КАК ОБРАЗЕЦ СТИЛЯ, не копируй текст дословно):\n"${toneOfVoice}"\n` : "";
     const useLength = LENGTH_OPTIONS.find(l=>l.id===length) || LENGTH_OPTIONS[1];
 
-    const jsonFields = usePlatforms.map(pid => `"${pid}": "текст поста для ${PLATFORMS.find(p=>p.id===pid)?.label||pid}"`).join(", ");
 
     const prompt = `Ты опытный SMM-стратег и контент-маркетолог. Пиши на русском языке.
 
@@ -1288,8 +1290,7 @@ ${tovSection}
 ПЛАТФОРМЫ для генерации: ${names}
 Для каждой платформы напиши отдельный адаптированный текст.
 
-ТОЛЬКО валидный JSON без markdown, строго такой формат:
-${jsonExample}`;
+ТОЛЬКО валидный JSON без markdown: {"headline":"заголовок поста","hook":"первые 1-2 строки","${jsonFields}"}`;
 
     try {
       const resp = await fetch("/api/claude", {
@@ -2057,25 +2058,59 @@ ${'{"headline":"заголовок","hook":"хук",' + platforms.map(pid=>`"${p
             <div style={{fontSize:11,color:"#5c4e7a",marginBottom:12,lineHeight:1.5}}>
               Добавляйте новые истории, наблюдения и инсайты — они используются при генерации личных тем.
             </div>
+            {/* Add new entry */}
+            <div style={{display:"flex",gap:8,marginBottom:10}}>
+              <textarea value={newStoryInput} onChange={e=>setNewStoryInput(e.target.value)}
+                placeholder="Инсайт, наблюдение, случай из практики..."
+                rows={2} style={{...inp,flex:1,fontSize:12}} />
+              <button onClick={()=>{ if(!newStoryInput.trim()) return; setPersonalStories(prev=>[newStoryInput.trim(),...prev]); setNewStoryInput(""); setBankOpytExpanded(true); }}
+                style={{padding:"10px 14px",borderRadius:9,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:13,fontWeight:700,cursor:"pointer",flexShrink:0,alignSelf:"flex-end"}}>+</button>
+            </div>
+
+            {personalStories.length===0 && <p style={{fontSize:12,color:"#9a88b8",fontStyle:"italic"}}>Пока пусто — добавьте первую историю</p>}
+
             {personalStories.length > 0 && (
-              <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:12}}>
-                {personalStories.map((s,i)=>(
-                  <div key={i} style={{display:"flex",alignItems:"flex-start",gap:8,padding:"8px 10px",background:"#f4f1ec",borderRadius:8,border:"1px solid #e8e0f0"}}>
-                    <div style={{fontSize:12,color:"#362d52",flex:1,lineHeight:1.5}}>{s}</div>
-                    <button onClick={()=>setPersonalStories(prev=>prev.filter((_,idx)=>idx!==i))}
-                      style={{background:"transparent",border:"none",color:"#c4b8d8",cursor:"pointer",fontSize:16,flexShrink:0,padding:0,lineHeight:1}}>×</button>
+              <div>
+                <button onClick={()=>setBankOpytExpanded(p=>!p)}
+                  style={{width:"100%",padding:"7px 12px",borderRadius:8,border:"1px solid #e8e0f0",background:"#f4f1ec",color:"#362d52",fontSize:11,fontWeight:600,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:bankOpytExpanded?8:0}}>
+                  <span>📚 {personalStories.length} {personalStories.length===1?"запись":"записей"} в банке</span>
+                  <span style={{color:"#9a88b8"}}>{bankOpytExpanded?"Скрыть ▲":"Показать ▼"}</span>
+                </button>
+                {bankOpytExpanded && (
+                  <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                    {personalStories.map((s,i)=>(
+                      <div key={i} style={{background:"#f4f1ec",borderRadius:8,border:"1px solid #e8e0f0",overflow:"hidden"}}>
+                        {editingStoryIdx===i ? (
+                          <div style={{padding:"8px 10px"}}>
+                            <textarea value={editingStoryText} onChange={e=>setEditingStoryText(e.target.value)}
+                              rows={3} style={{width:"100%",padding:"7px 10px",borderRadius:7,border:"1px solid #d8d0e0",fontSize:12,color:"#362d52",outline:"none",resize:"none",fontFamily:"'Nunito Sans',sans-serif",boxSizing:"border-box",marginBottom:6}} />
+                            <div style={{display:"flex",gap:6}}>
+                              <button onClick={()=>setEditingStoryIdx(null)}
+                                style={{flex:1,padding:"6px",borderRadius:6,border:"1px solid #d8d0e0",background:"transparent",color:"#5c4e7a",fontSize:11,cursor:"pointer"}}>Отмена</button>
+                              <button onClick={()=>{
+                                if(!editingStoryText.trim()) return;
+                                setPersonalStories(prev=>prev.map((item,idx)=>idx===i?editingStoryText.trim():item));
+                                setEditingStoryIdx(null);
+                              }} style={{flex:2,padding:"6px",borderRadius:6,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:11,fontWeight:700,cursor:"pointer"}}>💾 Сохранить</button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div style={{display:"flex",alignItems:"flex-start",gap:8,padding:"8px 10px"}}>
+                            <div style={{fontSize:12,color:"#362d52",flex:1,lineHeight:1.6}}>{s}</div>
+                            <div style={{display:"flex",gap:4,flexShrink:0}}>
+                              <button onClick={()=>{setEditingStoryIdx(i);setEditingStoryText(s);}}
+                                style={{background:"transparent",border:"1px solid #d8d0e0",borderRadius:5,color:"#5c4e7a",cursor:"pointer",fontSize:11,padding:"2px 7px"}}>✏️</button>
+                              <button onClick={()=>setPersonalStories(prev=>prev.filter((_,idx)=>idx!==i))}
+                                style={{background:"transparent",border:"none",color:"#c4b8d8",cursor:"pointer",fontSize:14,padding:"2px 4px"}}>×</button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
             )}
-            {personalStories.length===0 && <p style={{fontSize:12,color:"#9a88b8",fontStyle:"italic",marginBottom:12}}>Пока пусто — добавьте первую историю</p>}
-            <div style={{display:"flex",gap:8}}>
-              <textarea value={newStoryInput} onChange={e=>setNewStoryInput(e.target.value)}
-                placeholder="Например: недавно заметила что клиенты боятся не ошибиться, а выглядеть глупо..."
-                rows={2} style={{...inp,flex:1,fontSize:12}} />
-              <button onClick={()=>{ if(!newStoryInput.trim()) return; setPersonalStories(prev=>[newStoryInput.trim(),...prev]); setNewStoryInput(""); }}
-                style={{padding:"10px 14px",borderRadius:9,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:13,fontWeight:700,cursor:"pointer",flexShrink:0}}>+</button>
-            </div>
           </Card>
         )}
 
