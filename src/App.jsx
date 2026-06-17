@@ -796,7 +796,7 @@ ${qa}
     try {
       const resp = await fetch("/api/claude", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ model:"claude-sonnet-4-20250514", max_tokens:4000, messages:[{role:"user",content:prompt}] }),
+        body:JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:4000, messages:[{role:"user",content:prompt}] }),
       });
       const data = await resp.json();
       if (data.error) throw new Error(data.error.message);
@@ -916,7 +916,7 @@ ${topics.map((t,i) => (i+1)+". "+t).join("\n")}
     try {
       const resp = await fetch("/api/claude", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ model:"claude-sonnet-4-5-20251022", max_tokens:8000, messages:[{role:"user",content:prompt}] }),
+        body:JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:8000, messages:[{role:"user",content:prompt}] }),
       });
       const data = await resp.json();
       if (data.error) throw new Error(data.error.message);
@@ -985,7 +985,7 @@ ${formulasList}
     try {
       const resp = await fetch("/api/claude", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ model:"claude-sonnet-4-5-20251022", max_tokens:6000, messages:[{role:"user",content:prompt}] }),
+        body:JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:6000, messages:[{role:"user",content:prompt}] }),
       });
       const data = await resp.json();
       if (data.error) throw new Error(data.error.message);
@@ -1035,7 +1035,7 @@ ${tmpl?.prompt}
     try {
       const resp = await fetch("/api/claude", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ model:"claude-sonnet-4-20250514", max_tokens:3000, messages:[{role:"user",content:prompt}] }),
+        body:JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:3000, messages:[{role:"user",content:prompt}] }),
       });
       const data = await resp.json();
       if (data.error) throw new Error(data.error.message);
@@ -1115,7 +1115,7 @@ ${topics.map((t,i)=>(i+1)+'. '+t).join('\n')}
     try {
       const resp = await fetch("/api/claude", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ model:"claude-sonnet-4-5-20251022", max_tokens:8000, messages:[{role:"user",content:prompt}] }),
+        body:JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:8000, messages:[{role:"user",content:prompt}] }),
       });
       const data = await resp.json();
       if (data.error) throw new Error(data.error.message);
@@ -1184,7 +1184,7 @@ ${formulasList}
     try {
       const resp = await fetch("/api/claude", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ model:"claude-sonnet-4-5-20251022", max_tokens:6000, messages:[{role:"user",content:prompt}] }),
+        body:JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:6000, messages:[{role:"user",content:prompt}] }),
       });
       const data = await resp.json();
       if (data.error) throw new Error(data.error.message);
@@ -1228,7 +1228,7 @@ ${tmpl.prompt}
     try {
       const resp = await fetch("/api/claude", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ model:"claude-sonnet-4-5-20251022", max_tokens:4000, messages:[{role:"user",content:prompt}] }),
+        body:JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:4000, messages:[{role:"user",content:prompt}] }),
       });
       const data = await resp.json();
       if (data.error) throw new Error(data.error.message);
@@ -1296,7 +1296,7 @@ ${tovSection}
       const resp = await fetch("/api/claude", {
         method:"POST", headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
-          model:"claude-sonnet-4-5-20251022",
+          model:"claude-haiku-4-5-20251001",
           max_tokens:4000,
           messages:[{role:"user",content:prompt}],
         }),
@@ -1374,7 +1374,7 @@ ${sordellCtx ? "Для личных тем используй ТОЛЬКО ре�
 
     const resp = await fetch("/api/claude", {
       method:"POST", headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({ model:"claude-sonnet-4-20250514", max_tokens:4000, messages:[{role:"user",content:prompt}] }),
+      body:JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:4000, messages:[{role:"user",content:prompt}] }),
     });
     const data = await resp.json();
     if (data.error) throw new Error(data.error.message);
@@ -1619,7 +1619,7 @@ ${'{"headline":"заголовок","hook":"хук",' + platforms.map(pid=>`"${p
           "Content-Type":"application/json",
         },
         body:JSON.stringify({
-          model:"claude-sonnet-4-20250514",
+          model:"claude-haiku-4-5-20251001",
           max_tokens:platforms.includes("yt_long") ? 5000 : 3500,
           messages:[{role:"user",content:prompt}],
         }),
