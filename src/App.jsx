@@ -3210,44 +3210,41 @@ ${p.aiDesc?"Для промпта: "+p.aiDesc:""}
             ) : (
               <>
                 {error&&<p style={{color:"#e05c5c",fontSize:13,textAlign:"center",marginBottom:10}}>{error}</p>}
-                <div style={{display:"flex",gap:8}}>
-                  <button onClick={()=>setStep(1)} style={{flex:1,padding:12,borderRadius:10,border:`1px solid ${S.border}`,background:"transparent",color:"#5c4e7a",fontSize:13,cursor:"pointer"}}>← Назад</button>
-                  {/* Content mix settings - compact */}
-                <div style={{marginBottom:14}}>
+
+                {/* Content mix - one row */}
+                <div style={{marginBottom:10}}>
                   <Label text="Контент-микс" hint="Соотношение типов постов в плане" />
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:5}}>
+                  <div style={{display:"flex",gap:5}}>
                     {[
                       {key:"expert", label:"Экспертные", color:"#362d52"},
                       {key:"personal", label:"Личные", color:"#5c4e7a"},
-                      {key:"engaging", label:"Вовлекающие", color:"#4a8a6a"},
+                      {key:"engaging", label:"Вовлек.", color:"#4a8a6a"},
                       {key:"selling", label:"Продающие", color:"#e05c5c"},
                     ].map(type=>(
-                      <div key={type.key} style={{padding:"7px 10px",background:"#f4f1ec",borderRadius:8,border:"1px solid #e8e0f0"}}>
-                        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
-                          <span style={{fontSize:11,color:"#362d52",fontWeight:600}}>{type.label}</span>
-                          <div style={{display:"flex",alignItems:"center",gap:3}}>
-                            <button onClick={()=>setPlanMix(p=>({...p,[type.key]:Math.max(0,p[type.key]-10)}))}
-                              style={{width:18,height:18,borderRadius:4,border:"1px solid #d8d0e0",background:"#fff",color:"#362d52",fontSize:12,cursor:"pointer",lineHeight:1,padding:0}}>−</button>
-                            <span style={{fontSize:12,fontWeight:700,color:type.color,width:28,textAlign:"center"}}>{planMix[type.key]}%</span>
-                            <button onClick={()=>setPlanMix(p=>({...p,[type.key]:Math.min(80,p[type.key]+10)}))}
-                              style={{width:18,height:18,borderRadius:4,border:"1px solid #d8d0e0",background:"#fff",color:"#362d52",fontSize:12,cursor:"pointer",lineHeight:1,padding:0}}>+</button>
-                          </div>
+                      <div key={type.key} style={{flex:1,padding:"6px 8px",background:"#f4f1ec",borderRadius:8,border:"1px solid #e8e0f0",minWidth:0}}>
+                        <div style={{fontSize:10,color:"#362d52",fontWeight:600,marginBottom:3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{type.label}</div>
+                        <div style={{display:"flex",alignItems:"center",gap:2,justifyContent:"center"}}>
+                          <button onClick={()=>setPlanMix(p=>({...p,[type.key]:Math.max(0,p[type.key]-10)}))}
+                            style={{width:16,height:16,borderRadius:3,border:"1px solid #d8d0e0",background:"#fff",color:"#362d52",fontSize:11,cursor:"pointer",lineHeight:1,padding:0,flexShrink:0}}>−</button>
+                          <span style={{fontSize:11,fontWeight:700,color:type.color,width:24,textAlign:"center"}}>{planMix[type.key]}%</span>
+                          <button onClick={()=>setPlanMix(p=>({...p,[type.key]:Math.min(80,p[type.key]+10)}))}
+                            style={{width:16,height:16,borderRadius:3,border:"1px solid #d8d0e0",background:"#fff",color:"#362d52",fontSize:11,cursor:"pointer",lineHeight:1,padding:0,flexShrink:0}}>+</button>
                         </div>
-                        <div style={{height:4,background:"#e8e0f0",borderRadius:2}}>
-                          <div style={{height:"100%",width:planMix[type.key]+"%",background:type.color,borderRadius:2,transition:"width .2s"}} />
+                        <div style={{height:3,background:"#e8e0f0",borderRadius:2,marginTop:4}}>
+                          <div style={{height:"100%",width:planMix[type.key]+"%",background:type.color,borderRadius:2,transition:"width .2s"}}/>
                         </div>
                       </div>
                     ))}
                   </div>
-                  <div style={{fontSize:10,marginTop:5,textAlign:"right",fontWeight:600,color:Object.values(planMix).reduce((a,b)=>a+b,0)!==100?"#e05c5c":"#4a8a6a"}}>
-                    Итого: {Object.values(planMix).reduce((a,b)=>a+b,0)}% {Object.values(planMix).reduce((a,b)=>a+b,0)!==100?"⚠️ скорректируй до 100%":"✓"}
+                  <div style={{fontSize:10,marginTop:4,textAlign:"right",fontWeight:600,color:Object.values(planMix).reduce((a,b)=>a+b,0)!==100?"#e05c5c":"#4a8a6a"}}>
+                    {Object.values(planMix).reduce((a,b)=>a+b,0)}% {Object.values(planMix).reduce((a,b)=>a+b,0)!==100?"⚠️":"✓"}
                   </div>
                 </div>
 
-                <div style={{display:"flex",gap:8,marginTop:4}}>
-                  <button onClick={()=>setStep(1)} style={{padding:"8px 14px",borderRadius:8,border:"1px solid #d8d0e0",background:"transparent",color:"#5c4e7a",fontSize:12,cursor:"pointer",fontWeight:600}}>← Назад</button>
-                  <button onClick={generatePlan} style={{flex:1,padding:"8px 14px",borderRadius:8,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:12,fontWeight:700,cursor:"pointer"}}>📅 Создать план</button>
-                </div>
+                {/* Buttons */}
+                <div style={{display:"flex",gap:8}}>
+                  <button onClick={()=>setStep(1)} style={{flex:1,padding:"9px 0",borderRadius:9,border:"1px solid #d8d0e0",background:"transparent",color:"#5c4e7a",fontSize:13,cursor:"pointer",fontWeight:600}}>← Назад</button>
+                  <button onClick={generatePlan} style={{flex:2,padding:"9px 0",borderRadius:9,border:"none",background:"#362d52",color:"#f4f1ec",fontSize:13,fontWeight:700,cursor:"pointer"}}>📅 Создать план</button>
                 </div>
               </>
             )}
