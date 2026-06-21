@@ -527,6 +527,7 @@ ${toneOfVoice ? `Голос бренда / пример поста: ${toneOfVoic
       products: products || [],
       audienceBarriers: audienceBarriers || [],
       microsegments: microsegments || [],
+      personalStories: personalStories || [],
       customFormats: customFormats || [],
       sordellAnswers: sordellAnswers || [],
       savedAt: new Date().toLocaleDateString("ru"),
@@ -537,6 +538,7 @@ ${toneOfVoice ? `Голос бренда / пример поста: ${toneOfVoic
   }
 
   function loadBrand(brand) {
+    // Always reset ALL fields — even if new brand has empty values
     setExpert(brand.expert || "");
     setNiche(brand.niche || "");
     setAudience(brand.audience || "");
@@ -545,31 +547,42 @@ ${toneOfVoice ? `Голос бренда / пример поста: ${toneOfVoic
     setPlatforms(brand.platforms || ["telegram"]);
     setPillars(brand.pillars || []);
     setAudiencePains(brand.audiencePains || []);
-    if (brand.products?.length) {
-      setProducts(brand.products);
-      localStorage.setItem("lia_products", JSON.stringify(brand.products));
-    }
-    if (brand.customFormats?.length) {
-      setCustomFormats(brand.customFormats);
-      localStorage.setItem("lia_custom_formats", JSON.stringify(brand.customFormats));
-    }
-    if (brand.microsegments?.length) {
-      setMicrosegments(brand.microsegments);
-      localStorage.setItem("lia_microsegments", JSON.stringify(brand.microsegments));
-    }
-    if (brand.audienceBarriers?.length) {
-      setAudienceBarriers(brand.audienceBarriers);
-      localStorage.setItem("lia_audience_barriers", JSON.stringify(brand.audienceBarriers));
-    }
-    if (brand.sordellTopics?.length) {
-      setSordellResult(brand.sordellTopics);
-      localStorage.setItem("lia_sordell_result", JSON.stringify(brand.sordellTopics));
-    }
-    if (brand.sordellAnswers?.length) {
-      setSordellAnswers(brand.sordellAnswers);
-      localStorage.setItem("lia_sordell_answers", JSON.stringify(brand.sordellAnswers));
-    }
+    setAudienceBarriers(brand.audienceBarriers || []);
+
+    // Products — reset to empty if brand has none
+    const newProducts = brand.products || [];
+    setProducts(newProducts);
+    localStorage.setItem("lia_products", JSON.stringify(newProducts));
+
+    // Custom formats — reset to empty if brand has none
+    const newFormats = brand.customFormats || [];
+    setCustomFormats(newFormats);
+    localStorage.setItem("lia_custom_formats", JSON.stringify(newFormats));
+
+    // Microsegments — reset to empty if brand has none
+    const newMs = brand.microsegments || [];
+    setMicrosegments(newMs);
+    localStorage.setItem("lia_microsegments", JSON.stringify(newMs));
+
+    // Sordell — reset to empty if brand has none
+    const newSordellResult = brand.sordellTopics || [];
+    setSordellResult(newSordellResult);
+    localStorage.setItem("lia_sordell_result", JSON.stringify(newSordellResult));
+
+    const newSordellAnswers = brand.sordellAnswers || [];
+    setSordellAnswers(newSordellAnswers);
+    localStorage.setItem("lia_sordell_answers", JSON.stringify(newSordellAnswers));
+
+    // Personal stories (bank of experience)
+    const newStories = brand.personalStories || [];
+    setPersonalStories(newStories);
+    localStorage.setItem("lia_personal_stories", JSON.stringify(newStories));
+
+    // Reset UI state
     setPlanResult(null);
+    setResult(null);
+    setSelectedMs(null);
+    setSelectedProduct(null);
     setShowBrandPicker(false);
     setBrandChanged(false);
   }
